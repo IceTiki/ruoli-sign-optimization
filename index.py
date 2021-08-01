@@ -1,6 +1,7 @@
 import yaml
 import time
 import random
+import math
 from todayLoginService import TodayLoginService
 from actions.autoSign import AutoSign
 from actions.collection import Collection
@@ -53,24 +54,41 @@ def locationOffset(self, lon, lat, offset=50):
 def main():
     global startExecutingTime
     startExecutingTime = time.time()
+    workingStatus = {} # 储存各用户自动签到情况
+    workingStatus.clear
     config = getYmlConfig()
     for user in config['users']:
+        username = user['user']['username']
+        # 用户签到状态初始(status)为-1，代表还未尝试签到，签到成功后会被working函数的返回信息覆盖。如果已尝试签到，则跳过该用户。
+        # 尝试签到次数(times)初始为1，每次重试+1
+        if username not in workingStatus:# 第一次尝试签到，初始化状态信息
+            workingStatus[username]['status'] = -1
+            workingStatus[username]['times'] = 1
+        else:
+            if not workingStatus[username]['status'] == -1:# 如果status已经被working函数返回的msg覆盖，则跳过
+                continue
+            workingStatus[username]['times'] += 1
+            if workingStatus[username]['times'] > config['maxRetry']:# 如果times超过最大重试次数，则跳过
+                continue
+        log('正在处理%s|||第%d次尝试'%(username,workingStatus[username]['times']))
         # 对用户配置中的经纬度进行随机偏移
-        user['user']['lon'], user['user']['lat'] = locationOffset(
-            user['user']['lon'], user['user']['lat'], config['locationOffsetRange'])
+        if workingStatus[username]['times'] == 1:
+            user['user']['lon'], user['user']['lat'] = locationOffset(
+                user['user']['lon'], user['user']['lat'], config['locationOffsetRange'])
         # 实例化消息推送
         rl = RlMessage(user['user']['email'], config['emailApiUrl'])
-        if config['debug']:
+        # 开始自动信息收集/签到/查寝
+        try:
             msg = working(user)
-        else:
-            try:
-                msg = working(user)
-            except Exception as e:
-                msg = str(e)
-                log(msg)
-                msg = rl.sendMail('error', msg)
-        print(msg)
+            workingStatus[username]['status'] = msg
+        except Exception as e:
+            config['users'].append(user)# 加入到user列表中重试
+            msg = str(e)
+            log(msg)
+            msg = rl.sendMail('error', msg)
+        log(msg)
         msg = rl.sendMail('maybe', msg)
+    log(workingStatus)
 
 
 def working(user):
@@ -81,32 +99,34 @@ def working(user):
     if user['user']['type'] == 0:
         # 以下代码是信息收集的代码
         collection = Collection(today, user['user'])
-        msg = collection.queryForm()
-        msg = collection.fillForm()
+        collection.queryForm()
+        collection.fillForm()
         msg = collection.submitForm()
         return msg
     elif user['user']['type'] == 1:
         # 以下代码是签到的代码
         sign = AutoSign(today, user['user'])
         msg = sign.getUnSignTask()
-        msg = sign.getDetailTask()
-        msg = sign.fillForm()
+        if type(msg)==str:
+            return msg
+        sign.getDetailTask()
+        sign.fillForm()
         msg = sign.submitForm()
         return msg
     elif user['user']['type'] == 2:
         # 以下代码是查寝的代码
         check = sleepCheck(today, user['user'])
-        msg = check.getUnSignedTasks()
-        msg = check.getDetailTask()
-        msg = check.fillForm()
+        check.getUnSignedTasks()
+        check.getDetailTask()
+        check.fillForm()
         msg = check.submitForm()
         return msg
     elif user['user']['type'] == 3:
         # 以下代码是工作日志的代码
         work = workLog(today, user['user'])
-        msg = work.checkHasLog()
-        msg = work.getFormsByWids()
-        msg = work.fillForms()
+        work.checkHasLog()
+        work.getFormsByWids()
+        work.fillForms()
         msg = work.submitForms()
         return msg
 # 阿里云的入口函数

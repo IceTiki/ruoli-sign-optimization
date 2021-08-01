@@ -1,13 +1,10 @@
 author: 若离QQ：2909998156
-# 调试模式，用于寻找错误出现的坐标，默认为false
-# 特别提示：调试完成后请记得将debug改为false
-# 特别提示：调试完成后请记得将debug改为false
-# 特别提示：调试完成后请记得将debug改为false
-debug: true
 # 邮箱API的地址
 emailApiUrl: http://mail.ruoli.cc/api/sendMail
 # 坐标偏移范围(单位：米)
 locationOffsetRange: 50
+# 签到失败最大重试次数
+maxRetry: 10
 #用户组配置
 ##################################################
 # 温馨提示：请仔细注意每个模板是属于哪个任务类型的配置！##

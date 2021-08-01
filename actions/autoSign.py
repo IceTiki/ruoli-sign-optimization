@@ -33,27 +33,10 @@ class AutoSign:
         self.form = {}
         self.fileName = None
 
-    def getrighttask(self, tasks, title):
-        # tasks=res.json()['datas']['unSignedTasks']
-        # 测试修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        print(tasks)
-        if len(tasks) < 1:
-            print('当前暂时没有未签到的任务哦！')
-            return '当前暂时没有未签到的任务哦！'
-        if title == 0:
-            latestTask = tasks[0]
-            self.taskName = latestTask['taskName']
-            return {'signInstanceWid': latestTask['signInstanceWid'], 'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
-        for righttask in tasks:
-            if righttask['taskName'] == title:
-                self.taskName = righttask['taskName']
-                print(righttask['taskName'])
-                return {'signInstanceWid': righttask['signInstanceWid'], 'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
-        print('没有匹配标题的任务')
-        return '没有匹配标题的任务'
 
     # 获取未签到的任务
     def getUnSignTask(self):
+        # 如果有合适的任务，则返回dict。如果没有需要签到的任务，则返回str。
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
@@ -63,12 +46,24 @@ class AutoSign:
         # 第二次请求接口，真正的拿到具体任务
         res = self.session.post(url, headers=headers,
                                 data=json.dumps({}), verify=False).json()
+        # 查询是否没有未签到任务
+        log(res['datas']['unSignedTasks'])
         if len(res['datas']['unSignedTasks']) < 1:
+            log('当前暂时没有未签到的任务哦！')
             return '当前暂时没有未签到的任务哦！'
-        # 获取正确的任务
-        self.taskInfo = self.getrighttask(
-            res['datas']['unSignedTasks'], self.userInfo['title'])
-        return self.taskInfo
+        # 自动获取最后一个未签到任务(如果title==0)
+        if self.userInfo['title'] == 0:
+            latestTask = res['datas']['unSignedTasks'][0]
+            self.taskName = latestTask['taskName']
+            return {'signInstanceWid': latestTask['signInstanceWid'], 'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
+        # 获取匹配标题的任务
+        for righttask in res['datas']['unSignedTasks']:
+            if righttask['taskName'] == self.userInfo['title']:
+                self.taskName = righttask['taskName']
+                log(righttask['taskName'])
+                return {'signInstanceWid': righttask['signInstanceWid'], 'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
+        log('没有匹配标题的任务')
+        return '没有匹配标题的任务'
 
     # 获取具体的签到任务详情
     def getDetailTask(self):
@@ -77,6 +72,7 @@ class AutoSign:
         headers['Content-Type'] = 'application/json'
         res = self.session.post(url, headers=headers, data=json.dumps(
             self.taskInfo), verify=False).json()
+        log(res['datas'])
         self.task = res['datas']
 
     # 上传图片到阿里云oss
@@ -140,7 +136,7 @@ class AutoSign:
                 for extraFieldItem in extraFieldItems:
                     if extraFieldItem['isSelected']:
                         data = extraFieldItem['content']
-                    # print(extraFieldItem)
+                    # log(extraFieldItem)
                     if extraFieldItem['content'] == userItem['value']:
                         flag = True
                         extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
@@ -200,9 +196,11 @@ class AutoSign:
             'Host': re.findall('//(.*?)/', self.host)[0],
             'Connection': 'Keep-Alive'
         }
-        # print(json.dumps(self.form))
+        # log(json.dumps(self.form))
+        log(extension,headers)
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
                                 data=json.dumps(self.form), verify=False).json()
+        log(res['message'])
         return res['message']
 
     # 两经纬度算距离
