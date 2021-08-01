@@ -31,7 +31,9 @@ class RlMessage:
                 self.configIsCorrect = 0
             if not type(item) == str:
                 self.configIsCorrect = 0
+            return 0
         self.configIsCorrect = 1
+        return 1
 
     # 发送邮件消息
     def sendMail(self, title, msg):
@@ -64,7 +66,9 @@ class Qmsg:
                 self.configIsCorrect = 0
             if not type(item) == str:
                 self.configIsCorrect = 0
+            return 0
         self.configIsCorrect = 1
+        return 1
 
     def send(self, msg):
         # msg：要发送的信息|消息推送函数
