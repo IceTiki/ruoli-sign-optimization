@@ -37,6 +37,7 @@ class AutoSign:
     # 获取未签到的任务
     def getUnSignTask(self):
         # 如果有合适的任务，则返回dict。如果没有需要签到的任务，则返回str。
+        log('获取未签到的任务')
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
@@ -55,18 +56,22 @@ class AutoSign:
         if self.userInfo['title'] == 0:
             latestTask = res['datas']['unSignedTasks'][0]
             self.taskName = latestTask['taskName']
-            return {'signInstanceWid': latestTask['signInstanceWid'], 'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
+            log(latestTask['taskName'])
+            self.taskInfo = {'signInstanceWid': latestTask['signInstanceWid'], 'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
+            return self.taskInfo
         # 获取匹配标题的任务
         for righttask in res['datas']['unSignedTasks']:
             if righttask['taskName'] == self.userInfo['title']:
                 self.taskName = righttask['taskName']
                 log(righttask['taskName'])
-                return {'signInstanceWid': righttask['signInstanceWid'], 'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
+                self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'], 'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
+                return self.taskInfo
         log('没有匹配标题的任务')
         return '没有匹配标题的任务'
 
     # 获取具体的签到任务详情
     def getDetailTask(self):
+        log('获取具体的签到任务详情')
         url = f'{self.host}wec-counselor-sign-apps/stu/sign/detailSignInstance'
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
@@ -112,6 +117,7 @@ class AutoSign:
 
     # 填充表单
     def fillForm(self):
+        log('填充表单')
         # 判断签到是否需要照片
         if self.task['isPhoto'] == 1:
             self.uploadPicture()
@@ -176,6 +182,7 @@ class AutoSign:
 
     # 提交签到信息
     def submitForm(self):
+        log('提交签到信息')
         extension = {
             "lon": self.userInfo['lon'],
             "model": "OPPO R11 Plus",

@@ -67,7 +67,7 @@ def main():
             if not workingStatus[username]['status'] == -1:# 如果status已经被working函数返回的msg覆盖，则跳过
                 continue
             workingStatus[username]['times'] += 1
-            if workingStatus[username]['times'] > config['maxRetry']:# 如果times超过最大重试次数，则跳过
+            if workingStatus[username]['times'] > config['maxRetryTimes']:# 如果times超过最大重试次数，则跳过
                 continue
         log('正在处理%s|||第%d次尝试'%(username,workingStatus[username]['times']))
         # 对用户配置中的经纬度进行随机偏移

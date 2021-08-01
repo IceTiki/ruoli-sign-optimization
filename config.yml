@@ -4,7 +4,7 @@ emailApiUrl: http://mail.ruoli.cc/api/sendMail
 # 坐标偏移范围(单位：米)
 locationOffsetRange: 50
 # 签到失败最大重试次数
-maxRetry: 10
+maxRetryTimes: 10
 #用户组配置
 ##################################################
 # 温馨提示：请仔细注意每个模板是属于哪个任务类型的配置！##
