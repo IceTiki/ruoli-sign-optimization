@@ -15,23 +15,24 @@ def getYmlConfig(yaml_file='config.yml'):
     config = yaml.load(file_data, Loader=yaml.FullLoader)
     return dict(config)
 
+
 def log(*args):
-    ExecutingTime=time.time()-startExecutingTime
+    ExecutingTime = time.time()-startExecutingTime
     if args:
-        string = '|||log|||%0.3fs|||\n'%ExecutingTime
+        string = '|||log|||%0.3fs|||\n' % ExecutingTime
         for item in args:
-            if type(item)==dict:
-                string += yaml.dump(item,allow_unicode=True)
+            if type(item) == dict:
+                string += yaml.dump(item, allow_unicode=True)
             else:
                 string += str(item)
         print(string)
+
 
 def main():
     global startExecutingTime
     startExecutingTime = time.time()
     config = getYmlConfig()
     for user in config['users']:
-        
         rl = RlMessage(user['user']['email'], config['emailApiUrl'])
         if config['debug']:
             msg = working(user)
@@ -44,6 +45,7 @@ def main():
                 msg = rl.sendMail('error', msg)
         print(msg)
         msg = rl.sendMail('maybe', msg)
+
 
 def working(user):
     today = TodayLoginService(user['user'])
@@ -82,6 +84,8 @@ def working(user):
         msg = work.submitForms()
         return msg
 # 阿里云的入口函数
+
+
 def handler(event, context):
     main()
 
