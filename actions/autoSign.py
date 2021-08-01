@@ -3,11 +3,23 @@ import json
 import re
 import uuid
 import math
+import yaml
 
 from pyDes import des, CBC, PAD_PKCS5
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
+
+
+def log(*args):
+    if args:
+        string = '|||log|||\n'
+        for item in args:
+            if type(item) == dict:
+                string += yaml.dump(item, allow_unicode=True)
+            else:
+                string += str(item)
+        print(string)
 
 
 class AutoSign:
@@ -21,30 +33,50 @@ class AutoSign:
         self.form = {}
         self.fileName = None
 
+    def getrighttask(self, tasks, title):
+        # tasks=res.json()['datas']['unSignedTasks']
+        # 测试修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        print(tasks)
+        if len(tasks) < 1:
+            print('当前暂时没有未签到的任务哦！')
+            return '当前暂时没有未签到的任务哦！'
+        if title == 0:
+            latestTask = tasks[0]
+            self.taskName = latestTask['taskName']
+            return {'signInstanceWid': latestTask['signInstanceWid'], 'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
+        for righttask in tasks:
+            if righttask['taskName'] == title:
+                self.taskName = righttask['taskName']
+                print(righttask['taskName'])
+                return {'signInstanceWid': righttask['signInstanceWid'], 'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
+        print('没有匹配标题的任务')
+        return '没有匹配标题的任务'
+
     # 获取未签到的任务
     def getUnSignTask(self):
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
         url = f'{self.host}wec-counselor-sign-apps/stu/sign/getStuSignInfosInOneDay'
-        self.session.post(url, headers=headers, data=json.dumps({}), verify=False)
+        self.session.post(url, headers=headers,
+                          data=json.dumps({}), verify=False)
         # 第二次请求接口，真正的拿到具体任务
-        res = self.session.post(url, headers=headers, data=json.dumps({}), verify=False).json()
+        res = self.session.post(url, headers=headers,
+                                data=json.dumps({}), verify=False).json()
         if len(res['datas']['unSignedTasks']) < 1:
-            raise Exception('当前暂时没有未签到的任务哦！')
-        # 获取最后的一个任务
-        latestTask = res['datas']['unSignedTasks'][0]
-        self.taskInfo = {
-            'signInstanceWid': latestTask['signInstanceWid'],
-            'signWid': latestTask['signWid']
-        }
+            return '当前暂时没有未签到的任务哦！'
+        # 获取正确的任务
+        self.taskInfo = self.getrighttask(
+            res['datas']['unSignedTasks'], self.userInfo['title'])
+        return self.taskInfo
 
     # 获取具体的签到任务详情
     def getDetailTask(self):
         url = f'{self.host}wec-counselor-sign-apps/stu/sign/detailSignInstance'
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
-        res = self.session.post(url, headers=headers, data=json.dumps(self.taskInfo), verify=False).json()
+        res = self.session.post(url, headers=headers, data=json.dumps(
+            self.taskInfo), verify=False).json()
         self.task = res['datas']
 
     # 上传图片到阿里云oss
@@ -110,7 +142,7 @@ class AutoSign:
                         data = extraFieldItem['content']
                     # print(extraFieldItem)
                     if extraFieldItem['content'] == userItem['value']:
-                        flag =True
+                        flag = True
                         extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
                                                'extraFieldItemWid': extraFieldItem['wid']}
                         extraFieldItemValues.append(extraFieldItemValue)
@@ -121,7 +153,8 @@ class AutoSign:
                                                'extraFieldItemWid': extraFieldItem['wid']}
                         extraFieldItemValues.append(extraFieldItemValue)
                 if not flag:
-                    raise Exception(f'\r\n第{ i + 1 }个配置出错了\r\n表单未找到你设置的值：{userItem["value"]}\r\n，你上次系统选的值为：{ data }')
+                    raise Exception(
+                        f'\r\n第{ i + 1 }个配置出错了\r\n表单未找到你设置的值：{userItem["value"]}\r\n，你上次系统选的值为：{ data }')
             self.form['extraFieldItems'] = extraFieldItemValues
         self.form['signInstanceWid'] = self.task['signInstanceWid']
         self.form['longitude'] = self.userInfo['lon']
@@ -135,7 +168,7 @@ class AutoSign:
         self.form['abnormalReason'] = self.userInfo['abnormalReason']
         self.form['position'] = self.userInfo['address']
         self.form['uaIsCpadaily'] = True
-        self.form['signVersion'] ='1.0.0'
+        self.form['signVersion'] = '1.0.0'
 
     # DES加密
     def DESEncrypt(self, s, key='b3L26XNL'):

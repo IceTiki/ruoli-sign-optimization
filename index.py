@@ -58,6 +58,7 @@ def main():
         # 对用户配置中的经纬度进行随机偏移
         user['user']['lon'], user['user']['lat'] = locationOffset(
             user['user']['lon'], user['user']['lat'], config['locationOffsetRange'])
+        # 实例化消息推送
         rl = RlMessage(user['user']['email'], config['emailApiUrl'])
         if config['debug']:
             msg = working(user)
@@ -66,7 +67,7 @@ def main():
                 msg = working(user)
             except Exception as e:
                 msg = str(e)
-                print(msg)
+                log(msg)
                 msg = rl.sendMail('error', msg)
         print(msg)
         msg = rl.sendMail('maybe', msg)
@@ -80,32 +81,32 @@ def working(user):
     if user['user']['type'] == 0:
         # 以下代码是信息收集的代码
         collection = Collection(today, user['user'])
-        collection.queryForm()
-        collection.fillForm()
+        msg = collection.queryForm()
+        msg = collection.fillForm()
         msg = collection.submitForm()
         return msg
     elif user['user']['type'] == 1:
         # 以下代码是签到的代码
         sign = AutoSign(today, user['user'])
-        sign.getUnSignTask()
-        sign.getDetailTask()
-        sign.fillForm()
+        msg = sign.getUnSignTask()
+        msg = sign.getDetailTask()
+        msg = sign.fillForm()
         msg = sign.submitForm()
         return msg
     elif user['user']['type'] == 2:
         # 以下代码是查寝的代码
         check = sleepCheck(today, user['user'])
-        check.getUnSignedTasks()
-        check.getDetailTask()
-        check.fillForm()
+        msg = check.getUnSignedTasks()
+        msg = check.getDetailTask()
+        msg = check.fillForm()
         msg = check.submitForm()
         return msg
     elif user['user']['type'] == 3:
         # 以下代码是工作日志的代码
         work = workLog(today, user['user'])
-        work.checkHasLog()
-        work.getFormsByWids()
-        work.fillForms()
+        msg = work.checkHasLog()
+        msg = work.getFormsByWids()
+        msg = work.fillForms()
         msg = work.submitForms()
         return msg
 # 阿里云的入口函数

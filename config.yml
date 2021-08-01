@@ -129,6 +129,8 @@ users:
       abnormalReason: ''
       #photo 签到照片，不需要可不填，或者直接删除
       photo: sign.jpg
+      # 签到任务的标题(0为自动取最后一个未签到的任务)
+      title: 0
       # 是否检查表单的标题（1代表检查，0代表不检查）
       checkTitle: 1
       # 表单信息
