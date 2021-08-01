@@ -1,5 +1,6 @@
 import yaml
 import time
+import random
 from todayLoginService import TodayLoginService
 from actions.autoSign import AutoSign
 from actions.collection import Collection
@@ -28,11 +29,35 @@ def log(*args):
         print(string)
 
 
+# 经纬度随机偏移
+def locationOffset(self, lon, lat, offset=50):
+    '''
+    lon——经度
+    lat——纬度
+    offset——偏移范围(单位m)
+    '''
+    # 弧度=弧长/半径，角度=弧长*180°/π，某地经度所对应的圆半径=cos(|维度|)*地球半径
+    lonOffset = offset/(6371393*math.cos(abs(lat)))*(180/math.pi)
+    latOffset = offset/6371393*(180/math.pi)
+    # 生成随机偏移
+    randomLonOffset = random.uniform(lonOffset, -lonOffset)
+    randomLatOffset = random.uniform(latOffset, -latOffset)
+    # 将偏移应用到原有坐标上
+    # 南北极/对向子午线附近的坐标可能会超出范围(经度-180~180，维度-90~90)，对此进行了调整
+    offset_lon = ((lon+randomLonOffset)+180) % 360-180
+    offset_lat = (((lat+randomLatOffset)+90) % 180-90) * \
+        (-1)**(int(((lat+randomLatOffset)+90)/180))
+    return (offset_lon, offset_lat)
+
+
 def main():
     global startExecutingTime
     startExecutingTime = time.time()
     config = getYmlConfig()
     for user in config['users']:
+        # 对用户配置中的经纬度进行随机偏移
+        user['user']['lon'], user['user']['lat'] = locationOffset(
+            user['user']['lon'], user['user']['lat'], config['locationOffsetRange'])
         rl = RlMessage(user['user']['email'], config['emailApiUrl'])
         if config['debug']:
             msg = working(user)
