@@ -5,9 +5,9 @@ import requests
 # 通知函数
 class SendMessage:
     def __init__(self, sendMessageConfig):
-        rl = RlMessage(sendMessageConfig['email'],
+        self.rl = RlMessage(sendMessageConfig['email'],
                        sendMessageConfig['emailApiUrl'])
-        qmsg = Qmsg(
+        self.qmsg = Qmsg(
             {'key': sendMessageConfig['key'], 'qq': sendMessageConfig['qq'], 'isGroup': sendMessageConfig['isGroup']})
     def send(self, msg='default_msg', title='default_title'):
         self.rl.sendMail(title, msg)
