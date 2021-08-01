@@ -15,7 +15,7 @@ def log(*args):
     if args:
         string = '|||log|||\n'
         for item in args:
-            if type(item) == dict:
+            if type(item) == dict or type(item) == list:
                 string += yaml.dump(item, allow_unicode=True)
             else:
                 string += str(item)

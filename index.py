@@ -23,7 +23,7 @@ def log(*args):
     if args:
         string = '|||log|||%0.3fs|||\n' % ExecutingTime
         for item in args:
-            if type(item) == dict:
+            if type(item) == dict or type(item) == list:
                 string += yaml.dump(item, allow_unicode=True)
             else:
                 string += str(item)
@@ -62,8 +62,7 @@ def main():
         # 用户签到状态初始(status)为-1，代表还未尝试签到，签到成功后会被working函数的返回信息覆盖。如果已尝试签到，则跳过该用户。
         # 尝试签到次数(times)初始为1，每次重试+1
         if username not in workingStatus:# 第一次尝试签到，初始化状态信息
-            workingStatus[username]['status'] = -1
-            workingStatus[username]['times'] = 1
+            workingStatus[username] = {'status':-1,'times':1}
         else:
             if not workingStatus[username]['status'] == -1:# 如果status已经被working函数返回的msg覆盖，则跳过
                 continue
@@ -76,7 +75,7 @@ def main():
             user['user']['lon'], user['user']['lat'] = locationOffset(
                 user['user']['lon'], user['user']['lat'], config['locationOffsetRange'])
         # 实例化消息推送
-        rl = RlMessage(user['user']['email'], config['emailApiUrl'])
+        # rl = RlMessage(user['user']['email'], config['emailApiUrl'])
         # 开始自动信息收集/签到/查寝
         try:
             msg = working(user)
@@ -85,9 +84,9 @@ def main():
             config['users'].append(user)# 加入到user列表中重试
             msg = str(e)
             log(msg)
-            msg = rl.sendMail('error', msg)
+            # msg = rl.sendMail('error', msg)
         log(msg)
-        msg = rl.sendMail('maybe', msg)
+        # msg = rl.sendMail('maybe', msg)
     log(workingStatus)
 
 
