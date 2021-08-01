@@ -7,7 +7,7 @@ from actions.autoSign import AutoSign
 from actions.collection import Collection
 from actions.workLog import workLog
 from actions.sleepCheck import sleepCheck
-from actions.rlMessage import RlMessage
+import actions.sendMessage as sendMessage
 
 
 def getYmlConfig(yaml_file='config.yml'):
@@ -75,19 +75,22 @@ def main():
             user['user']['lon'], user['user']['lat'] = locationOffset(
                 user['user']['lon'], user['user']['lat'], config['locationOffsetRange'])
         # 实例化消息推送
-        # rl = RlMessage(user['user']['email'], config['emailApiUrl'])
+        sm = sendMessage.SendMessage(user['user']['sendMessage'])
         # 开始自动信息收集/签到/查寝
         try:
             msg = working(user)
+            log(msg)
             workingStatus[username]['status'] = msg
+            sm.send(msg, '[maybe]今日校园通知')
         except Exception as e:
             config['users'].append(user)# 加入到user列表中重试
             msg = str(e)
             log(msg)
-            # msg = rl.sendMail('error', msg)
-        log(msg)
-        # msg = rl.sendMail('maybe', msg)
+            sm.send(msg, '[error]今日校园通知')
     log(workingStatus)
+    # 函数整体执行情况推送
+    sws=sendMessage.SendMessage(user['sendWorkingStatus'])
+    sws.send(yaml.dump(workingStatus, allow_unicode=True), '[status]今日校园通知')
 
 
 def working(user):

@@ -1,10 +1,19 @@
 author: 若离QQ：2909998156
-# 邮箱API的地址
-emailApiUrl: http://mail.ruoli.cc/api/sendMail
 # 坐标偏移范围(单位：米)
 locationOffsetRange: 50
 # 签到失败最大重试次数
 maxRetryTimes: 10
+sendWorkingStatus: # 推送函数的整体运行情况
+    # 邮箱API的地址
+    emailApiUrl: http://mail.ruoli.cc/api/sendMail
+    #email 接受通知消息的邮箱
+    email: "*****"
+    # qmsg推送的key
+    key: "*****"
+    # qmsg推送的qq号
+    qq: "*****"
+    # 此qq号是否为群(是的话填1，反之为0)
+    isGroup: 0
 #用户组配置
 ##################################################
 # 温馨提示：请仔细注意每个模板是属于哪个任务类型的配置！##
@@ -24,8 +33,17 @@ users:
       password: ''
       # 地址信息
       address: '宜宾市（自己改）'
-      #email 接受通知消息的邮箱
-      email: ''
+      sendMessage: 
+        # 邮箱API的地址
+        emailApiUrl: http://mail.ruoli.cc/api/sendMail
+        #email 接受通知消息的邮箱
+        email: "*****"
+        # qmsg推送的key
+        key: "*****"
+        # qmsg推送的qq号
+        qq: "*****"
+        # 此qq号是否为群(是的话填1，反之为0)
+        isGroup: 0
       # 附上经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
       #lon 经度
       lon: 104.616858
@@ -69,8 +87,17 @@ users:
         password: ''
         # 定位位置信息
         address: '四川省（自己改）'
-        #email 接受通知消息的邮箱
-        email: ''
+        sendMessage: 
+            # 邮箱API的地址
+            emailApiUrl: http://mail.ruoli.cc/api/sendMail
+            #email 接受通知消息的邮箱
+            email: "*****"
+            # qmsg推送的key
+            key: "*****"
+            # qmsg推送的qq号
+            qq: "*****"
+            # 此qq号是否为群(是的话填1，反之为0)
+            isGroup: 0
         # 附上经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
         # 经纬度信息
         lon: 104.6191824
@@ -113,8 +140,17 @@ users:
       password: ''
       #address 地址，定位信息
       address: ''
-      #email 接受通知消息的邮箱，通知功能暂时未写
-      email: ''
+      sendMessage: 
+        # 邮箱API的地址
+        emailApiUrl: http://mail.ruoli.cc/api/sendMail
+        #email 接受通知消息的邮箱
+        email: "*****"
+        # qmsg推送的key
+        key: "*****"
+        # qmsg推送的qq号
+        qq: "*****"
+        # 此qq号是否为群(是的话填1，反之为0)
+        isGroup: 0
       #school 学校全称
       schoolName: 武汉船舶职业技术学院
       # 附上经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
@@ -152,8 +188,17 @@ users:
       password: ''
       # 地址信息
       address: ''
-      #email 接受通知消息的邮箱
-      email: ''
+      sendMessage: 
+        # 邮箱API的地址
+        emailApiUrl: http://mail.ruoli.cc/api/sendMail
+        #email 接受通知消息的邮箱
+        email: "*****"
+        # qmsg推送的key
+        key: "*****"
+        # qmsg推送的qq号
+        qq: "*****"
+        # 此qq号是否为群(是的话填1，反之为0)
+        isGroup: 0
       # 附上经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
       #lon 经度
       lon: 105.895856
