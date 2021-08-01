@@ -24,9 +24,9 @@ def log(*args):
         string = '|||log|||%0.3fs|||\n' % ExecutingTime
         for item in args:
             if type(item) == dict or type(item) == list:
-                string += yaml.dump(item, allow_unicode=True)
+                string += yaml.dump(item, allow_unicode=True)+'\n'
             else:
-                string += str(item)
+                string += str(item)+'\n'
         print(string)
 
 
