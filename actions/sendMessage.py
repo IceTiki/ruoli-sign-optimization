@@ -2,7 +2,7 @@ import requests
 
 
 
-# 通知函数
+# 通知类
 class SendMessage:
     def __init__(self, sendMessageConfig):
         self.rl = RlMessage(sendMessageConfig['email'],
@@ -10,8 +10,14 @@ class SendMessage:
         self.qmsg = Qmsg(
             {'key': sendMessageConfig['key'], 'qq': sendMessageConfig['qq'], 'isGroup': sendMessageConfig['isGroup']})
     def send(self, msg='default_msg', title='default_title'):
-        self.rl.sendMail(title, msg)
-        self.qmsg.send(msg)
+        try:
+            self.qmsg.send(msg)
+        except Exception as e:
+            print('|||log|||\nqmsg酱推送失败|%s'%e)
+        try:
+            self.rl.sendMail(title, msg)
+        except Exception as e:
+            print('|||log|||\n若离消息推送失败|%s'%e)
 
 
 # 若离消息通知类
@@ -20,19 +26,17 @@ class RlMessage:
     def __init__(self, mail, apiUrl):
         self.mail = mail
         self.apiUrl = apiUrl
-        self.isCorrectConfig()
+        self.configIsCorrect=self.isCorrectConfig()
 
     def isCorrectConfig(self):
         # 简单检查邮箱地址或API地址是否合法
         for item in [self.mail, self.apiUrl]:
             if "*" in item:
-                self.configIsCorrect = 0
+                return 0
             if len(item) == 0:
-                self.configIsCorrect = 0
+                return 0
             if not type(item) == str:
-                self.configIsCorrect = 0
-            return 0
-        self.configIsCorrect = 1
+                return 0
         return 1
 
     # 发送邮件消息
@@ -47,6 +51,7 @@ class RlMessage:
             res = requests.post(url=self.apiUrl, params=params).json()
             return res['msg']
         else:
+            print('邮箱或邮件api填写无效，已取消发送邮件！')
             return '邮箱或邮件api填写无效，已取消发送邮件！'
 
 
@@ -56,19 +61,17 @@ class Qmsg:
     def __init__(self, config):
         # config={'key':'*****','qq':'*****','isgroup':0}
         self.config = config
-        self.isCorrectConfig()
+        self.configIsCorrect=self.isCorrectConfig()
 
     def isCorrectConfig(self):
         # 简单检查key和qq是否合法
         for item in [self.config['key'], self.config['qq']]:
             if "*" in item:
-                self.configIsCorrect = 0
+                return 0
             if len(item) == 0:
-                self.configIsCorrect = 0
+                return 0
             if not type(item) == str:
-                self.configIsCorrect = 0
-            return 0
-        self.configIsCorrect = 1
+                return 0
         return 1
 
     def send(self, msg):
@@ -76,11 +79,12 @@ class Qmsg:
         msg = str(msg)
         # 简单检查配置
         if self.configIsCorrect:
-            sendtype = 'group/' if self.config['isgroup'] else 'send/'
+            sendtype = 'group/' if self.config['isGroup'] else 'send/'
             res = requests.post(url='https://qmsg.zendee.cn/'+sendtype +
                                 self.config['key'], data={'msg': msg, 'qq': self.config['qq']})
             return str(res)
             #    code = res.json()['code']
             #    print(code)
         else:
+            print('Qmsg配置出错')
             return 'Qmsg配置出错'

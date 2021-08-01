@@ -51,25 +51,39 @@ def locationOffset(self, lon, lat, offset=50):
     return (offset_lon, offset_lat)
 
 
+def sendworkingStatus(workingStatus, config):
+    workingStatus_msg = yaml.dump(workingStatus, allow_unicode=True)
+    ExecutingTime = time.time()-startExecutingTime
+    for user in config['users']:
+        if 'remarksName' in user['user']:
+            if user['user']['remarksName']:
+                workingStatus_msg = workingStatus_msg.replace(
+                    user['user']['username'], user['user']['remarksName'])
+    sws = sendMessage.SendMessage(config['sendWorkingStatus'])
+    sws.send(workingStatus_msg+'执行时间%.3fSecond' %
+             ExecutingTime, '[status]今日校园通知')
+
+
 def main():
     global startExecutingTime
     startExecutingTime = time.time()
-    workingStatus = {} # 储存各用户自动签到情况
+    workingStatus = {}  # 储存各用户自动签到情况
     workingStatus.clear
     config = getYmlConfig()
     for user in config['users']:
         username = user['user']['username']
         # 用户签到状态初始(status)为-1，代表还未尝试签到，签到成功后会被working函数的返回信息覆盖。如果已尝试签到，则跳过该用户。
         # 尝试签到次数(times)初始为1，每次重试+1
-        if username not in workingStatus:# 第一次尝试签到，初始化状态信息
-            workingStatus[username] = {'status':-1,'times':1}
+        if username not in workingStatus:  # 第一次尝试签到，初始化状态信息
+            workingStatus[username] = {'status': -1, 'times': 1}
         else:
-            if not workingStatus[username]['status'] == -1:# 如果status已经被working函数返回的msg覆盖，则跳过
+            # 如果status已经被working函数返回的msg覆盖，则跳过
+            if not workingStatus[username]['status'] == -1:
                 continue
             workingStatus[username]['times'] += 1
-            if workingStatus[username]['times'] > config['maxRetryTimes']:# 如果times超过最大重试次数，则跳过
+            if workingStatus[username]['times'] > config['maxRetryTimes']:  # 如果times超过最大重试次数，则跳过
                 continue
-        log('正在处理%s|||第%d次尝试'%(username,workingStatus[username]['times']))
+        log('正在处理%s|||第%d次尝试' % (username, workingStatus[username]['times']))
         # 对用户配置中的经纬度进行随机偏移
         if workingStatus[username]['times'] == 1:
             user['user']['lon'], user['user']['lat'] = locationOffset(
@@ -83,14 +97,13 @@ def main():
             workingStatus[username]['status'] = msg
             sm.send(msg, '[maybe]今日校园通知')
         except Exception as e:
-            config['users'].append(user)# 加入到user列表中重试
+            config['users'].append(user)  # 加入到user列表中重试
             msg = str(e)
             log(msg)
             sm.send(msg, '[error]今日校园通知')
     log(workingStatus)
-    # 函数整体执行情况推送
-    sws=sendMessage.SendMessage(config['sendWorkingStatus'])
-    sws.send(yaml.dump(workingStatus, allow_unicode=True), '[status]今日校园通知')
+    # 函数整体执行情况格式化并推送
+    sendworkingStatus(workingStatus, config)
 
 
 def working(user):
@@ -109,7 +122,7 @@ def working(user):
         # 以下代码是签到的代码
         sign = AutoSign(today, user['user'])
         msg = sign.getUnSignTask()
-        if type(msg)==str:
+        if type(msg) == str:
             return msg
         sign.getDetailTask()
         sign.fillForm()
