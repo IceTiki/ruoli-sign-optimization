@@ -89,7 +89,7 @@ def main():
             sm.send(msg, '[error]今日校园通知')
     log(workingStatus)
     # 函数整体执行情况推送
-    sws=sendMessage.SendMessage(user['sendWorkingStatus'])
+    sws=sendMessage.SendMessage(config['sendWorkingStatus'])
     sws.send(yaml.dump(workingStatus, allow_unicode=True), '[status]今日校园通知')
 
 

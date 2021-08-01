@@ -11,7 +11,7 @@ class SendMessage:
             {'key': sendMessageConfig['key'], 'qq': sendMessageConfig['qq'], 'isGroup': sendMessageConfig['isGroup']})
     def send(self, msg='default_msg', title='default_title'):
         self.rl.sendMail(title, msg)
-        self.qmsg(msg)
+        self.qmsg.send(msg)
 
 
 # 若离消息通知类
@@ -56,6 +56,7 @@ class Qmsg:
     def __init__(self, config):
         # config={'key':'*****','qq':'*****','isgroup':0}
         self.config = config
+        self.isCorrectConfig()
 
     def isCorrectConfig(self):
         # 简单检查key和qq是否合法
