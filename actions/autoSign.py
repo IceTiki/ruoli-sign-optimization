@@ -48,7 +48,7 @@ class AutoSign:
         res = self.session.post(url, headers=headers,
                                 data=json.dumps({}), verify=False).json()
         # 查询是否没有未签到任务
-        log(res['datas']['unSignedTasks'])
+        log('所有未签到任务',res['datas']['unSignedTasks'])
         if len(res['datas']['unSignedTasks']) < 1:
             log('当前暂时没有未签到的任务哦！')
             return '当前暂时没有未签到的任务哦！'
@@ -56,14 +56,14 @@ class AutoSign:
         if self.userInfo['title'] == 0:
             latestTask = res['datas']['unSignedTasks'][0]
             self.taskName = latestTask['taskName']
-            log(latestTask['taskName'])
+            log('最后一个未签到的任务',latestTask['taskName'])
             self.taskInfo = {'signInstanceWid': latestTask['signInstanceWid'], 'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
             return self.taskInfo
         # 获取匹配标题的任务
         for righttask in res['datas']['unSignedTasks']:
             if righttask['taskName'] == self.userInfo['title']:
                 self.taskName = righttask['taskName']
-                log(righttask['taskName'])
+                log('匹配标题的任务',righttask['taskName'])
                 self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'], 'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
                 return self.taskInfo
         log('没有匹配标题的任务')
@@ -77,7 +77,7 @@ class AutoSign:
         headers['Content-Type'] = 'application/json'
         res = self.session.post(url, headers=headers, data=json.dumps(
             self.taskInfo), verify=False).json()
-        log(res['datas'])
+        log('签到任务的详情',res['datas'])
         self.task = res['datas']
 
     # 上传图片到阿里云oss
@@ -204,10 +204,10 @@ class AutoSign:
             'Connection': 'Keep-Alive'
         }
         # log(json.dumps(self.form))
-        log(extension,headers)
+        log('即将提交的信息',extension,headers)
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
                                 data=json.dumps(self.form), verify=False).json()
-        log(res['message'])
+        log(res['提交后返回的信息','message'])
         return res['message']
 
     # 两经纬度算距离
