@@ -2,6 +2,7 @@ import base64
 import json
 import re
 import uuid
+import math
 
 from pyDes import des, CBC, PAD_PKCS5
 from requests_toolbelt import MultipartEncoder
@@ -125,7 +126,12 @@ class AutoSign:
         self.form['signInstanceWid'] = self.task['signInstanceWid']
         self.form['longitude'] = self.userInfo['lon']
         self.form['latitude'] = self.userInfo['lat']
-        self.form['isMalposition'] = self.task['isMalposition']
+        # 检查是否在签到范围内
+        self.form['isMalposition'] = 1
+        for place in self.task['signPlaceSelected']:
+            if self.geodistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
+                self.form['isMalposition'] = 0
+                break
         self.form['abnormalReason'] = self.userInfo['abnormalReason']
         self.form['position'] = self.userInfo['address']
         self.form['uaIsCpadaily'] = True
@@ -165,3 +171,17 @@ class AutoSign:
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
                                 data=json.dumps(self.form), verify=False).json()
         return res['message']
+
+    # 两经纬度算距离
+    def geodistance(self, lon1, lat1, lon2, lat2):
+        #lon1,lat1,lon2,lat2 = (120.12802999999997,30.28708,115.86572000000001,28.7427)
+        # 经纬度转换成弧度
+        lon1, lat1, lon2, lat2 = map(math.radians, [float(
+            lon1), float(lat1), float(lon2), float(lat2)])
+        dlon = lon2-lon1
+        dlat = lat2-lat1
+        a = math.sin(dlat/2)**2 + math.cos(lat1) * \
+            math.cos(lat2) * math.sin(dlon/2)**2
+        distance = 2*math.asin(math.sqrt(a))*6371393  # 地球平均半径，6371393m
+        distance = round(distance/1000, 3)
+        return distance
