@@ -31,7 +31,7 @@ def log(*args):
 
 
 # 经纬度随机偏移
-def locationOffset(lon, lat, offset=50):
+def locationOffset(self, lon, lat, offset=50):
     '''
     lon——经度
     lat——纬度
