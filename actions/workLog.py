@@ -2,13 +2,26 @@ import base64
 import json
 import re
 import uuid
+import yaml
 from pyDes import PAD_PKCS5, des, CBC
 import time
 
 from todayLoginService import TodayLoginService
 
 
+def log(*args):
+    if args:
+        string = '|||log|||\n'
+        for item in args:
+            if type(item) == dict or type(item) == list:
+                string += yaml.dump(item, allow_unicode=True)+'\n'
+            else:
+                string += str(item)+'\n'
+        print(string)
+
 # 教师工作日志类
+
+
 class workLog:
     # 初始化顶底工作日志类
     def __init__(self, todayLoginService: TodayLoginService, userInfo):
@@ -32,7 +45,8 @@ class workLog:
             'pageSize': '9999999',
             'status': '1'
         }
-        res = self.session.post(url, data=json.dumps(params), verify=False).json()
+        res = self.session.post(
+            url, data=json.dumps(params), verify=False).json()
         self.collectWid = res['datas']['rows'][0]['wid']
         url = f'{self.host}wec-counselor-worklog-apps/worklog/list'
         params = {
@@ -40,7 +54,9 @@ class workLog:
             'pageNumber': '1',
             'pageSize': '20'
         }
-        res = self.session.post(url, data=json.dumps(params), verify=False).json()
+        res = self.session.post(
+            url, data=json.dumps(params), verify=False).json()
+        log('获取已创建且未提交的模板', res['datas'])
         for item in res['datas']['rows']:
             if item['status'] == 0:
                 self.formWids.append(item['wid'])
@@ -55,7 +71,9 @@ class workLog:
             params = {
                 'wid': wid
             }
-            res = self.session.post(url, data=json.dumps(params), verify=False).json()
+            res = self.session.post(
+                url, data=json.dumps(params), verify=False).json()
+            log('获取wid=%s的表单信息' % wid, res['datas'])
             self.forms.append(res['datas']['form'])
 
     # 填充表单
@@ -71,7 +89,8 @@ class workLog:
                     if formItem['signScopeWids'] != '':
                         # 如果是签到选项
                         # 新的代码
-                        form = self.submitSign(formItem['wid'], self.formWids[pos])
+                        form = self.submitSign(
+                            formItem['wid'], self.formWids[pos])
                         # 以下代码已放弃，应该是先去请求地点签到api
                         # value = {
                         #     "isInSignScope": False,
@@ -132,13 +151,16 @@ class workLog:
             "longitude": self.userInfo['lon'],
             "latitude": self.userInfo['lat']
         }
-        res = self.session.post(url, data=json.dumps(params), headers=headers, verify=False).json()
+        log('地点签到', 'headers', headers, 'params', params)
+        res = self.session.post(url, data=json.dumps(
+            params), headers=headers, verify=False).json()
         if res['message'] == 'SUCCESS':
             url = f'{self.host}wec-counselor-worklog-apps/worklog/detail'
             params = {
                 'wid': worklogWid
             }
-            res = self.session.post(url, data=json.dumps(params), verify=False).json()
+            res = self.session.post(
+                url, data=json.dumps(params), verify=False).json()
             form = res['datas']['form']
             return form
         else:
@@ -155,6 +177,7 @@ class workLog:
                 'form': form,
                 'operationType': 1
             }
+            log('提交表单', 'params', params)
             res = self.session.post(f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params),
                                     verify=False).json()
             result.append(res['message'])
@@ -177,7 +200,8 @@ class workLog:
             'formWid': str(self.collectWid),
             'operationType': 0
         }
-        res = self.session.post(f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params)).json()
+        res = self.session.post(
+            f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params)).json()
         if res['message'] == 'SUCCESS':
             self.formWids.append(res['datas']['wid'])
         else:

@@ -2,10 +2,22 @@ import base64
 import json
 import re
 import uuid
+import yaml
 from pyDes import PAD_PKCS5, des, CBC
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
+
+
+def log(*args):
+    if args:
+        string = '|||log|||\n'
+        for item in args:
+            if type(item) == dict or type(item) == list:
+                string += yaml.dump(item, allow_unicode=True)+'\n'
+            else:
+                string += str(item)+'\n'
+        print(string)
 
 
 class sleepCheck:
@@ -17,16 +29,20 @@ class sleepCheck:
         self.taskInfo = None
         self.form = {}
     # 获取未签到任务
+
     def getUnSignedTasks(self):
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
         url = f'{self.host}wec-counselor-attendance-apps/student/attendance/getStuAttendacesInOneDay'
-        self.session.post(url, headers=headers, data=json.dumps({}), verify=False)
+        self.session.post(url, headers=headers,
+                          data=json.dumps({}), verify=False)
         # 第二次请求接口，真正的拿到具体任务
-        res = self.session.post(url, headers=headers, data=json.dumps({}), verify=False).json()
+        res = self.session.post(url, headers=headers,
+                                data=json.dumps({}), verify=False).json()
         if len(res['datas']['unSignedTasks']) < 1:
             raise Exception('当前暂时没有未签到的任务哦！')
+        log('未签到的查寝', res['datas'])
         # 获取最后的一个任务
         latestTask = res['datas']['unSignedTasks'][0]
         self.taskInfo = {
@@ -39,7 +55,9 @@ class sleepCheck:
         url = f'{self.host}wec-counselor-attendance-apps/student/attendance/detailSignInstance'
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
-        res = self.session.post(url, headers=headers, data=json.dumps(self.taskInfo), verify=False).json()
+        res = self.session.post(url, headers=headers, data=json.dumps(
+            self.taskInfo), verify=False).json()
+        log('具体查寝任务', res['datas'])
         self.task = res['datas']
 
     # 上传图片到阿里云oss
@@ -77,8 +95,8 @@ class sleepCheck:
         photoUrl = res.json().get('datas')
         return photoUrl
 
-
     # 填充表单
+
     def fillForm(self):
         # 判断签到是否需要照片
         if self.task['isPhoto'] == 1:
@@ -95,8 +113,8 @@ class sleepCheck:
         self.form['qrUuid'] = ''
         self.form['uaIsCpadaily'] = True
 
-
     # DES加密
+
     def DESEncrypt(self, s, key='b3L26XNL'):
         key = key
         iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
@@ -126,8 +144,8 @@ class sleepCheck:
             'Host': re.findall('//(.*?)/', self.host)[0],
             'Connection': 'Keep-Alive'
         }
-        print(json.dumps(self.task))
-        print(json.dumps(self.form))
+        log('提交查寝数据', 'extension', extension,
+            'header', headers, 'data', self.form)
         res = self.session.post(f'{self.host}wec-counselor-attendance-apps/student/attendance/submitSign', headers=headers,
                                 data=json.dumps(self.form), verify=False).json()
         return res['message']
