@@ -149,12 +149,11 @@ class AutoSign:
                         flag = True
                         extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
                                                'extraFieldItemWid': extraFieldItem['wid']}
-                        extraFieldItemValues.append(extraFieldItemValue)
-                    # 其他 额外的文本
-                    if extraFieldItem['isOtherItems'] == 1:
-                        flag = True
-                        extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
-                                               'extraFieldItemWid': extraFieldItem['wid']}
+                        # 其他 额外的文本
+                        if extraFieldItem['isOtherItems'] == 1:
+                            flag = True
+                            extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
+                                                'extraFieldItemWid': extraFieldItem['wid']}
                         extraFieldItemValues.append(extraFieldItemValue)
                 if not flag:
                     raise Exception(
@@ -186,13 +185,13 @@ class AutoSign:
     def submitForm(self):
         log('提交签到信息')
         extension = {
-            "lon": self.userInfo['lon'],
+            "lon": self.form['longitude'],
+            "lat": self.form['latitude'],
             "model": "OPPO R11 Plus",
             "appVersion": "8.1.14",
             "systemVersion": "4.4.4",
             "userId": self.userInfo['username'],
             "systemName": "android",
-            "lat": self.userInfo['lat'],
             "deviceId": str(uuid.uuid1())
         }
         headers = {
@@ -206,11 +205,11 @@ class AutoSign:
             'Connection': 'Keep-Alive'
         }
         # log(json.dumps(self.form))
-        log('即将提交的信息', extension, headers)
+        log('即将提交的信息', extension, headers, self.form)
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
                                 data=json.dumps(self.form), verify=False).json()
         log('提交后返回的信息', res['message'])
-        return '[%s]%s' % (res['message'], self.taskInfo['taskName'])
+        return res['message']
 
     # 两经纬度算距离
     def geodistance(self, lon1, lat1, lon2, lat2):
