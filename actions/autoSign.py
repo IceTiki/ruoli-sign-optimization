@@ -215,7 +215,6 @@ class AutoSign:
     def geodistance(self, lon1, lat1, lon2, lat2):
         #lon1,lat1,lon2,lat2 = (120.12802999999997,30.28708,115.86572000000001,28.7427)
         # 经纬度转换成弧度
-        log('算距离', lon1, lat1, lon2, lat2)# debug
         lon1, lat1, lon2, lat2 = map(math.radians, [float(
             lon1), float(lat1), float(lon2), float(lat2)])
         dlon = lon2-lon1
@@ -223,6 +222,4 @@ class AutoSign:
         a = math.sin(dlat/2)**2 + math.cos(lat1) * \
             math.cos(lat2) * math.sin(dlon/2)**2
         distance = 2*math.asin(math.sqrt(a))*6371393  # 地球平均半径，6371393m
-        distance = round(distance/1000, 3)
-        log('算距离', lon1, lat1, lon2, lat2, distance)# debug
         return distance
