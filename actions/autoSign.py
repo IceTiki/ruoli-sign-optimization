@@ -149,12 +149,11 @@ class AutoSign:
                         flag = True
                         extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
                                                'extraFieldItemWid': extraFieldItem['wid']}
-                        extraFieldItemValues.append(extraFieldItemValue)
-                    # 其他 额外的文本
-                    if extraFieldItem['isOtherItems'] == 1:
-                        flag = True
-                        extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
-                                               'extraFieldItemWid': extraFieldItem['wid']}
+                        # 其他 额外的文本
+                        if extraFieldItem['isOtherItems'] == 1:
+                            flag = True
+                            extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
+                                                'extraFieldItemWid': extraFieldItem['wid']}
                         extraFieldItemValues.append(extraFieldItemValue)
                 if not flag:
                     raise Exception(
@@ -186,13 +185,13 @@ class AutoSign:
     def submitForm(self):
         log('提交签到信息')
         extension = {
-            "lon": self.userInfo['lon'],
+            "lon": self.form['longitude'],
+            "lat": self.form['latitude'],
             "model": "OPPO R11 Plus",
             "appVersion": "8.1.14",
             "systemVersion": "4.4.4",
             "userId": self.userInfo['username'],
             "systemName": "android",
-            "lat": self.userInfo['lat'],
             "deviceId": str(uuid.uuid1())
         }
         headers = {
@@ -206,7 +205,7 @@ class AutoSign:
             'Connection': 'Keep-Alive'
         }
         # log(json.dumps(self.form))
-        log('即将提交的信息', extension, headers)
+        log('即将提交的信息', extension, headers, self.form)
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
                                 data=json.dumps(self.form), verify=False).json()
         log('提交后返回的信息', res['message'])
@@ -216,6 +215,7 @@ class AutoSign:
     def geodistance(self, lon1, lat1, lon2, lat2):
         #lon1,lat1,lon2,lat2 = (120.12802999999997,30.28708,115.86572000000001,28.7427)
         # 经纬度转换成弧度
+        log('算距离', lon1, lat1, lon2, lat2)# debug
         lon1, lat1, lon2, lat2 = map(math.radians, [float(
             lon1), float(lat1), float(lon2), float(lat2)])
         dlon = lon2-lon1
@@ -224,4 +224,5 @@ class AutoSign:
             math.cos(lat2) * math.sin(dlon/2)**2
         distance = 2*math.asin(math.sqrt(a))*6371393  # 地球平均半径，6371393m
         distance = round(distance/1000, 3)
+        log('算距离', lon1, lat1, lon2, lat2, distance)# debug
         return distance
