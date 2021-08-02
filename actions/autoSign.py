@@ -209,7 +209,7 @@ class AutoSign:
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
                                 data=json.dumps(self.form), verify=False).json()
         log('提交后返回的信息', res['message'])
-        return res['message']
+        return '[%s]%s' % (res['message'], self.taskInfo['taskName'])
 
     # 两经纬度算距离
     def geodistance(self, lon1, lat1, lon2, lat2):
