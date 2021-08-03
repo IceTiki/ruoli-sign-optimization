@@ -2,20 +2,20 @@ author: 若离QQ：2909998156|https://github.com/IceTiki/ruoli-sign-optimization
 locationOffsetRange: 50 # 坐标偏移范围(单位：米)
 maxRetryTimes: 10 # 签到失败最大重试次数
 sendWorkingStatus: # 推送函数的整体运行情况
-      emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址
-      email: "*****" # email 接受通知消息的邮箱
-      key: "*****" # qmsg推送的key
-      qq: "*****" # qmsg推送的qq号
+      emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
+      email: "" # email 接受通知消息的邮箱(不需要推送不用填)
+      key: "" # qmsg推送的key(不需要推送不用填)
+      qq: "" # qmsg推送的qq号(不需要推送不用填)
       isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
 template: # YAML有引用和锚点，可以节省配置长度
       nosend: &nosend # 不需要单独推送的模板
             sendMessage: &nosend
-                  emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址
-                  email: "*****" # email 接受通知消息的邮箱
-                  key: "*****" # qmsg推送的key
-                  qq: "*****" # qmsg推送的qq号
-                  isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
-#用户组配置
+                  emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
+                  email: "" # email 接受通知消息的邮箱(不需要推送不用填)
+                  key: "" # qmsg推送的key(不需要推送不用填)
+                  qq: "" # qmsg推送的qq号(不需要推送不用填)
+                  isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)(不需要推送不用填)
+# 用户组配置(填写自己所需的类型，并注释掉不需要的。可以多用户签到。)
 users:
       - user: # 信息收集模板
               remarksName: "这个人太懒了，都不自己填备注名" # 备注姓名(可随意，仅供日志输出)
