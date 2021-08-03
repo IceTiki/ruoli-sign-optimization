@@ -25,10 +25,11 @@ class Collection:
         self.session = todaLoginService.session
         self.host = todaLoginService.host
         self.userInfo = userInfo
-        self.form = None
+        self.task = None
         self.collectWid = None
-        self.formWid = None
+        self.taskWid = None
         self.schoolTaskWid = None
+        self.form = []
 
     # 查询表单
     def queryForm(self):
@@ -43,33 +44,38 @@ class Collection:
             params), headers=headers, verify=False).json()
         if len(res['datas']['rows']) < 1:
             raise Exception('查询表单失败，请确认你是信息收集并且当前有收集任务。确定请联系开发者')
-        log('查询表单返回结果', res['datas'])
+        log('查询任务返回结果', res['datas'])
         self.collectWid = res['datas']['rows'][0]['wid']
-        self.formWid = res['datas']['rows'][0]['formWid']
+        self.taskWid = res['datas']['rows'][0]['formWid']
         detailUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
         res = self.session.post(detailUrl, headers=headers, data=json.dumps({'collectorWid': self.collectWid}),
                                 verify=False).json()
         self.schoolTaskWid = res['datas']['collector']['schoolTaskWid']
         getFormUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/getFormFields'
         params = {"pageSize": 100, "pageNumber": 1,
-                  "formWid": self.formWid, "collectorWid": self.collectWid}
+                  "formWid": self.taskWid, "collectorWid": self.collectWid}
         res = self.session.post(
             getFormUrl, headers=headers, data=json.dumps(params), verify=False).json()
-        self.form = res['datas']['rows']
+        log('查询任务详情返回结果', res['datas'])
+        self.task = res['datas']['rows']
 
     # 填写表单
     def fillForm(self):
-        index = 0
-        for formItem in self.form[:]:
-            # 只处理必填项
-            if formItem['isRequired'] == 1:
-                userForm = self.userInfo['forms'][index]['form']
+        # 检查用户配置长度与查询到的表单长度是否匹配
+        if len(self.task) != len(self.userInfo['forms']):
+            raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' %
+                            (len(self.userInfo['forms']), len(self.task)))
+        for formItem, userForm in zip(self.task, self.userInfo['forms']):
+            userForm = userForm['form']
+            # 根据用户配置决定是否要填此选项
+            if userForm['isNeed'] == 1:
                 # 判断用户是否需要检查标题
                 if self.userInfo['checkTitle'] == 1:
                     # 如果检查到标题不相等
                     if formItem['title'] != userForm['title']:
                         raise Exception(
-                            f'\r\n第{index + 1}个配置项的标题不正确\r\n您的标题为：{userForm["title"]}\r\n系统的标题为：{formItem["title"]}')
+                            f'\r\n有配置项的标题不正确\r\n您的标题为：{userForm["title"]}\r\n系统的标题为：{formItem["title"]}')
+                # 开始填充表单
                 # 文本选项直接赋值
                 if formItem['fieldType'] == 1 or formItem['fieldType'] == 5:
                     formItem['value'] = userForm['value']
@@ -77,25 +83,22 @@ class Collection:
                 elif formItem['fieldType'] == 2:
                     formItem['value'] = userForm['value']
                     # 单选需要移除多余的选项
-                    fieldItems = formItem['fieldItems']
-                    for fieldItem in fieldItems[:]:
+                    for fieldItem in formItem['fieldItems'].copy():
                         if fieldItem['content'] != userForm['value']:
-                            fieldItems.remove(fieldItem)
+                            formItem['fieldItems'].remove(fieldItem)
                 # 多选填充
                 elif formItem['fieldType'] == 3:
-                    fieldItems = formItem['fieldItems']
                     userItems = userForm['value'].split('|')
-                    for fieldItem in fieldItems[:]:
+                    for fieldItem in formItem['fieldItems'].copy():
                         if fieldItem['content'] in userItems:
                             formItem['value'] += fieldItem['content'] + ' '
                         else:
-                            fieldItems.remove(fieldItem)
-                if formItem['fieldType'] == 4:
+                            formItem['fieldItems'].remove(fieldItem)
+                elif formItem['fieldType'] == 4:
                     pass
-                index += 1
+                self.form.append(formItem)
             else:
-                # 移除非必填选项
-                self.form.remove(formItem)
+                pass
 
     # 提交表单
     def submitForm(self):
@@ -122,7 +125,7 @@ class Collection:
             'Accept-Encoding': 'gzip'
         }
         params = {
-            "formWid": self.formWid, "address": self.userInfo['address'], "collectWid": self.collectWid,
+            "formWid": self.taskWid, "address": self.userInfo['address'], "collectWid": self.collectWid,
             "schoolTaskWid": self.schoolTaskWid, "form": self.form, "uaIsCpadaily": True
         }
         submitUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/submitForm'
