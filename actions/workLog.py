@@ -38,6 +38,7 @@ class workLog:
 
     # 检查是否存在已创建且未提交的模板
     def checkHasLog(self):
+        log('检查是否存在已创建且未提交的模板')
         # 首先 获取 templateName=疫情采集（每天上报）新 的wid：37
         url = f'{self.host}wec-counselor-worklog-apps/worklog/template/listActiveTemplate'
         params = {
@@ -47,6 +48,7 @@ class workLog:
         }
         res = self.session.post(
             url, data=json.dumps(params), verify=False).json()
+        log('已创建且未提交的模板列表', res['datas'])
         self.collectWid = res['datas']['rows'][0]['wid']
         url = f'{self.host}wec-counselor-worklog-apps/worklog/list'
         params = {
@@ -78,11 +80,12 @@ class workLog:
 
     # 填充表单
     def fillForms(self):
+        log('开始填充表单')
         userItems = self.userInfo['forms']
-        for form in self.forms[:]:
+        for pos, form in enumerate(self.forms[:]):
             # 由于无法判断有没有签到选项，使用个i来作为下标索引
             i = 0
-            for pos, formItem in enumerate(form):
+            for formItem in form:
                 # 只填写必填项
                 if formItem['isRequired']:
                     # 判断一下是否是签到选项
@@ -123,6 +126,7 @@ class workLog:
 
     # 地点签到
     def submitSign(self, fieldWid, worklogWid):
+        log('开始地点签到')
         extension = {
             "lon": self.userInfo['lon'],
             "model": "OPPO R11 Plus",
@@ -151,9 +155,10 @@ class workLog:
             "longitude": self.userInfo['lon'],
             "latitude": self.userInfo['lat']
         }
-        log('地点签到', 'headers', headers, 'params', params)
+        log('地点签到提交信息', 'headers', headers, 'params', params)
         res = self.session.post(url, data=json.dumps(
             params), headers=headers, verify=False).json()
+        log('提交返回信息', res)
         if res['message'] == 'SUCCESS':
             url = f'{self.host}wec-counselor-worklog-apps/worklog/detail'
             params = {
@@ -168,6 +173,7 @@ class workLog:
 
     # 提交表单
     def submitForms(self):
+        log('开始提交表单')
         result = []
         for i, wid in enumerate(self.formWids):
             form = self.forms[i]
@@ -185,6 +191,7 @@ class workLog:
 
     # 创建模板
     def createFormTemplate(self):
+        log('开始创建模板')
         # 获取模板
         params = {
             'formWid': self.collectWid
@@ -200,6 +207,7 @@ class workLog:
             'formWid': str(self.collectWid),
             'operationType': 0
         }
+        log('提交参数', params)
         res = self.session.post(
             f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params)).json()
         if res['message'] == 'SUCCESS':

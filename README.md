@@ -24,3 +24,8 @@
 ## collection.py修改
 
 - [x] 支持非必填项的填写
+
+### workLog.py修改
+
+- [x] 修复了关于遍历下标的bug(容易引发index out of range)
+
