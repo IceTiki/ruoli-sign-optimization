@@ -31,11 +31,11 @@ class RlMessage:
     def isCorrectConfig(self):
         # 简单检查邮箱地址或API地址是否合法
         for item in [self.mail, self.apiUrl]:
-            if "*" in item:
+            if not type(item) == str:
                 return 0
             if len(item) == 0:
                 return 0
-            if not type(item) == str:
+            if "*" in item:
                 return 0
         return 1
 
@@ -66,11 +66,11 @@ class Qmsg:
     def isCorrectConfig(self):
         # 简单检查key和qq是否合法
         for item in [self.config['key'], self.config['qq']]:
-            if "*" in item:
+            if not type(item) == str:
                 return 0
             if len(item) == 0:
                 return 0
-            if not type(item) == str:
+            if "*" in item:
                 return 0
         return 1
 

@@ -88,18 +88,18 @@ def main():
         if workingStatus[username]['times'] == 1:
             user['user']['lon'], user['user']['lat'] = locationOffset(
                 user['user']['lon'], user['user']['lat'], config['locationOffsetRange'])
-        # 实例化消息推送
-        sm = sendMessage.SendMessage(user['user']['sendMessage'])
         # 开始自动信息收集/签到/查寝
         try:
             msg = working(user)
             log(msg)
             workingStatus[username]['status'] = msg
+            sm = sendMessage.SendMessage(user['user']['sendMessage'])
             sm.send(msg, '[maybe]今日校园通知')
         except Exception as e:
             config['users'].append(user)  # 加入到user列表中重试
             msg = str(e)
             log(msg)
+            sm = sendMessage.SendMessage(user['user']['sendMessage'])
             sm.send(msg, '[error]今日校园通知')
     log(workingStatus)
     # 函数整体执行情况格式化并推送
