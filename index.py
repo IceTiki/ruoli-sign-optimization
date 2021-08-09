@@ -48,6 +48,9 @@ def locationOffset(lon, lat, offset=50):
     offset_lon = ((lon+randomLonOffset)+180) % 360-180
     offset_lat = (((lat+randomLatOffset)+90) % 180-90) * \
         (-1)**(int(((lat+randomLatOffset)+90)/180))
+    # 保留六位小数
+    offset_lon=round(offset_lon,6)
+    offset_lat=round(offset_lat,6)
     return (offset_lon, offset_lat)
 
 
