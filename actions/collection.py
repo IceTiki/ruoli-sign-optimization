@@ -37,12 +37,12 @@ class Collection:
         headers['Content-Type'] = 'application/json'
         queryUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/queryCollectorProcessingList'
         params = {
-            'pageSize': 6,
+            'pageSize': 20,
             "pageNumber": 1
         }
         res = self.session.post(queryUrl, data=json.dumps(
             params), headers=headers, verify=False).json()
-        if len(res['datas']['rows']) < 1:
+        if res['datas']['totalSize'] < 1:
             raise Exception('查询表单失败，请确认你是信息收集并且当前有收集任务。确定请联系开发者')
         log('查询任务返回结果', res['datas'])
         self.collectWid = res['datas']['rows'][0]['wid']
@@ -75,27 +75,50 @@ class Collection:
                     if formItem['title'] != userForm['title']:
                         raise Exception(
                             f'\r\n有配置项的标题不正确\r\n您的标题为：{userForm["title"]}\r\n系统的标题为：{formItem["title"]}')
+                # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
+                formItem['show'] = True
+                formItem['formType'] = '0'  # 盲猜是任务类型、待确认
+                formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
                 # 开始填充表单
                 # 文本选项直接赋值
-                if formItem['fieldType'] == 1 or formItem['fieldType'] == 5:
+                if formItem['fieldType'] == '1' or formItem['fieldType'] == '5' or formItem['fieldType'] == '7':
                     formItem['value'] = userForm['value']
                 # 单选框填充
-                elif formItem['fieldType'] == 2:
-                    formItem['value'] = userForm['value']
+                elif formItem['fieldType'] == '2':
+                    # 定义单选框的wid
+                    itemWid = ''
                     # 单选需要移除多余的选项
                     for fieldItem in formItem['fieldItems'].copy():
                         if fieldItem['content'] != userForm['value']:
                             formItem['fieldItems'].remove(fieldItem)
+                        else:
+                            itemWid = fieldItem['itemWid']
+                    if itemWid == '':
+                        raise Exception(
+                            f'\r\n第{index + 1}个配置项的选项不正确，该选项为单选，且未找到您配置的值'
+                        )
+                    formItem['value'] = itemWid
                 # 多选填充
-                elif formItem['fieldType'] == 3:
+                elif formItem['fieldType'] == '3':
+                    # 定义单选框的wid
+                    itemWidArr = []
                     userItems = userForm['value'].split('|')
                     for fieldItem in formItem['fieldItems'].copy():
                         if fieldItem['content'] in userItems:
                             formItem['value'] += fieldItem['content'] + ' '
+                            itemWidArr.append(fieldItem['itemWid'])
                         else:
                             formItem['fieldItems'].remove(fieldItem)
-                elif formItem['fieldType'] == 4:
-                    pass
+                    # 若多选一个都未选中
+                    if len(itemWidArr) == 0:
+                        raise Exception(
+                            f'\r\n第{index + 1}个配置项的选项不正确，该选项为多选，且未找到您配置的值'
+                        )
+                    formItem['value'] = ','.join(itemWidArr)
+                else:
+                    raise Exception(
+                        f'\r\n第{index + 1}个配置项属于未知配置项，请反馈'
+                    )
                 self.form.append(formItem)
             else:
                 pass
@@ -126,7 +149,8 @@ class Collection:
         }
         params = {
             "formWid": self.taskWid, "address": self.userInfo['address'], "collectWid": self.collectWid,
-            "schoolTaskWid": self.schoolTaskWid, "form": self.form, "uaIsCpadaily": True
+            "schoolTaskWid": self.schoolTaskWid, "form": self.form, "uaIsCpadaily": True,
+            "latitude": self.userInfo['lat'], 'longitude': self.userInfo['lon']
         }
         submitUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/submitForm'
         log('提交表单', 'extension', extension, 'headers', headers, 'params', params)

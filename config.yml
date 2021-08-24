@@ -1,5 +1,5 @@
 author: 若离QQ：2909998156|IceTiki：https://github.com/IceTiki/ruoli-sign-optimization
-default: # YAML有引用和锚点，可以节省配置长度!!!!!!!!!!!!!!!!!!!!
+default: # YAML有引用和锚点，可以节省配置长度(备注:锚点要放在引用的前面)(可以参考https://www.runoob.com/w3cnote/yaml-intro.html)
   nosend: &nosend # 不需要单独推送的模板
     sendMessage:
       rl_emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
