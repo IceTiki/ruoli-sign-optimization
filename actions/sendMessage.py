@@ -8,6 +8,8 @@ import re
 # 通知类
 class SendMessage:
     def __init__(self, con: dict):
+        if type(con)!=dict:
+            con=dict()
         self.rl = RlMessage(con.get('rl_email'),
                             con.get('rl_emailApiUrl'))
         self.qmsg = Qmsg(con.get('qmsg_key'), con.get(
@@ -111,7 +113,7 @@ class Qmsg:
 class Smtp:
     '''Smtp发送类'''
 
-    def __init__(self, host: str, user: str, key: str, sender: str, receivers: list[str]):
+    def __init__(self, host: str, user: str, key: str, sender: str, receivers: list):
         """
         :param host: SMTP的域名
         :param user: 用户名

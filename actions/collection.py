@@ -95,7 +95,7 @@ class Collection:
                             itemWid = fieldItem['itemWid']
                     if itemWid == '':
                         raise Exception(
-                            f'\r\n第{index + 1}个配置项的选项不正确，该选项为单选，且未找到您配置的值'
+                            f'\r\n{userForm}配置项的选项不正确，该选项为单选，且未找到您配置的值'
                         )
                     formItem['value'] = itemWid
                 # 多选填充
@@ -112,12 +112,12 @@ class Collection:
                     # 若多选一个都未选中
                     if len(itemWidArr) == 0:
                         raise Exception(
-                            f'\r\n第{index + 1}个配置项的选项不正确，该选项为多选，且未找到您配置的值'
+                            f'\r\n{userForm}配置项的选项不正确，该选项为多选，且未找到您配置的值'
                         )
                     formItem['value'] = ','.join(itemWidArr)
                 else:
                     raise Exception(
-                        f'\r\n第{index + 1}个配置项属于未知配置项，请反馈'
+                        f'\r\n{userForm}配置项属于未知配置项，请反馈'
                     )
                 self.form.append(formItem)
             else:
