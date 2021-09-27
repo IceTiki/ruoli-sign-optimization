@@ -1,6 +1,6 @@
 ## [ruoli-sign-optimization](https://github.com/IceTiki/ruoli-sign-optimization)
 
-[基于若离的自动签到](https://github.com/ZimoLoveShuang/auto-submit/tree/ruoli)
+[基于若离的自动签到](https://github.com/ZimoLoveShuang/auto-submit/tree/ruoli)而写的今日校园自动签到。
 
 ## 常见问题
 
