@@ -1,9 +1,9 @@
-import os
+import traceback
 from todayLoginService import TodayLoginService
 from actions.autoSign import AutoSign
 from actions.collection import Collection
-from actions.workLog import workLog
 from actions.sleepCheck import sleepCheck
+from actions.workLog import workLog
 from actions.sendMessage import SendMessage
 from login.Utils import Utils
 from liteTools import *
@@ -93,6 +93,7 @@ def main():
                 sm.send(msg, '今日校园自动签到')
                 LL.log(1, sm.log_str)
             except Exception as e:
+                LL.log(2, traceback.format_exc())
                 LL.log(2, user['username']+'签到失败'+str(e))
 
     # 签到情况推送
