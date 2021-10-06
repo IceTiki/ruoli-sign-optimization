@@ -13,6 +13,7 @@ def loadConfig():
     config = DT.loadYml('config.yml')
     # 用户配置初始化
     for user in config['users']:
+        user['remarkName'] = user.get('remarkName', '默认备注名')
         user['state'] = None
         # 坐标随机偏移
         user['lon'], user['lat'] = RT.locationOffset(
