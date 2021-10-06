@@ -7,17 +7,7 @@ from pyDes import PAD_PKCS5, des, CBC
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
-
-
-def log(*args):
-    if args:
-        string = '|||log|||\n'
-        for item in args:
-            if type(item) == dict or type(item) == list:
-                string += yaml.dump(item, allow_unicode=True)+'\n'
-            else:
-                string += str(item)+'\n'
-        print(string)
+from liteTools import *
 
 
 class sleepCheck:
@@ -28,9 +18,12 @@ class sleepCheck:
         self.userInfo = userInfo
         self.taskInfo = None
         self.form = {}
+        self.msg = None
     # 获取未签到任务
 
     def getUnSignedTasks(self):
+        if self.msg:
+            return self.msg
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
@@ -39,10 +32,12 @@ class sleepCheck:
                           data=json.dumps({}), verify=False)
         # 第二次请求接口，真正的拿到具体任务
         res = self.session.post(url, headers=headers,
-                                data=json.dumps({}), verify=False).json()
+                                data=json.dumps({}), verify=False)
+        res = DT.resJsonEncode(res)
         if len(res['datas']['unSignedTasks']) < 1:
-            raise Exception('当前暂时没有未签到的任务哦！')
-        log('未签到的查寝', res['datas'])
+            self.msg = '当前暂时没有未签到的任务哦！'
+            return
+        LL.log(1, '未签到的查寝', res['datas'])
         # 获取最后的一个任务
         latestTask = res['datas']['unSignedTasks'][0]
         self.taskInfo = {
@@ -52,12 +47,15 @@ class sleepCheck:
 
     # 获取具体的签到任务详情
     def getDetailTask(self):
+        if self.msg:
+            return self.msg
         url = f'{self.host}wec-counselor-attendance-apps/student/attendance/detailSignInstance'
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         res = self.session.post(url, headers=headers, data=json.dumps(
-            self.taskInfo), verify=False).json()
-        log('具体查寝任务', res['datas'])
+            self.taskInfo), verify=False)
+        res = DT.resJsonEncode(res)
+        LL.log(1, '具体查寝任务', res['datas'])
         self.task = res['datas']
 
     # 上传图片到阿里云oss
@@ -65,7 +63,7 @@ class sleepCheck:
         url = f'{self.host}wec-counselor-sign-apps/stu/oss/getUploadPolicy'
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
                                 verify=False)
-        datas = res.json().get('datas')
+        datas = DT.resJsonEncode(res).get('datas')
         fileName = datas.get('fileName')
         policy = datas.get('policy')
         accessKeyId = datas.get('accessid')
@@ -78,7 +76,7 @@ class sleepCheck:
             fields={  # 这里根据需要进行参数格式设置
                 'key': fileName, 'policy': policy, 'OSSAccessKeyId': accessKeyId, 'success_action_status': '200',
                 'signature': signature,
-                'file': ('blob', open(self.userInfo['photo'], 'rb'), 'image/jpg')
+                'file': ('blob', open(RT.choicePhoto(self.userInfo['photo']), 'rb'), 'image/jpg')
             })
         headers['Content-Type'] = multipart_encoder.content_type
         res = self.session.post(url=policyHost,
@@ -98,6 +96,8 @@ class sleepCheck:
     # 填充表单
 
     def fillForm(self):
+        if self.msg:
+            return self.msg
         # 判断签到是否需要照片
         if self.task['isPhoto'] == 1:
             self.uploadPicture()
@@ -124,6 +124,8 @@ class sleepCheck:
 
     # 提交签到信息
     def submitForm(self):
+        if self.msg:
+            return self.msg
         extension = {
             "model": "OPPO R11 Plus",
             "appVersion": "8.1.14",
@@ -144,8 +146,9 @@ class sleepCheck:
             'Host': re.findall('//(.*?)/', self.host)[0],
             'Connection': 'Keep-Alive'
         }
-        log('提交查寝数据', 'extension', extension,
-            'header', headers, 'data', self.form)
+        LL.log(1, '提交查寝数据', 'extension', extension,
+               'header', headers, 'data', self.form)
         res = self.session.post(f'{self.host}wec-counselor-attendance-apps/student/attendance/submitSign', headers=headers,
-                                data=json.dumps(self.form), verify=False).json()
+                                data=json.dumps(self.form), verify=False)
+        res = DT.resJsonEncode(res)
         return res['message']

@@ -6,17 +6,7 @@ from pyDes import PAD_PKCS5, des, CBC
 import yaml
 
 from todayLoginService import TodayLoginService
-
-
-def log(*args):
-    if args:
-        string = '|||log|||\n'
-        for item in args:
-            if type(item) == dict or type(item) == list:
-                string += yaml.dump(item, allow_unicode=True)+'\n'
-            else:
-                string += str(item)+'\n'
-        print(string)
+from liteTools import *
 
 
 class Collection:
@@ -30,9 +20,12 @@ class Collection:
         self.taskWid = None
         self.schoolTaskWid = None
         self.form = []
+        self.msg = None
 
     # 查询表单
     def queryForm(self):
+        if self.msg:
+            return self.msg
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         queryUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/queryCollectorProcessingList'
@@ -41,30 +34,36 @@ class Collection:
             "pageNumber": 1
         }
         res = self.session.post(queryUrl, data=json.dumps(
-            params), headers=headers, verify=False).json()
+            params), headers=headers, verify=False)
+        res = DT.resJsonEncode(res)
         if res['datas']['totalSize'] < 1:
-            raise Exception('查询表单失败，请确认你是信息收集并且当前有收集任务。确定请联系开发者')
-        log('查询任务返回结果', res['datas'])
+            self.msg = '没有查询到信息收集任务'
+            return
+        LL.log(1, '查询任务返回结果', res['datas'])
         self.collectWid = res['datas']['rows'][0]['wid']
         self.taskWid = res['datas']['rows'][0]['formWid']
         detailUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
         res = self.session.post(detailUrl, headers=headers, data=json.dumps({'collectorWid': self.collectWid}),
-                                verify=False).json()
+                                verify=False)
+        res = DT.resJsonEncode(res)
         self.schoolTaskWid = res['datas']['collector']['schoolTaskWid']
         getFormUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/getFormFields'
         params = {"pageSize": 100, "pageNumber": 1,
                   "formWid": self.taskWid, "collectorWid": self.collectWid}
         res = self.session.post(
-            getFormUrl, headers=headers, data=json.dumps(params), verify=False).json()
-        log('查询任务详情返回结果', res['datas'])
+            getFormUrl, headers=headers, data=json.dumps(params), verify=False)
+        res = DT.resJsonEncode(res)
+        LL.log(1, '查询任务详情返回结果', res['datas'])
         self.task = res['datas']['rows']
 
     # 填写表单
     def fillForm(self):
+        if self.msg:
+            return self.msg
         # 检查用户配置长度与查询到的表单长度是否匹配
         if len(self.task) != len(self.userInfo['forms']):
-            raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' %
-                            (len(self.userInfo['forms']), len(self.task)))
+            raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
+                len(self.userInfo['forms']), len(self.task)))
         for formItem, userForm in zip(self.task, self.userInfo['forms']):
             userForm = userForm['form']
             # 根据用户配置决定是否要填此选项
@@ -125,6 +124,8 @@ class Collection:
 
     # 提交表单
     def submitForm(self):
+        if self.msg:
+            return self.msg
         extension = {
             "model": "OPPO R11 Plus",
             "appVersion": "8.2.14",
@@ -153,9 +154,11 @@ class Collection:
             "latitude": self.userInfo['lat'], 'longitude': self.userInfo['lon']
         }
         submitUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/submitForm'
-        log('提交表单', 'extension', extension, 'headers', headers, 'params', params)
+        LL.log(1, '提交表单', 'extension', extension,
+               'headers', headers, 'params', params)
         data = self.session.post(
-            submitUrl, headers=headers, data=json.dumps(params), verify=False).json()
+            submitUrl, headers=headers, data=json.dumps(params), verify=False)
+        data = DT.resJsonEncode(data)
         return data['message']
 
     # DES加密

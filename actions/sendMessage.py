@@ -8,33 +8,40 @@ import re
 # 通知类
 class SendMessage:
     def __init__(self, con: dict):
-        if type(con)!=dict:
-            con=dict()
-        self.rl = RlMessage(con.get('rl_email'),
-                            con.get('rl_emailApiUrl'))
+        if type(con) != dict:
+            con = dict()
         self.qmsg = Qmsg(con.get('qmsg_key'), con.get(
             'qmsg_qq'), con.get('qmsg_isGroup'))
         self.smtp = Smtp(con.get('smtp_host'), con.get('smtp_user'),
                          con.get('smtp_key'), con.get('smtp_sender'), con.get('smtp_receivers'))
+        self.rl = RlMessage(con.get('rl_email'),
+                            con.get('rl_emailApiUrl'))
+        self.pp = Pushplus(con.get('pushplus_token'))
+        self.log_str = '推送情况\n'
 
-    def send(self, msg='default_msg', title='default_title'):
+    def send(self, msg='no msg', title='no title'):
         try:
             self.qmsg.send(msg)
         except Exception as e:
-            print('\nqmsg酱推送失败|%s' % e)
-        try:
-            self.rl.sendMail(msg, title)
-        except Exception as e:
-            print('\n若离消息推送失败|%s' % e)
+            self.log_str += '\nqmsg酱推送失败|%s' % e
         try:
             self.smtp.sendmail(msg, title)
         except Exception as e:
-            print('\nSMTP推送失败|%s' % e)
+            self.log_str += '\nSMTP推送失败|%s' % e
+        try:
+            self.rl.sendMail(msg, title)
+        except Exception as e:
+            self.log_str += '\n若离消息推送失败|%s' % e
+        try:
+            self.pp.sendPushplus(msg, title)
+        except Exception as e:
+            self.log_str += '\nPushplus消息推送失败|%s' % e
 
 
-# 若离消息通知类
 class RlMessage:
+    '''若离消息通知类'''
     # 初始化类
+
     def __init__(self, mail, apiUrl):
         self.mail = mail
         self.apiUrl = apiUrl
@@ -45,7 +52,7 @@ class RlMessage:
         for item in [self.mail, self.apiUrl]:
             if not type(item) == str:
                 return 0
-            if len(item) == 0:
+            if not item:
                 return 0
             if "*" in item:
                 return 0
@@ -63,11 +70,49 @@ class RlMessage:
             res = requests.post(url=self.apiUrl, params=params).json()
             return res['msg']
         else:
-            print('邮箱或邮件api填写无效，已取消发送邮件！')
             return '邮箱或邮件api填写无效，已取消发送邮件！'
 
 
-# Qmsg酱通知类
+class Pushplus:
+    '''Pushplus推送类'''
+
+    def __init__(self, token: str):
+        """
+        :param token: 令牌
+        """
+        self.token = token
+        self.configIsCorrect = self.isCorrectConfig()
+
+    def isCorrectConfig(self):
+        # 简单检查邮箱地址或API地址是否合法
+        if not type(self.token) == str:
+            return 0
+        if not self.token:
+            return 0
+        return 1
+
+    def sendPushplus(self, msg, title):
+        msg=str(msg)
+        title=str(title)
+        if self.configIsCorrect:
+            params = {
+                'token': self.token,
+                'title': title,
+                'content': msg,
+            }
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
+            }
+            res = requests.post(
+                "https://pushplus.hxtrip.com/send", headers=headers, params=params)
+            if res.status_code == 200:
+                return "发送成功"
+            else:
+                return "发送失败"
+        else:
+            return 'pushplus的令牌填写错误，已取消发送！'
+
+
 class Qmsg:
     '''Qmsg发送类'''
 
@@ -102,7 +147,7 @@ class Qmsg:
         msg = str(msg)
         # 简单检查配置
         if not self.configIsCorrect:
-            print('Qmsg配置错误，信息取消发送')
+            return('Qmsg配置错误，信息取消发送')
         else:
             sendtype = 'group/' if self.isGroup else 'send/'
             res = requests.post(url='https://qmsg.zendee.cn/'+sendtype +
@@ -148,7 +193,6 @@ class Smtp:
         msg = str(msg)
         title = str(title)
         if not self.configIsCorrect:
-            print('邮件配置出错')
             return '邮件配置出错'
         else:
             mail = MIMEText(msg, 'plain', 'utf-8')
@@ -158,4 +202,4 @@ class Smtp:
             smtpObj.connect(self.host, 25)
             smtpObj.login(self.user, self.key)
             smtpObj.sendmail(self.sender, self.receivers, mail.as_string())
-            print("邮件发送成功")
+            return("邮件发送成功")

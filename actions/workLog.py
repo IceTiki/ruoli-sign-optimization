@@ -2,22 +2,10 @@ import base64
 import json
 import re
 import uuid
-import yaml
 from pyDes import PAD_PKCS5, des, CBC
-import time
 
 from todayLoginService import TodayLoginService
-
-
-def log(*args):
-    if args:
-        string = '|||log|||\n'
-        for item in args:
-            if type(item) == dict or type(item) == list:
-                string += yaml.dump(item, allow_unicode=True)+'\n'
-            else:
-                string += str(item)+'\n'
-        print(string)
+from liteTools import *
 
 # 教师工作日志类
 
@@ -35,10 +23,12 @@ class workLog:
             'User-Agent': self.session.headers['User-Agent'],
             'Content-type': 'application/json; charset=utf-8;'
         }
+        self.msg = None
 
     # 检查是否存在已创建且未提交的模板
     def checkHasLog(self):
-        log('检查是否存在已创建且未提交的模板')
+        if self.msg:
+            return self.msg
         # 首先 获取 templateName=疫情采集（每天上报）新 的wid：37
         url = f'{self.host}wec-counselor-worklog-apps/worklog/template/listActiveTemplate'
         params = {
@@ -46,9 +36,10 @@ class workLog:
             'pageSize': '9999999',
             'status': '1'
         }
-        res = self.session.post(
-            url, data=json.dumps(params), verify=False).json()
-        log('已创建且未提交的模板列表', res['datas'])
+        res = self.session.post(url, data=json.dumps(params), verify=False)
+        if res.status_code == 404:
+            raise Exception('您没有任何工作日志任务，请检查自己的任务类型！')
+        res = DT.resJsonEncode(res)
         self.collectWid = res['datas']['rows'][0]['wid']
         url = f'{self.host}wec-counselor-worklog-apps/worklog/list'
         params = {
@@ -57,14 +48,16 @@ class workLog:
             'pageSize': '20'
         }
         res = self.session.post(
-            url, data=json.dumps(params), verify=False).json()
-        log('获取已创建且未提交的模板', res['datas'])
+            url, data=json.dumps(params), verify=False)
+        res = DT.resJsonEncode(res)
         for item in res['datas']['rows']:
             if item['status'] == 0:
                 self.formWids.append(item['wid'])
 
     # 通过wid获取表单信息
     def getFormsByWids(self):
+        if self.msg:
+            return self.msg
         # 如果不存在已经创建好的模板，那么就自己创建一个模板
         if len(self.formWids) == 0:
             self.createFormTemplate()
@@ -74,13 +67,14 @@ class workLog:
                 'wid': wid
             }
             res = self.session.post(
-                url, data=json.dumps(params), verify=False).json()
-            log('获取wid=%s的表单信息' % wid, res['datas'])
+                url, data=json.dumps(params), verify=False)
+            res = DT.resJsonEncode(res)
             self.forms.append(res['datas']['form'])
 
     # 填充表单
     def fillForms(self):
-        log('开始填充表单')
+        if self.msg:
+            return self.msg
         userItems = self.userInfo['forms']
         for pos, form in enumerate(self.forms[:]):
             # 由于无法判断有没有签到选项，使用个i来作为下标索引
@@ -126,7 +120,6 @@ class workLog:
 
     # 地点签到
     def submitSign(self, fieldWid, worklogWid):
-        log('开始地点签到')
         extension = {
             "lon": self.userInfo['lon'],
             "model": "OPPO R11 Plus",
@@ -155,17 +148,17 @@ class workLog:
             "longitude": self.userInfo['lon'],
             "latitude": self.userInfo['lat']
         }
-        log('地点签到提交信息', 'headers', headers, 'params', params)
         res = self.session.post(url, data=json.dumps(
-            params), headers=headers, verify=False).json()
-        log('提交返回信息', res)
+            params), headers=headers, verify=False)
+        res = DT.resJsonEncode(res)
         if res['message'] == 'SUCCESS':
             url = f'{self.host}wec-counselor-worklog-apps/worklog/detail'
             params = {
                 'wid': worklogWid
             }
             res = self.session.post(
-                url, data=json.dumps(params), verify=False).json()
+                url, data=json.dumps(params), verify=False)
+            res = DT.resJsonEncode(res)
             form = res['datas']['form']
             return form
         else:
@@ -173,7 +166,8 @@ class workLog:
 
     # 提交表单
     def submitForms(self):
-        log('开始提交表单')
+        if self.msg:
+            return self.msg
         result = []
         for i, wid in enumerate(self.formWids):
             form = self.forms[i]
@@ -183,21 +177,21 @@ class workLog:
                 'form': form,
                 'operationType': 1
             }
-            log('提交表单', 'params', params)
             res = self.session.post(f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params),
-                                    verify=False).json()
+                                    verify=False)
+            res = DT.resJsonEncode(res)
             result.append(res['message'])
-        return result
+        return str(result)
 
     # 创建模板
     def createFormTemplate(self):
-        log('开始创建模板')
         # 获取模板
         params = {
             'formWid': self.collectWid
         }
         res = self.session.post(f'{self.host}wec-counselor-worklog-apps/worklog/template/detail',
-                                data=json.dumps(params), verify=False).json()
+                                data=json.dumps(params), verify=False)
+        res = DT.resJsonEncode(res)
         formTemplate = res['datas']['content']
         for formItem in formTemplate:
             formItem.pop('fieldItems')
@@ -207,9 +201,9 @@ class workLog:
             'formWid': str(self.collectWid),
             'operationType': 0
         }
-        log('提交参数', params)
         res = self.session.post(
-            f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params)).json()
+            f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params))
+        res = DT.resJsonEncode(res)
         if res['message'] == 'SUCCESS':
             self.formWids.append(res['datas']['wid'])
         else:

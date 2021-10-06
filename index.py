@@ -1,164 +1,123 @@
-import yaml
-import time
-import random
-import math
+import os
 from todayLoginService import TodayLoginService
 from actions.autoSign import AutoSign
 from actions.collection import Collection
 from actions.workLog import workLog
 from actions.sleepCheck import sleepCheck
-import actions.sendMessage as sendMessage
+from actions.sendMessage import SendMessage
+from login.Utils import Utils
+from liteTools import *
 
 
-def getYmlConfig(yaml_file='config.yml'):
-    file = open(yaml_file, 'r', encoding="utf-8")
-    file_data = file.read()
-    file.close()
-    config = yaml.load(file_data, Loader=yaml.FullLoader)
-    return dict(config)
-
-
-def log(*args):
-    ExecutingTime = time.time()-startExecutingTime
-    if args:
-        string = '|||log|||%0.3fs|||\n' % ExecutingTime
-        for item in args:
-            if type(item) == dict or type(item) == list:
-                string += yaml.dump(item, allow_unicode=True)+'\n'
-            else:
-                string += str(item)+'\n'
-        print(string)
-
-
-# 经纬度随机偏移
-def locationOffset(lon, lat, offset=50):
-    '''
-    lon——经度
-    lat——纬度
-    offset——偏移范围(单位m)
-    '''
-    # 弧度=弧长/半径，角度=弧长*180°/π，某地经度所对应的圆半径=cos(|维度|)*地球半径
-    lonOffset = offset/(6371393*math.cos(abs(lat)))*(180/math.pi)
-    latOffset = offset/6371393*(180/math.pi)
-    # 生成随机偏移
-    randomLonOffset = random.uniform(lonOffset, -lonOffset)
-    randomLatOffset = random.uniform(latOffset, -latOffset)
-    # 将偏移应用到原有坐标上
-    # 南北极/对向子午线附近的坐标可能会超出范围(经度-180~180，维度-90~90)，对此进行了调整
-    offset_lon = ((lon+randomLonOffset)+180) % 360-180
-    offset_lat = (((lat+randomLatOffset)+90) % 180-90) * \
-        (-1)**(int(((lat+randomLatOffset)+90)/180))
-    # 保留六位小数
-    offset_lon=round(offset_lon,6)
-    offset_lat=round(offset_lat,6)
-    return (offset_lon, offset_lat)
-
-
-def sendworkingStatus(workingStatus, config):
-    workingStatus_msg = yaml.dump(workingStatus, allow_unicode=True)
-    ExecutingTime = time.time()-startExecutingTime
+def loadConfig():
+    config = DT.loadYml('config.yml')
+    # 用户配置初始化
     for user in config['users']:
-        if 'remarksName' in user['user']:
-            if user['user']['remarksName']:
-                workingStatus_msg = workingStatus_msg.replace(
-                    user['user']['username'], user['user']['remarksName'])
-    sws = sendMessage.SendMessage(config['sendWorkingStatus'])
-    sws.send(workingStatus_msg+'执行时间%.3fSecond' %
-             ExecutingTime, '[status]今日校园通知')
-
-
-def main():
-    global startExecutingTime
-    startExecutingTime = time.time()
-    workingStatus = {}  # 储存各用户自动签到情况
-    workingStatus.clear
-    config = getYmlConfig()
-    for user in config['users']:
-        username = user['user']['username']
-        # 用户签到状态初始(status)为-1，代表还未尝试签到，签到成功后会被working函数的返回信息覆盖。如果已尝试签到，则跳过该用户。
-        # 尝试签到次数(times)初始为1，每次重试+1
-        if username not in workingStatus:  # 第一次尝试签到，初始化状态信息
-            workingStatus[username] = {'status': -1, 'times': 1}
-        else:
-            # 如果status已经被working函数返回的msg覆盖，则跳过
-            if not workingStatus[username]['status'] == -1:
-                continue
-            workingStatus[username]['times'] += 1
-            if workingStatus[username]['times'] > config['maxRetryTimes']:  # 如果times超过最大重试次数，则跳过
-                continue
-        log('正在处理%s|||第%d次尝试' % (username, workingStatus[username]['times']))
-        # 对用户配置中的经纬度进行随机偏移
-        if workingStatus[username]['times'] == 1:
-            user['user']['lon'], user['user']['lat'] = locationOffset(
-                user['user']['lon'], user['user']['lat'], config['locationOffsetRange'])
-        # 开始自动信息收集/签到/查寝
-        try:
-            msg = working(user)
-            log(msg)
-            workingStatus[username]['status'] = msg
-            sm = sendMessage.SendMessage(user['user']['sendMessage'])
-            sm.send(msg, '[maybe]今日校园通知')
-        except Exception as e:
-            config['users'].append(user)  # 加入到user列表中重试
-            msg = str(e)
-            log(msg)
-            sm = sendMessage.SendMessage(user['user']['sendMessage'])
-            sm.send(msg, '[error]今日校园通知')
-    log(workingStatus)
-    # 函数整体执行情况格式化并推送
-    sendworkingStatus(workingStatus, config)
+        user['state'] = None
+        # 坐标随机偏移
+        user['lon'], user['lat'] = RT.locationOffset(
+            user['lon'], user['lat'], config['locationOffsetRange'])
+    return config
 
 
 def working(user):
-    today = TodayLoginService(user['user'])
+    LL.log(1, '准备登录')
+    today = TodayLoginService(user)
     today.login()
+    LL.log(1, '登录完成')
     # 登陆成功，通过type判断当前属于 信息收集、签到、查寝
     # 信息收集
-    if user['user']['type'] == 0:
+    if user['type'] == 0:
         # 以下代码是信息收集的代码
-        collection = Collection(today, user['user'])
+        LL.log(1, '即将开始信息收集填报')
+        collection = Collection(today, user)
         collection.queryForm()
         collection.fillForm()
         msg = collection.submitForm()
         return msg
-    elif user['user']['type'] == 1:
+    elif user['type'] == 1:
         # 以下代码是签到的代码
-        sign = AutoSign(today, user['user'])
-        msg = sign.getUnSignTask()
-        if type(msg) == str:
-            return msg
+        LL.log(1, '即将开始签到')
+        sign = AutoSign(today, user)
+        sign.getUnSignTask()
         sign.getDetailTask()
         sign.fillForm()
         msg = sign.submitForm()
         return msg
-    elif user['user']['type'] == 2:
+    elif user['type'] == 2:
         # 以下代码是查寝的代码
-        check = sleepCheck(today, user['user'])
+        LL.log(1, '即将开始查寝填报')
+        check = sleepCheck(today, user)
         check.getUnSignedTasks()
         check.getDetailTask()
         check.fillForm()
         msg = check.submitForm()
         return msg
-    elif user['user']['type'] == 3:
+    elif user['type'] == 3:
         # 以下代码是工作日志的代码
-        work = workLog(today, user['user'])
+        LL.log(1, '即将开始工作日志填报')
+        work = workLog(today, user)
         work.checkHasLog()
         work.getFormsByWids()
         work.fillForms()
         msg = work.submitForms()
         return msg
+    else:
+        raise Exception('任务类型出错，请检查您的user的type')
 
 
-# 阿里云的入口函数
+def main():
+    # 加载配置
+    config = loadConfig()
+    maxTry = config['maxTry']
+
+    # 开始签到
+    # 自动重试
+    for tryTimes in range(1, maxTry+1):
+        LL.log(1, '正在进行第%d轮尝试' % tryTimes)
+        # 遍历用户
+        for user in config['users']:
+            # 检查是否已经在上一轮尝试中签到
+            if type(user['state']) == str:
+                continue
+            LL.log(1, '即将在第%d轮尝试中为[%s]签到' % (tryTimes, user['username']))
+
+            try:
+                msg = working(user)
+                # 消息格式化
+                msg = ' |%s|%d|\n %s' % (user['username'], tryTimes, msg)
+                user['state'] = msg
+                LL.log(1, msg)
+                # 消息推送
+                sm = SendMessage(user.get('sendMessage'))
+                sm.send(msg, '今日校园自动签到')
+                LL.log(1, sm.log_str)
+            except Exception as e:
+                LL.log(2, user['username']+'签到失败'+str(e))
+
+    # 签到情况推送
+    msg = '==签到情况==\n'
+    for i in config['users']:
+        msg += '[%s]\n%s\n' % (i['remarkName'], i['state'])
+    LL.log(4, msg)
+    sm = SendMessage(config['sendMessage'])
+    sm.send(LL.getLog(4), '健康打卡自动签到')
+    LL.log(1, sm.log_str)
+
+
 def handler(event, context):
+    '''阿里云的入口函数'''
     main()
 
 
-# 腾讯云的入口函数
 def main_handler(event, context):
+    '''腾讯云的入口函数'''
     main()
     return 'ok'
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    finally:
+        LL.saveLog(DT.loadYml('config.yml').get('logDir'))  # 生成日志文件

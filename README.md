@@ -1,10 +1,44 @@
 ## [ruoli-sign-optimization](https://github.com/IceTiki/ruoli-sign-optimization)
 
-[基于若离的自动签到](https://github.com/ZimoLoveShuang/auto-submit/tree/ruoli)而写的今日校园自动签到。
+基于[若离自动签到](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到。
+
+**最近更新2021/10/6**
+
+## 修改摘要
+
+### 整体修改
+
+- [x] 完善推送
+- [x] 签到失败自动重试
+- [x] 响应的json解析优化
+- [x] 签到坐标随机偏移
+
+------
+
+- [x] 日志组件优化
+- [x] 本地运行时保存执行日志
+
+------
+
+- [ ] DeviceID通过用户名伪随机生成
+- [ ] UA随机生成
+- [ ] 随机签到时间延迟
+
+### autosign.py修改
+
+- [x] 签到任务Title匹配
+- [x] ismalposition参数本地判定
+- [ ] 支持签到已请假任务
+- [ ] 获取以往签到任务自动填写表单
+
+### collection.py修改
+
+- [x] 支持非必填项的填写，以及不填写必填项
+- [ ] 获取以往签到任务自动填写表单
 
 ## 常见问题
 
-* 如果在日志发现HTTP 418(I'm a teapot.)，意为被怀疑为爬虫脚本。因为腾讯云函数广州节点用的人太多了，试着把函数复制到其他区域。
+* 如果在日志发现HTTP 418(I'm a teapot.)，意为被怀疑为爬虫脚本。
 * 如果在模拟登录后开始抓取任务列表时HTTP 405(请求方式错误)
 
 > Carlton大佬:
@@ -14,30 +48,6 @@
 > ​	405是因为取辅导猫表单时候 发现没有登录态 302回你学校了
 >
 > ​	离谱就是，302回你学校cas服务以后他是登录的，又给你302回调回来了，302肯定是get，所以返回405
-
-## 修改摘要
-
-### 整体修改
-
-- [x] Qmsg推送
-- [x] 签到坐标随机偏移
-- [x] 签到失败自动重试
-- [x] SMTP推送
-- [x] 事无巨细的日志记录
-
-### autosign.py修改
-
-- [x] 签到任务Title匹配
-- [x] ismalposition参数本地判定
-- [x] 修复了提交表单中，单项选择会提交多个选项的bug(提交返回SUCCESS但没签到成功的原因)
-
-### collection.py修改
-
-- [x] 支持非必填项的填写，以及不填写必填项
-
-### workLog.py修改
-
-- [x] 修复了关于遍历下标的bug(容易引发index out of range)
 
 ## 使用方法
 

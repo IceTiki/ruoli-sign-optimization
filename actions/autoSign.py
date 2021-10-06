@@ -9,17 +9,7 @@ from pyDes import des, CBC, PAD_PKCS5
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
-
-
-def log(*args):
-    if args:
-        string = '|||log|||\n'
-        for item in args:
-            if type(item) == dict or type(item) == list:
-                string += yaml.dump(item, allow_unicode=True)+'\n'
-            else:
-                string += str(item)+'\n'
-        print(string)
+from liteTools import *
 
 
 class AutoSign:
@@ -32,12 +22,15 @@ class AutoSign:
         self.task = None
         self.form = {}
         self.fileName = None
+        self.msg = None
 
     # 获取未签到的任务
 
     def getUnSignTask(self):
+        if self.msg:
+            return self.msg
         # 如果有合适的任务，则返回dict。如果没有需要签到的任务，则返回str。
-        log('获取未签到的任务')
+        LL.log(1, '获取未签到的任务')
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
@@ -46,40 +39,53 @@ class AutoSign:
                           data=json.dumps({}), verify=False)
         # 第二次请求接口，真正的拿到具体任务
         res = self.session.post(url, headers=headers,
-                                data=json.dumps({}), verify=False).json()
+                                data=json.dumps({}), verify=False)
+        res = DT.resJsonEncode(res)
+
+        signLevel = self.userInfo.get('signLevel', 1)
+        if signLevel >= 0:
+            taskList = res['datas']['unSignedTasks'] # 未签到任务
+        if signLevel >= 1:
+            taskList += res['datas']['leaveTasks'] # 不需签到任务
+        if signLevel == 2:
+            taskList += res['datas']['signedTasks'] # 已签到任务
         # 查询是否没有未签到任务
-        log('所有未签到任务', res['datas']['unSignedTasks'])
-        if len(res['datas']['unSignedTasks']) < 1:
-            log('当前暂时没有未签到的任务哦！')
-            return '当前暂时没有未签到的任务哦！'
+        LL.log(1, '获取到的签到任务列表', taskList)
+        if len(taskList) < 1:
+            LL.log(1, '签到任务列表为空')
+            self.msg = '签到任务列表为空'
+            return
         # 自动获取最后一个未签到任务(如果title==0)
         if self.userInfo['title'] == 0:
-            latestTask = res['datas']['unSignedTasks'][0]
+            latestTask = taskList[0]
             self.taskName = latestTask['taskName']
-            log('最后一个未签到的任务', latestTask['taskName'])
+            LL.log(1, '最后一个未签到的任务', latestTask['taskName'])
             self.taskInfo = {'signInstanceWid': latestTask['signInstanceWid'],
                              'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
-            return self.taskInfo
         # 获取匹配标题的任务
-        for righttask in res['datas']['unSignedTasks']:
+        for righttask in taskList:
             if righttask['taskName'] == self.userInfo['title']:
                 self.taskName = righttask['taskName']
-                log('匹配标题的任务', righttask['taskName'])
+                LL.log(1, '匹配标题的任务', righttask['taskName'])
                 self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
                                  'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
                 return self.taskInfo
-        log('没有匹配标题的任务')
-        return '没有匹配标题的任务'
+        LL.log(1, '没有匹配标题的任务')
+        self.msg = '没有匹配标题的任务'
+        return
 
     # 获取具体的签到任务详情
     def getDetailTask(self):
-        log('获取具体的签到任务详情')
+        if self.msg:
+            return self.msg
+        LL.log(1, '获取具体的签到任务详情')
         url = f'{self.host}wec-counselor-sign-apps/stu/sign/detailSignInstance'
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         res = self.session.post(url, headers=headers, data=json.dumps(
-            self.taskInfo), verify=False).json()
-        log('签到任务的详情', res['datas'])
+            self.taskInfo), verify=False)
+        res = DT.resJsonEncode(res)
+        LL.log(1, '签到任务的详情', res['datas'])
         self.task = res['datas']
 
     # 上传图片到阿里云oss
@@ -87,7 +93,7 @@ class AutoSign:
         url = f'{self.host}wec-counselor-sign-apps/stu/oss/getUploadPolicy'
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
                                 verify=False)
-        datas = res.json().get('datas')
+        datas = DT.resJsonEncode(res).get('datas')
         fileName = datas.get('fileName')
         policy = datas.get('policy')
         accessKeyId = datas.get('accessid')
@@ -100,7 +106,7 @@ class AutoSign:
             fields={  # 这里根据需要进行参数格式设置
                 'key': fileName, 'policy': policy, 'OSSAccessKeyId': accessKeyId, 'success_action_status': '200',
                 'signature': signature,
-                'file': ('blob', open(self.userInfo['photo'], 'rb'), 'image/jpg')
+                'file': ('blob', open(RT.choicePhoto(self.userInfo['photo']), 'rb'), 'image/jpg')
             })
         headers['Content-Type'] = multipart_encoder.content_type
         res = self.session.post(url=policyHost,
@@ -114,12 +120,15 @@ class AutoSign:
         params = {'ossKey': self.fileName}
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
                                 verify=False)
-        photoUrl = res.json().get('datas')
+
+        photoUrl = DT.resJsonEncode(res).get('datas')
         return photoUrl
 
     # 填充表单
     def fillForm(self):
-        log('填充表单')
+        if self.msg:
+            return self.msg
+        LL.log(1, '填充表单')
         # 判断签到是否需要照片
         if self.task['isPhoto'] == 1:
             self.uploadPicture()
@@ -144,7 +153,7 @@ class AutoSign:
                 for extraFieldItem in extraFieldItems:
                     if extraFieldItem['isSelected']:
                         data = extraFieldItem['content']
-                    # log(extraFieldItem)
+                    # LL.log(1,extraFieldItem)
                     if extraFieldItem['content'] == userItem['value']:
                         flag = True
                         extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
@@ -153,7 +162,7 @@ class AutoSign:
                         if extraFieldItem['isOtherItems'] == 1:
                             flag = True
                             extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
-                                                'extraFieldItemWid': extraFieldItem['wid']}
+                                                   'extraFieldItemWid': extraFieldItem['wid']}
                         extraFieldItemValues.append(extraFieldItemValue)
                 if not flag:
                     raise Exception(
@@ -165,7 +174,7 @@ class AutoSign:
         # 检查是否在签到范围内
         self.form['isMalposition'] = 1
         for place in self.task['signPlaceSelected']:
-            if self.geodistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
+            if MT.geoDistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
                 self.form['isMalposition'] = 0
                 break
         self.form['abnormalReason'] = self.userInfo['abnormalReason']
@@ -183,7 +192,9 @@ class AutoSign:
 
     # 提交签到信息
     def submitForm(self):
-        log('提交签到信息')
+        if self.msg:
+            return self.msg
+        LL.log(1, '提交签到信息')
         extension = {
             "lon": self.form['longitude'],
             "lat": self.form['latitude'],
@@ -204,22 +215,10 @@ class AutoSign:
             'Host': re.findall('//(.*?)/', self.host)[0],
             'Connection': 'Keep-Alive'
         }
-        # log(json.dumps(self.form))
-        log('即将提交的信息', extension, headers, self.form)
+        # LL.log(1,json.dumps(self.form))
+        LL.log(1, '即将提交的信息', extension, headers, self.form)
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
-                                data=json.dumps(self.form), verify=False).json()
-        log('提交后返回的信息', res['message'])
+                                data=json.dumps(self.form), verify=False)
+        res = DT.resJsonEncode(res)
+        LL.log(1, '提交后返回的信息', res['message'])
         return '[%s]%s' % (res['message'], self.taskInfo['taskName'])
-
-    # 两经纬度算距离
-    def geodistance(self, lon1, lat1, lon2, lat2):
-        #lon1,lat1,lon2,lat2 = (120.12802999999997,30.28708,115.86572000000001,28.7427)
-        # 经纬度转换成弧度
-        lon1, lat1, lon2, lat2 = map(math.radians, [float(
-            lon1), float(lat1), float(lon2), float(lat2)])
-        dlon = lon2-lon1
-        dlat = lat2-lat1
-        a = math.sin(dlat/2)**2 + math.cos(lat1) * \
-            math.cos(lat2) * math.sin(dlon/2)**2
-        distance = 2*math.asin(math.sqrt(a))*6371393  # 地球平均半径，6371393m
-        return distance
