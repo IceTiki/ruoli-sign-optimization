@@ -20,12 +20,9 @@ class Collection:
         self.taskWid = None
         self.schoolTaskWid = None
         self.form = []
-        self.msg = None
 
     # 查询表单
     def queryForm(self):
-        if self.msg:
-            return self.msg
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         queryUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/queryCollectorProcessingList'
@@ -37,8 +34,7 @@ class Collection:
             params), headers=headers, verify=False)
         res = DT.resJsonEncode(res)
         if res['datas']['totalSize'] < 1:
-            self.msg = '没有查询到信息收集任务'
-            return
+            raise TaskError('没有查询到信息收集任务')
         LL.log(1, '查询任务返回结果', res['datas'])
         self.collectWid = res['datas']['rows'][0]['wid']
         self.taskWid = res['datas']['rows'][0]['formWid']
@@ -58,8 +54,6 @@ class Collection:
 
     # 填写表单
     def fillForm(self):
-        if self.msg:
-            return self.msg
         # 检查用户配置长度与查询到的表单长度是否匹配
         if len(self.task) != len(self.userInfo['forms']):
             raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
@@ -124,8 +118,6 @@ class Collection:
 
     # 提交表单
     def submitForm(self):
-        if self.msg:
-            return self.msg
         extension = {
             "model": "OPPO R11 Plus",
             "appVersion": "8.2.14",

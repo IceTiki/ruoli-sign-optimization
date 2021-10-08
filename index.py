@@ -85,17 +85,21 @@ def main():
 
             try:
                 msg = working(user)
-                # 消息格式化
-                msg = ' |%s|%d|\n %s' % (user['username'], tryTimes, msg)
-                user['state'] = msg
-                LL.log(1, msg)
-                # 消息推送
-                sm = SendMessage(user.get('sendMessage'))
-                sm.send(msg, '今日校园自动签到')
-                LL.log(1, sm.log_str)
+            except TaskError as e:
+                msg = str(e)
             except Exception as e:
                 LL.log(2, traceback.format_exc())
                 LL.log(2, user['username']+'签到失败'+str(e))
+                continue
+
+            # 消息格式化
+            msg = '--%s|%d\n--%s' % (user['username'], tryTimes, msg)
+            user['state'] = msg
+            LL.log(1, msg)
+            # 消息推送
+            sm = SendMessage(user.get('sendMessage'))
+            sm.send(msg, '今日校园自动签到')
+            LL.log(1, sm.log_str)
 
     # 签到情况推送
     msg = '==签到情况==\n'

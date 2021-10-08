@@ -23,12 +23,9 @@ class workLog:
             'User-Agent': self.session.headers['User-Agent'],
             'Content-type': 'application/json; charset=utf-8;'
         }
-        self.msg = None
 
     # 检查是否存在已创建且未提交的模板
     def checkHasLog(self):
-        if self.msg:
-            return self.msg
         # 首先 获取 templateName=疫情采集（每天上报）新 的wid：37
         url = f'{self.host}wec-counselor-worklog-apps/worklog/template/listActiveTemplate'
         params = {
@@ -56,8 +53,6 @@ class workLog:
 
     # 通过wid获取表单信息
     def getFormsByWids(self):
-        if self.msg:
-            return self.msg
         # 如果不存在已经创建好的模板，那么就自己创建一个模板
         if len(self.formWids) == 0:
             self.createFormTemplate()
@@ -73,8 +68,6 @@ class workLog:
 
     # 填充表单
     def fillForms(self):
-        if self.msg:
-            return self.msg
         userItems = self.userInfo['forms']
         for pos, form in enumerate(self.forms[:]):
             # 由于无法判断有没有签到选项，使用个i来作为下标索引
@@ -166,8 +159,6 @@ class workLog:
 
     # 提交表单
     def submitForms(self):
-        if self.msg:
-            return self.msg
         result = []
         for i, wid in enumerate(self.formWids):
             form = self.forms[i]

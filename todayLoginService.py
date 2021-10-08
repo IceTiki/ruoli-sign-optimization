@@ -18,7 +18,7 @@ class TodayLoginService:
     def __init__(self, userInfo):
         if None == userInfo['username'] or '' == userInfo['username'] or None == userInfo['password'] or '' == userInfo[
             'password'] or None == userInfo['schoolName'] or '' == userInfo['schoolName']:
-            raise Exception('初始化类失败，请键入完整的参数（用户名，密码，学校名称）')
+            raise TaskError('初始化类失败，请键入完整的参数（用户名，密码，学校名称）')
         self.username = userInfo['username']
         self.password = userInfo['password']
         self.schoolName = userInfo['schoolName']
@@ -48,7 +48,7 @@ class TodayLoginService:
         for item in schools:
             if item['name'] == self.schoolName:
                 if item['joinType'] == 'NONE':
-                    raise Exception(self.schoolName + '未加入今日校园，请检查...')
+                    raise TaskError(self.schoolName + '未加入今日校园，请检查...')
                 flag = False
                 params = {
                     'ids': item['id']

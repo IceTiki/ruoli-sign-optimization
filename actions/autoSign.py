@@ -22,13 +22,10 @@ class AutoSign:
         self.task = None
         self.form = {}
         self.fileName = None
-        self.msg = None
 
     # 获取未签到的任务
 
     def getUnSignTask(self):
-        if self.msg:
-            return self.msg
         # 如果有合适的任务，则返回dict。如果没有需要签到的任务，则返回str。
         LL.log(1, '获取未签到的任务')
         headers = self.session.headers
@@ -53,8 +50,7 @@ class AutoSign:
         LL.log(1, '获取到的签到任务列表', taskList)
         if len(taskList) < 1:
             LL.log(1, '签到任务列表为空')
-            self.msg = '签到任务列表为空'
-            return
+            raise TaskError('签到任务列表为空')
         # 自动获取最后一个未签到任务(如果title==0)
         if self.userInfo['title'] == 0:
             latestTask = taskList[0]
@@ -71,13 +67,10 @@ class AutoSign:
                                  'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
                 return self.taskInfo
         LL.log(1, '没有匹配标题的任务')
-        self.msg = '没有匹配标题的任务'
-        return
+        raise TaskError('没有匹配标题的任务')
 
     # 获取具体的签到任务详情
     def getDetailTask(self):
-        if self.msg:
-            return self.msg
         LL.log(1, '获取具体的签到任务详情')
         url = f'{self.host}wec-counselor-sign-apps/stu/sign/detailSignInstance'
         headers = self.session.headers
@@ -126,8 +119,6 @@ class AutoSign:
 
     # 填充表单
     def fillForm(self):
-        if self.msg:
-            return self.msg
         LL.log(1, '填充表单')
         # 判断签到是否需要照片
         if self.task['isPhoto'] == 1:
@@ -192,8 +183,6 @@ class AutoSign:
 
     # 提交签到信息
     def submitForm(self):
-        if self.msg:
-            return self.msg
         LL.log(1, '提交签到信息')
         extension = {
             "lon": self.form['longitude'],

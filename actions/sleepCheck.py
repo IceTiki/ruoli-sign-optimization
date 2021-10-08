@@ -18,12 +18,9 @@ class sleepCheck:
         self.userInfo = userInfo
         self.taskInfo = None
         self.form = {}
-        self.msg = None
     # 获取未签到任务
 
     def getUnSignedTasks(self):
-        if self.msg:
-            return self.msg
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
@@ -35,8 +32,7 @@ class sleepCheck:
                                 data=json.dumps({}), verify=False)
         res = DT.resJsonEncode(res)
         if len(res['datas']['unSignedTasks']) < 1:
-            self.msg = '当前暂时没有未签到的任务哦！'
-            return
+            raise TaskError('当前暂时没有未签到的任务哦！')
         LL.log(1, '未签到的查寝', res['datas'])
         # 获取最后的一个任务
         latestTask = res['datas']['unSignedTasks'][0]
@@ -47,8 +43,6 @@ class sleepCheck:
 
     # 获取具体的签到任务详情
     def getDetailTask(self):
-        if self.msg:
-            return self.msg
         url = f'{self.host}wec-counselor-attendance-apps/student/attendance/detailSignInstance'
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
@@ -96,8 +90,6 @@ class sleepCheck:
     # 填充表单
 
     def fillForm(self):
-        if self.msg:
-            return self.msg
         # 判断签到是否需要照片
         if self.task['isPhoto'] == 1:
             self.uploadPicture()
@@ -124,8 +116,6 @@ class sleepCheck:
 
     # 提交签到信息
     def submitForm(self):
-        if self.msg:
-            return self.msg
         extension = {
             "model": "OPPO R11 Plus",
             "appVersion": "8.1.14",

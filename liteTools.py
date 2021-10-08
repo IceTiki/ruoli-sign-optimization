@@ -5,6 +5,9 @@ import math
 import random
 import os
 
+class TaskError(Exception):
+    '''目前(配置/时间/签到情况)不宜完成签到任务'''
+    pass
 
 class MT:
     '''MiscTools'''
@@ -106,6 +109,15 @@ class RT:
                 raise Exception("路径(%s)指向一个没有图片(.jpg)的文件夹" % dir)
             return os.path.join(dir, random.choice(files))
 
+    @staticmethod
+    def randomSleep(a: int, b: int = None):
+        '''随机暂停一段时间'''
+        if b == None:
+            b = a/2
+        sleepTime = random.randint(a, b)
+        LL.log(0, f'程序正在暂停({sleepTime})')
+        time.sleep(sleepTime)
+
 
 class DT:
     '''dict tools'''
@@ -138,6 +150,7 @@ class LL:
 
     @staticmethod
     def formatLog(logType: str, args):
+        '''返回logItem[时间,类型,内容]'''
         string = ''
         for item in args:
             if type(item) == dict or type(item) == list:
@@ -167,7 +180,7 @@ class LL:
         '''获取日志函数'''
         string = ''
         for item in LL.log_list:
-            if level <= item[0]:
+            if level <= item[1]:
                 string += LL.log2FormatStr(item)
         return string
 
@@ -180,6 +193,7 @@ class LL:
         log = LL.getLog(level)
         if not os.path.isdir(dir):
             os.makedirs(dir)
-        dir = os.path.join(dir, 'log_%d.txt' % time.time())
+        dir = os.path.join(dir, time.strftime(
+            "LOG#t=%Y-%m-%d--%H-%M-%S##.txt", time.localtime()))
         with open(dir, 'w', encoding='utf-8') as f:
             f.write(log)
