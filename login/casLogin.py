@@ -41,6 +41,7 @@ class casLogin:
             self.type = 1
         # 填充数据
         params = {}
+        soup = BeautifulSoup(str(form[0]), 'lxml')
         form = soup.select('input')
         for item in form:
             if None != item.get('name') and len(item.get('name')) > 0:
@@ -49,6 +50,7 @@ class casLogin:
                         params[item.get('name')] = ''
                     else:
                         params[item.get('name')] = item.get('value')
+        # print("self.type=", self.type)
         if self.type == 0:
             salt = soup.select("#pwdDefaultEncryptSalt")
         else:
@@ -56,13 +58,15 @@ class casLogin:
         if len(salt) != 0:
             salt = salt[0].get('value')
         else:
-            pattern = '\"(\w{16})\"'
+            pattern = r'EncryptSalt = "(\w{16})";'
             salt = re.findall(pattern, html)
-            if (len(salt) == 1):
+            # print("ssalt=", salt)
+            if len(salt) == 1:
                 salt = salt[0]
             else:
                 salt = False
         params['username'] = self.username
+        # print("salt=", salt)
         if not salt:
             params['password'] = self.password
         else:
@@ -74,6 +78,7 @@ class casLogin:
                 else:
                     imgUrl = self.host + 'authserver/getCaptcha.htl'
                     params['captcha'] = Utils.getCodeFromImg(self.session, imgUrl)
+        # print(params)
         data = self.session.post(self.login_url, params=params, allow_redirects=False)
         # 如果等于302强制跳转，代表登陆成功
         if data.status_code == 302:
@@ -90,9 +95,20 @@ class casLogin:
                     raise Exception('登录失败，请反馈BUG')
         elif data.status_code == 200:
             data = data.text
+            print(data)
             soup = BeautifulSoup(data, 'lxml')
             if self.type == 0:
-                msg = soup.select('#errorMsg')[0].get_text()
+                msg = soup.select('#errorMsg')
+                if len(msg) != 0:
+                    msg = msg[0].get_text()
+                else:
+                    msg = soup.select("#msg")
+                    if len(msg) != 0:
+                        msg = msg[0].get_text()
+                    else:
+                        msg = soup.select(".authError")
+                        if len(msg) != 0:
+                            msg = msg[0].get_text()
             else:
                 msg = soup.select('#formErrorTip2')[0].get_text()
             raise Exception(msg)

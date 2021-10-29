@@ -1,4 +1,5 @@
 import traceback
+import uuid
 from todayLoginService import TodayLoginService
 from actions.autoSign import AutoSign
 from actions.collection import Collection
@@ -18,6 +19,8 @@ def loadConfig():
         # 坐标随机偏移
         user['lon'], user['lat'] = RT.locationOffset(
             user['lon'], user['lat'], config['locationOffsetRange'])
+        user['deviceId'] = user.get(
+            'deviceId', RT.genDeviceID(user.get('username')))
     return config
 
 
@@ -88,9 +91,10 @@ def main():
             except TaskError as e:
                 msg = str(e)
             except Exception as e:
-                LL.log(2, traceback.format_exc())
-                LL.log(2, user['username']+'签到失败'+str(e))
-                continue
+                msg = str(e)
+                LL.log(3, traceback.format_exc(), user['username']+'签到失败'+msg)
+                if maxTry != tryTimes:
+                    continue
 
             # 消息格式化
             msg = '--%s|%d\n--%s' % (user['username'], tryTimes, msg)
@@ -105,9 +109,9 @@ def main():
     msg = '==签到情况==\n'
     for i in config['users']:
         msg += '[%s]\n%s\n' % (i['remarkName'], i['state'])
-    LL.log(4, msg)
+    LL.log(1, msg)
     sm = SendMessage(config['sendMessage'])
-    sm.send(LL.getLog(4), '健康打卡自动签到')
+    sm.send(msg+'\n'+LL.getLog(4), '自动健康打卡')
     LL.log(1, sm.log_str)
 
 

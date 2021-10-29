@@ -1,8 +1,12 @@
+## 警告
+
+**因为今日校园2021/10/25更新，本仓库已弃坑停止更新。测试本仓库有封号风险。**
+
 ## [ruoli-sign-optimization](https://github.com/IceTiki/ruoli-sign-optimization)
 
 基于[若离自动签到](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到。
 
-**最近更新2021/10/6**
+> **最近有大更新2021/10/6，配置文件需要重新填写**
 
 ## 修改摘要
 
@@ -20,7 +24,7 @@
 
 ------
 
-- [ ] DeviceID通过用户名伪随机生成
+- [x] DeviceID通过用户名伪随机生成
 - [ ] UA随机生成
 - [ ] 随机签到时间延迟
 

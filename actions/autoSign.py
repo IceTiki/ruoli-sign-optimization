@@ -5,7 +5,6 @@ import uuid
 import math
 import yaml
 
-from pyDes import des, CBC, PAD_PKCS5
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
@@ -26,7 +25,6 @@ class AutoSign:
     # 获取未签到的任务
 
     def getUnSignTask(self):
-        # 如果有合适的任务，则返回dict。如果没有需要签到的任务，则返回str。
         LL.log(1, '获取未签到的任务')
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
@@ -41,11 +39,11 @@ class AutoSign:
 
         signLevel = self.userInfo.get('signLevel', 1)
         if signLevel >= 0:
-            taskList = res['datas']['unSignedTasks'] # 未签到任务
+            taskList = res['datas']['unSignedTasks']  # 未签到任务
         if signLevel >= 1:
-            taskList += res['datas']['leaveTasks'] # 不需签到任务
+            taskList += res['datas']['leaveTasks']  # 不需签到任务
         if signLevel == 2:
-            taskList += res['datas']['signedTasks'] # 已签到任务
+            taskList += res['datas']['signedTasks']  # 已签到任务
         # 查询是否没有未签到任务
         LL.log(1, '获取到的签到任务列表', taskList)
         if len(taskList) < 1:
@@ -173,41 +171,62 @@ class AutoSign:
         self.form['uaIsCpadaily'] = True
         self.form['signVersion'] = '1.0.0'
 
-    # DES加密
-    def DESEncrypt(self, s, key='b3L26XNL'):
-        key = key
-        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
-        k = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
-        encrypt_str = k.encrypt(s)
-        return base64.b64encode(encrypt_str).decode()
+    def getSubmitExtension(self):
+        '''生成各种额外参数'''
+        extension = {
+            "lon": self.userInfo['lon'],
+            "lat": self.userInfo['lat'],
+            "model": "OPPO R11 Plus",
+            "appVersion": "9.0.12",
+            "systemVersion": "4.4.4",
+            "userId": self.userInfo['username'],
+            "systemName": "android",
+            "deviceId": self.userInfo['deviceId']
+        }
+
+        self.cpdailyExtension = CT.encrypt_CpdailyExtension(
+            json.dumps(extension))
+
+        self.bodyString = CT.encrypt_BodyString(json.dumps(self.form))
+
+        self.submitData = {
+            "lon": self.userInfo['lon'],
+            "version": "first_v2",
+            "calVersion": "firstv",
+            "deviceId": self.userInfo['deviceId'],
+            "userId": self.userInfo['username'],
+            "systemName": "android",
+            "bodyString": self.bodyString,
+            "lat": self.userInfo['lat'],
+            "systemVersion": "4.4.4",
+            "appVersion": "9.0.12",
+            "model": "OPPO R11 Plus",
+        }
+
+        sign = ''.join("%s=%s&" % (i, self.submitData[i]) for i in [
+                       "appVersion", "bodyString", "deviceId", "lat", "lon", "model", "systemName", "systemVersion", "userId"]) + "ytUQ7l2ZZu8mLvJZ"
+        sign = HSF.strHash(sign, 5)
+        self.submitData['sign'] = sign
 
     # 提交签到信息
     def submitForm(self):
         LL.log(1, '提交签到信息')
-        extension = {
-            "lon": self.form['longitude'],
-            "lat": self.form['latitude'],
-            "model": "OPPO R11 Plus",
-            "appVersion": "8.1.14",
-            "systemVersion": "4.4.4",
-            "userId": self.userInfo['username'],
-            "systemName": "android",
-            "deviceId": str(uuid.uuid1())
-        }
+        self.getSubmitExtension()
+
         headers = {
             'User-Agent': self.session.headers['User-Agent'],
             'CpdailyStandAlone': '0',
             'extension': '1',
-            'Cpdaily-Extension': self.DESEncrypt(json.dumps(extension)),
+            'Cpdaily-Extension': self.cpdailyExtension,
             'Content-Type': 'application/json; charset=utf-8',
             'Accept-Encoding': 'gzip',
             'Host': re.findall('//(.*?)/', self.host)[0],
             'Connection': 'Keep-Alive'
         }
-        # LL.log(1,json.dumps(self.form))
-        LL.log(1, '即将提交的信息', extension, headers, self.form)
+
+        LL.log(1, '即将提交的信息', headers, self.submitData)
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
-                                data=json.dumps(self.form), verify=False)
+                                data=json.dumps(self.submitData), verify=False)
         res = DT.resJsonEncode(res)
         LL.log(1, '提交后返回的信息', res['message'])
         return '[%s]%s' % (res['message'], self.taskInfo['taskName'])

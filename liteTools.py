@@ -4,10 +4,16 @@ import yaml
 import math
 import random
 import os
+from Crypto.Cipher import AES
+from pyDes import des, CBC, PAD_PKCS5
+import base64
+import hashlib
+
 
 class TaskError(Exception):
     '''目前(配置/时间/签到情况)不宜完成签到任务'''
     pass
+
 
 class MT:
     '''MiscTools'''
@@ -118,6 +124,16 @@ class RT:
         LL.log(0, f'程序正在暂停({sleepTime})')
         time.sleep(sleepTime)
 
+    @staticmethod
+    def genDeviceID(seed):
+        '''根据种子伪随机生成uuid'''
+        random.seed(seed, version=2)  # 种子设置
+        def ranHex(x): return ''.join(
+            random.choices('0123456789ABCDEF', k=x))  # 指定长度随机Hex字符串生成
+        deviceId = "-".join([ranHex(8), ranHex(4), ranHex(4),
+                            ranHex(4), ranHex(12)])  # 拼合字符串
+        return deviceId
+
 
 class DT:
     '''dict tools'''
@@ -197,3 +213,132 @@ class LL:
             "LOG#t=%Y-%m-%d--%H-%M-%S##.txt", time.localtime()))
         with open(dir, 'w', encoding='utf-8') as f:
             f.write(log)
+
+
+class CT:
+    '''CryptoTools'''
+    charset = 'utf-8'
+
+    @staticmethod
+    def encrypt_BodyString(text):
+        """BodyString加密"""
+        key = b"ytUQ7l2ZZu8mLvJZ"
+        iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+
+        text = CT.pkcs7padding(text)  # 填充
+        text = text.encode(CT.charset)  # 编码
+        text = cipher.encrypt(text)  # 加密
+        text = base64.b64encode(text).decode(CT.charset)  # Base64编码
+        return text
+
+    @staticmethod
+    def decrypt_BodyString(text):
+        """BodyString解密"""
+        key = b"ytUQ7l2ZZu8mLvJZ"
+        iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+
+        text = base64.b64decode(text)  # Base64解码
+        text = cipher.decrypt(text)  # 解密
+        text = text.decode(CT.charset)  # 解码
+        text = CT.pkcs7unpadding(text)  # 删除填充
+        return text
+
+    @staticmethod
+    def pkcs7padding(text: str):
+        """明文使用PKCS7填充"""
+        remainder = 16 - len(text.encode(CT.charset)) % 16
+        return str(text + chr(remainder) * remainder)
+
+    @staticmethod
+    def pkcs7unpadding(text: str):
+        """去掉填充字符"""
+        return text[:-ord(text[-1])]
+
+    @staticmethod
+    def encrypt_CpdailyExtension(text):
+        '''CpdailyExtension加密'''
+        key = 'b3L26XNL'
+        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
+        d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
+
+        text = d.encrypt(text)  # 加密
+        text = base64.b64encode(text).decode()  # base64编码
+        return text
+
+
+class HSF:
+    """Hashing String And File"""
+    @staticmethod
+    def geneHashObj(hash_type):
+        if hash_type == 1:
+            return hashlib.sha1()
+        elif hash_type == 224:
+            return hashlib.sha224()
+        elif hash_type == 256:
+            return hashlib.sha256()
+        elif hash_type == 384:
+            return hashlib.sha384()
+        elif hash_type == 512:
+            return hashlib.sha512()
+        elif hash_type == 5:
+            return hashlib.md5()
+        elif hash_type == 3.224:
+            return hashlib.sha3_224()
+        elif hash_type == 3.256:
+            return hashlib.sha3_256()
+        elif hash_type == 3.384:
+            return hashlib.sha3_384()
+        elif hash_type == 3.512:
+            return hashlib.sha3_512()
+        else:
+            raise Exception('类型错误, 初始化失败')
+
+    @staticmethod
+    def fileHash(path, hash_type):
+        """计算文件哈希
+        :param path: 文件路径
+        :param hash_type: 哈希算法类型
+            1       sha-1
+            224     sha-224
+            256      sha-256
+            384     sha-384
+            512     sha-512
+            5       md5
+            3.256   sha3-256
+            3.384   sha3-384
+            3.512   sha3-512
+        """
+        hashObj = HSF.geneHashObj(hash_type)
+        if os.path.isfile(path):
+            try:
+                with open(path, "rb") as f:
+                    for byte_block in iter(lambda: f.read(1048576), b""):
+                        hashObj.update(byte_block)
+                    return hashObj.hexdigest()
+            except Exception as e:
+                raise Exception('%s计算哈希出错: %s' % (path, e))
+        else:
+            raise Exception('路径错误, 没有指向文件: "%s"')
+
+    @staticmethod
+    def strHash(str_: str, hash_type, charset='utf-8'):
+        """计算字符串哈希
+        :param str_: 字符串
+        :param hash_type: 哈希算法类型
+        :param charset: 字符编码类型
+            1       sha-1
+            224     sha-224
+            256      sha-256
+            384     sha-384
+            512     sha-512
+            5       md5
+            3.256   sha3-256
+            3.384   sha3-384
+            3.512   sha3-512
+        """
+        hashObj = HSF.geneHashObj(hash_type)
+        bstr = str_.encode(charset)
+        hashObj.update(bstr)
+        return hashObj.hexdigest()

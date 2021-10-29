@@ -19,7 +19,7 @@ class Collection:
         self.collectWid = None
         self.taskWid = None
         self.schoolTaskWid = None
-        self.form = []
+        self.form = {}
 
     # 查询表单
     def queryForm(self):
@@ -54,6 +54,7 @@ class Collection:
 
     # 填写表单
     def fillForm(self):
+        task_form = []
         # 检查用户配置长度与查询到的表单长度是否匹配
         if len(self.task) != len(self.userInfo['forms']):
             raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
@@ -112,51 +113,76 @@ class Collection:
                     raise Exception(
                         f'\r\n{userForm}配置项属于未知配置项，请反馈'
                     )
-                self.form.append(formItem)
+                task_form.append(formItem)
             else:
                 pass
 
-    # 提交表单
-    def submitForm(self):
+        self.form["form"] = task_form
+        self.form["formWid"] = self.taskWid
+        self.form["address"] = self.userInfo['address']
+        self.form["collectWid"] = self.collectWid
+        self.form["schoolTaskWid"] = self.schoolTaskWid
+        self.form["uaIsCpadaily"] = True
+        self.form["latitude"] = self.userInfo['lat']
+        self.form["longitude"] = self.userInfo['lon']
+
+    def getSubmitExtension(self):
+        '''生成各种额外参数'''
         extension = {
-            "model": "OPPO R11 Plus",
-            "appVersion": "8.2.14",
-            "systemVersion": "9.1.0",
-            "userId": self.userInfo['username'],
-            "systemName": "android",
             "lon": self.userInfo['lon'],
             "lat": self.userInfo['lat'],
-            "deviceId": str(uuid.uuid1())
+            "model": "OPPO R11 Plus",
+            "appVersion": "9.0.12",
+            "systemVersion": "4.4.4",
+            "userId": self.userInfo['username'],
+            "systemName": "android",
+            "deviceId": self.userInfo['deviceId']
         }
+
+        self.cpdailyExtension = CT.encrypt_CpdailyExtension(
+            json.dumps(extension))
+
+        self.bodyString = CT.encrypt_BodyString(json.dumps(self.form))
+
+        self.submitData = {
+            "lon": self.userInfo['lon'],
+            "version": "first_v2",
+            "calVersion": "firstv",
+            "deviceId": self.userInfo['deviceId'],
+            "userId": self.userInfo['username'],
+            "systemName": "android",
+            "bodyString": self.bodyString,
+            "lat": self.userInfo['lat'],
+            "systemVersion": "4.4.4",
+            "appVersion": "9.0.12",
+            "model": "OPPO R11 Plus",
+        }
+
+        sign = ''.join("%s=%s&" % (i, self.submitData[i]) for i in [
+                       "appVersion", "bodyString", "deviceId", "lat", "lon", "model", "systemName", "systemVersion", "userId"]) + "ytUQ7l2ZZu8mLvJZ"
+        sign = HSF.strHash(sign, 5)
+        self.submitData['sign'] = sign
+
+    # 提交表单
+    def submitForm(self):
+        self.getSubmitExtension()
 
         headers = {
             'User-Agent': self.session.headers['User-Agent'],
             'CpdailyStandAlone': '0',
             'extension': '1',
-            'Cpdaily-Extension': self.DESEncrypt(json.dumps(extension)),
+            'Cpdaily-Extension': self.cpdailyExtension,
             'Content-Type': 'application/json; charset=utf-8',
             # 请注意这个应该和配置文件中的host保持一致
             'Host': re.findall('//(.*?)/', self.host)[0],
             'Connection': 'Keep-Alive',
             'Accept-Encoding': 'gzip'
         }
-        params = {
-            "formWid": self.taskWid, "address": self.userInfo['address'], "collectWid": self.collectWid,
-            "schoolTaskWid": self.schoolTaskWid, "form": self.form, "uaIsCpadaily": True,
-            "latitude": self.userInfo['lat'], 'longitude': self.userInfo['lon']
-        }
+
         submitUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/submitForm'
-        LL.log(1, '提交表单', 'extension', extension,
-               'headers', headers, 'params', params)
+        LL.log(1, '提交表单', 'data', self.submitData,
+               'headers', headers, 'params', self.submitData)
         data = self.session.post(
-            submitUrl, headers=headers, data=json.dumps(params), verify=False)
+            submitUrl, headers=headers, data=json.dumps(self.submitData), verify=False)
         data = DT.resJsonEncode(data)
         return data['message']
-
-    # DES加密
-    def DESEncrypt(self, content):
-        key = 'b3L26XNL'
-        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
-        k = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
-        encrypt_str = k.encrypt(content)
-        return base64.b64encode(encrypt_str).decode()

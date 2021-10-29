@@ -105,40 +105,58 @@ class sleepCheck:
         self.form['qrUuid'] = ''
         self.form['uaIsCpadaily'] = True
 
-    # DES加密
-
-    def DESEncrypt(self, s, key='b3L26XNL'):
-        key = key
-        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
-        k = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
-        encrypt_str = k.encrypt(s)
-        return base64.b64encode(encrypt_str).decode()
-
-    # 提交签到信息
-    def submitForm(self):
+    def getSubmitExtension(self):
+        '''生成各种额外参数'''
         extension = {
+            "lon": self.userInfo['lon'],
+            "lat": self.userInfo['lat'],
             "model": "OPPO R11 Plus",
-            "appVersion": "8.1.14",
+            "appVersion": "9.0.12",
             "systemVersion": "4.4.4",
             "userId": self.userInfo['username'],
             "systemName": "android",
-            "lat": self.userInfo['lat'],
-            "lon": self.userInfo['lon'],
-            "deviceId": str(uuid.uuid1())
+            "deviceId": self.userInfo['deviceId']
         }
+
+        self.cpdailyExtension = CT.encrypt_CpdailyExtension(
+            json.dumps(extension))
+
+        self.bodyString = CT.encrypt_BodyString(json.dumps(self.form))
+
+        self.submitData = {
+            "lon": self.userInfo['lon'],
+            "version": "first_v2",
+            "calVersion": "firstv",
+            "deviceId": self.userInfo['deviceId'],
+            "userId": self.userInfo['username'],
+            "systemName": "android",
+            "bodyString": self.bodyString,
+            "lat": self.userInfo['lat'],
+            "systemVersion": "4.4.4",
+            "appVersion": "9.0.12",
+            "model": "OPPO R11 Plus",
+        }
+
+        sign = ''.join("%s=%s&" % (i, self.submitData[i]) for i in [
+                       "appVersion", "bodyString", "deviceId", "lat", "lon", "model", "systemName", "systemVersion", "userId"]) + "ytUQ7l2ZZu8mLvJZ"
+        sign = HSF.strHash(sign, 5)
+        self.submitData['sign'] = sign
+
+    # 提交签到信息
+    def submitForm(self):
+        self.getSubmitExtension()
         headers = {
             'User-Agent': self.session.headers['User-Agent'],
             'CpdailyStandAlone': '0',
             'extension': '1',
-            'Cpdaily-Extension': self.DESEncrypt(json.dumps(extension)),
+            'Cpdaily-Extension': self.cpdailyExtension,
             'Content-Type': 'application/json; charset=utf-8',
             'Accept-Encoding': 'gzip',
             'Host': re.findall('//(.*?)/', self.host)[0],
             'Connection': 'Keep-Alive'
         }
-        LL.log(1, '提交查寝数据', 'extension', extension,
-               'header', headers, 'data', self.form)
+        LL.log(1, '提交查寝数据', 'data', self.submitData, 'header', headers)
         res = self.session.post(f'{self.host}wec-counselor-attendance-apps/student/attendance/submitSign', headers=headers,
-                                data=json.dumps(self.form), verify=False)
+                                data=json.dumps(self.submitData), verify=False)
         res = DT.resJsonEncode(res)
         return res['message']
