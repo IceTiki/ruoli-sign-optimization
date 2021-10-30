@@ -20,7 +20,7 @@ def loadConfig():
         user['lon'], user['lat'] = RT.locationOffset(
             user['lon'], user['lat'], config['locationOffsetRange'])
         user['deviceId'] = user.get(
-            'deviceId', RT.genDeviceID(user.get('username')))
+            'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
     return config
 
 
