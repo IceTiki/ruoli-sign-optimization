@@ -30,6 +30,10 @@ class Collection:
             'pageSize': 20,
             "pageNumber": 1
         }
+        # 第一次请求接口获取cookies（MOD_AUTH_CAS）
+        self.session.post(queryUrl, headers=headers,
+                          data=json.dumps({}), verify=False)
+        # 第二次请求接口，真正的拿到具体任务
         res = self.session.post(queryUrl, data=json.dumps(
             params), headers=headers, verify=False)
         res = DT.resJsonEncode(res)

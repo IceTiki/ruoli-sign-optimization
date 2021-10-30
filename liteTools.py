@@ -44,8 +44,9 @@ class RT:
         offset——偏移范围(单位m)
         round_——保留位数
         '''
+        if offset == 0:
+            return (lon, lat)
         # 限定函数(经度-180~180，维度-90~90)
-
         def limit(n, a, b):
             if n < a:
                 n = a
