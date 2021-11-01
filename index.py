@@ -1,5 +1,5 @@
 import traceback
-import uuid
+import os
 from todayLoginService import TodayLoginService
 from actions.autoSign import AutoSign
 from actions.collection import Collection
@@ -71,6 +71,9 @@ def working(user):
 
 
 def main():
+    # 将工作路径设置为脚本位置
+    os.chdir(os.path.dirname(__file__))
+
     # 加载配置
     config = loadConfig()
     maxTry = config['maxTry']
