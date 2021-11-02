@@ -71,8 +71,7 @@ def working(user):
 
 
 def main():
-    # 将工作路径设置为脚本位置
-    os.chdir(os.path.dirname(__file__))
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))  # 将工作路径设置为脚本位置
 
     # 加载配置
     config = loadConfig()
