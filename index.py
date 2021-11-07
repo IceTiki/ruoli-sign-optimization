@@ -6,6 +6,7 @@ from actions.collection import Collection
 from actions.sleepCheck import sleepCheck
 from actions.workLog import workLog
 from actions.sendMessage import SendMessage
+from actions.teacherSign import teacherSign
 from login.Utils import Utils
 from liteTools import *
 
@@ -14,13 +15,23 @@ def loadConfig():
     config = DT.loadYml('config.yml')
     # 用户配置初始化
     for user in config['users']:
-        user['remarkName'] = user.get('remarkName', '默认备注名')
-        user['state'] = None
+        defaultConfig = {
+            'remarkName': '默认备注名',
+            'state': None,
+            'model': 'OPPO R11 Plus',
+            'appVersion': '9.0.12',
+            'systemVersion': '4.4.4',
+            'systemName': 'android'
+        }
+        defaultConfig.update(user)
+        user.update(defaultConfig)
+
+        user['deviceId'] = user.get(
+            'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
+
         # 坐标随机偏移
         user['lon'], user['lat'] = RT.locationOffset(
             user['lon'], user['lat'], config['locationOffsetRange'])
-        user['deviceId'] = user.get(
-            'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
     return config
 
 
@@ -65,6 +76,15 @@ def working(user):
         work.getFormsByWids()
         work.fillForms()
         msg = work.submitForms()
+        return msg
+    elif user['type'] == 4:
+        # 以下代码是政工签到的代码
+        LL.log(1, '即将开始政工签到填报')
+        check = teacherSign(today, user)
+        check.getUnSignedTasks()
+        check.getDetailTask()
+        check.fillForm()
+        msg = check.submitForm()
         return msg
     else:
         raise Exception('任务类型出错，请检查您的user的type')

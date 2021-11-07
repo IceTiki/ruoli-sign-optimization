@@ -115,11 +115,11 @@ class workLog:
     def submitSign(self, fieldWid, worklogWid):
         extension = {
             "lon": self.userInfo['lon'],
-            "model": "OPPO R11 Plus",
+            "model": self.userInfo['model'],
             "appVersion": "8.1.14",
-            "systemVersion": "4.4.4",
+            "systemVersion": self.userInfo['systemVersion'],
             "userId": self.userInfo['username'],
-            "systemName": "android",
+            "systemName": self.userInfo['systemName'],
             "lat": self.userInfo['lat'],
             "deviceId": str(uuid.uuid1())
         }

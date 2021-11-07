@@ -25,7 +25,7 @@ sendMessage: # 推送函数的整体运行情况
 users: # ------别误删了这一行------
   - # 信息收集模板=======
     # 通用必填项-------
-    type: 0 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3]
+    type: 0 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
     schoolName: 宜宾学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
@@ -44,28 +44,10 @@ users: # ------别误删了这一行------
     lon: 104.616858 # 经度
     lat: 28.793022 # 纬度
     address: "宜宾市（自己改）" # 地址信息
-    # 可选项(如不需要可以删除)-------
-    remarkName: "这个人太懒了，都不自己填备注名" # 备注姓名(可随意，仅供日志输出)
-    state: # 签到情况跟踪，无需修改此项目
-    proxy: # 代理ip信息（格式为：网络协议://ip地址:端口   如：http://127.0.0.1:7890）
-    deviceId: # 设备识别号
-    userAgent: # 用户设备信息
-    sendMessage:
-      rl_emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
-      rl_email: "" # email 接受通知消息的邮箱(不需要推送不用填)
-      qmsg_key: "" # qmsg推送的key(不需要推送不用填)
-      qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)
-      qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
-      pushplus_token: "" # pushplus令牌
-      smtp_host: "smtp.qq.com" # SMTP服务器域名
-      smtp_user: "*****@qq.com" # SMTP服务器用户名
-      smtp_key: "" # SMTP服务器密钥
-      smtp_sender: "*****@qq.com" # 发送邮箱
-      smtp_receivers:
-        - "*****@qq.com" # 接收邮箱(可填多个)
+
   - # 签到模板=======
     # 通用必填项-------
-    type: 1 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3]
+    type: 1 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
     schoolName: 宜宾学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
@@ -86,28 +68,10 @@ users: # ------别误删了这一行------
     lon: 104.616858 # 经度
     lat: 28.793022 # 纬度
     address: "宜宾市（自己改）" # 地址信息
-    # 可选项(如不需要可以删除)-------
-    remarkName: "这个人太懒了，都不自己填备注名" # 备注姓名(可随意，仅供日志输出)
-    state: # 签到情况跟踪，无需修改此项目
-    proxy: # 代理ip信息（格式为：网络协议://ip地址:端口   如：http://127.0.0.1:7890）
-    deviceId: # 设备识别号
-    userAgent: # 用户设备信息
-    sendMessage:
-      rl_emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
-      rl_email: "" # email 接受通知消息的邮箱(不需要推送不用填)
-      qmsg_key: "" # qmsg推送的key(不需要推送不用填)
-      qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)
-      qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
-      pushplus_token: "" # pushplus令牌
-      smtp_host: "smtp.qq.com" # SMTP服务器域名
-      smtp_user: "*****@qq.com" # SMTP服务器用户名
-      smtp_key: "" # SMTP服务器密钥
-      smtp_sender: "*****@qq.com" # 发送邮箱
-      smtp_receivers:
-        - "*****@qq.com" # 接收邮箱(可填多个)
+
   - # 查寝模板=======
     # 通用必填项-------
-    type: 2 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3]
+    type: 2 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
     schoolName: 宜宾学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
@@ -118,28 +82,10 @@ users: # ------别误删了这一行------
     lon: 104.616858 # 经度
     lat: 28.793022 # 纬度
     address: "宜宾市（自己改）" # 地址信息
-    # 可选项(如不需要可以删除)-------
-    remarkName: "这个人太懒了，都不自己填备注名" # 备注姓名(可随意，仅供日志输出)
-    state: # 签到情况跟踪，无需修改此项目
-    proxy: # 代理ip信息（格式为：网络协议://ip地址:端口   如：http://127.0.0.1:7890）
-    deviceId: # 设备识别号
-    userAgent: # 用户设备信息
-    sendMessage:
-      rl_emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
-      rl_email: "" # email 接受通知消息的邮箱(不需要推送不用填)
-      qmsg_key: "" # qmsg推送的key(不需要推送不用填)
-      qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)
-      qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
-      pushplus_token: "" # pushplus令牌
-      smtp_host: "smtp.qq.com" # SMTP服务器域名
-      smtp_user: "*****@qq.com" # SMTP服务器用户名
-      smtp_key: "" # SMTP服务器密钥
-      smtp_sender: "*****@qq.com" # 发送邮箱
-      smtp_receivers:
-        - "*****@qq.com" # 接收邮箱(可填多个)
+
   - # 教师工作日志模板=======
     # 通用必填项-------
-    type: 3 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3]
+    type: 3 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
     schoolName: 宜宾学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
@@ -171,22 +117,17 @@ users: # ------别误删了这一行------
     lon: 104.616858 # 经度
     lat: 28.793022 # 纬度
     address: "宜宾市（自己改）" # 地址信息
-    # 可选项(如不需要可以删除)-------
-    remarkName: "这个人太懒了，都不自己填备注名" # 备注姓名(可随意，仅供日志输出)
-    state: # 签到情况跟踪，无需修改此项目
-    proxy: # 代理ip信息（格式为：网络协议://ip地址:端口   如：http://127.0.0.1:7890）
-    deviceId: # 设备识别号
-    userAgent: # 用户设备信息
-    sendMessage:
-      rl_emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
-      rl_email: "" # email 接受通知消息的邮箱(不需要推送不用填)
-      qmsg_key: "" # qmsg推送的key(不需要推送不用填)
-      qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)
-      qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
-      pushplus_token: "" # pushplus令牌
-      smtp_host: "smtp.qq.com" # SMTP服务器域名
-      smtp_user: "*****@qq.com" # SMTP服务器用户名
-      smtp_key: "" # SMTP服务器密钥
-      smtp_sender: "*****@qq.com" # 发送邮箱
-      smtp_receivers:
-        - "*****@qq.com" # 接收邮箱(可填多个)
+
+  - # 政工签到模板=======
+    # 通用必填项-------
+    type: 4 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
+    schoolName: 宜宾学院 # 学校全称
+    username: "" # 学号或者工号
+    password: "" # 密码
+    # 一般需填项-------
+    abnormalReason: "" # abnormalReason 反馈信息（这个一般不用配置，但是不能删除，删除会报错）
+    photo: sign.jpg # 签到照片，不需要可不填。如果填入文件夹路径或路径列表，则会自动从中随机选择图片(.jpg)
+    # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
+    lon: 104.616858 # 经度
+    lat: 28.793022 # 纬度
+    address: "宜宾市（自己改）" # 地址信息

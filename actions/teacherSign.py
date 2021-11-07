@@ -10,8 +10,8 @@ from todayLoginService import TodayLoginService
 from liteTools import *
 
 
-class sleepCheck:
-    # 初始化信息收集类
+class teacherSign:
+    # 初始化政工签到类
     def __init__(self, todaLoginService: TodayLoginService, userInfo):
         self.session = todaLoginService.session
         self.host = todaLoginService.host
@@ -24,7 +24,7 @@ class sleepCheck:
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
-        url = f'{self.host}wec-counselor-attendance-apps/student/attendance/getStuAttendacesInOneDay'
+        url = f'{self.host}wec-counselor-teacher-sign-apps/teacher/sign/getTeacherSignInfosInOneDay'
         self.session.post(url, headers=headers,
                           data=json.dumps({}), verify=False)
         # 第二次请求接口，真正的拿到具体任务
@@ -43,7 +43,7 @@ class sleepCheck:
 
     # 获取具体的签到任务详情
     def getDetailTask(self):
-        url = f'{self.host}wec-counselor-attendance-apps/student/attendance/detailSignInstance'
+        url = f'{self.host}wec-counselor-teacher-sign-apps/teacher/sign/detailSignInstance'
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
         res = self.session.post(url, headers=headers, data=json.dumps(
@@ -54,7 +54,7 @@ class sleepCheck:
 
     # 上传图片到阿里云oss
     def uploadPicture(self):
-        url = f'{self.host}wec-counselor-sign-apps/stu/oss/getUploadPolicy'
+        url = f'{self.host}wec-counselor-teacher-sign-apps/teacher/oss/getUploadPolicy'
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
                                 verify=False)
         datas = DT.resJsonEncode(res).get('datas')
@@ -80,7 +80,7 @@ class sleepCheck:
 
     # 获取图片上传位置
     def getPictureUrl(self):
-        url = f'{self.host}wec-counselor-sign-apps/stu/sign/previewAttachment'
+        url = f'{self.host}wec-counselor-teacher-sign-apps/teacher/sign/previewAttachment'
         params = {'ossKey': self.fileName}
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
                                 verify=False)
@@ -156,7 +156,7 @@ class sleepCheck:
             'Connection': 'Keep-Alive'
         }
         LL.log(1, '提交查寝数据', 'data', self.submitData, 'header', headers)
-        res = self.session.post(f'{self.host}wec-counselor-attendance-apps/student/attendance/submitSign', headers=headers,
+        res = self.session.post(f'{self.host}wec-counselor-teacher-sign-apps/teacher/sign/submitSign', headers=headers,
                                 data=json.dumps(self.submitData), verify=False)
         res = DT.resJsonEncode(res)
         return res['message']

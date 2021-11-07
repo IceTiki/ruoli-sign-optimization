@@ -265,7 +265,20 @@ class CT:
         d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
 
         text = d.encrypt(text)  # 加密
-        text = base64.b64encode(text).decode()  # base64编码
+        text = base64.b64encode(text)  # base64编码
+        text = text.decode()  # 解码
+        return text
+
+    @staticmethod
+    def decrypt_CpdailyExtension(text):
+        '''CpdailyExtension加密'''
+        key = 'b3L26XNL'
+        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
+        d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
+
+        text = base64.b64decode(text)  # Base64解码
+        text = d.decrypt(text)  # 解密
+        text = text.decode()  # 解码
         return text
 
 

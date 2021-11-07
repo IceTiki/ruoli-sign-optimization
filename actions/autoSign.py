@@ -176,11 +176,11 @@ class AutoSign:
         extension = {
             "lon": self.userInfo['lon'],
             "lat": self.userInfo['lat'],
-            "model": "OPPO R11 Plus",
-            "appVersion": "9.0.12",
-            "systemVersion": "4.4.4",
+            "model": self.userInfo['model'],
+            "appVersion": self.userInfo['appVersion'],
+            "systemVersion": self.userInfo['systemVersion'],
             "userId": self.userInfo['username'],
-            "systemName": "android",
+            "systemName": self.userInfo['systemName'],
             "deviceId": self.userInfo['deviceId']
         }
 
@@ -195,12 +195,12 @@ class AutoSign:
             "calVersion": "firstv",
             "deviceId": self.userInfo['deviceId'],
             "userId": self.userInfo['username'],
-            "systemName": "android",
+            "systemName": self.userInfo['systemName'],
             "bodyString": self.bodyString,
             "lat": self.userInfo['lat'],
-            "systemVersion": "4.4.4",
-            "appVersion": "9.0.12",
-            "model": "OPPO R11 Plus",
+            "systemVersion": self.userInfo['systemVersion'],
+            "appVersion": self.userInfo['appVersion'],
+            "model": self.userInfo['model'],
         }
 
         sign = ''.join("%s=%s&" % (i, self.submitData[i]) for i in [
