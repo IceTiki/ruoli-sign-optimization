@@ -19,6 +19,7 @@ class Collection:
         self.collectWid = None
         self.taskWid = None
         self.schoolTaskWid = None
+        self.instanceWid = None
         self.form = {}
 
     # 查询表单
@@ -40,13 +41,19 @@ class Collection:
         if res['datas']['totalSize'] < 1:
             raise TaskError('没有查询到信息收集任务')
         LL.log(1, '查询任务返回结果', res['datas'])
-        self.collectWid = res['datas']['rows'][0]['wid']
-        self.taskWid = res['datas']['rows'][0]['formWid']
+        task = res['datas']['rows'][0]
+        self.collectWid = task['wid']
+        self.taskWid = task['formWid']
+        self.instanceWid = task.get('instanceWid', '')
         detailUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
         res = self.session.post(detailUrl, headers=headers, data=json.dumps({'collectorWid': self.collectWid}),
                                 verify=False)
         res = DT.resJsonEncode(res)
-        self.schoolTaskWid = res['datas']['collector']['schoolTaskWid']
+        try:
+            self.schoolTaskWid = res['datas']['collector']['schoolTaskWid']
+        except TypeError:
+            self.schoolTaskWid = ''
+            LL.log(1, '循环普通任务实例wid为空')
         getFormUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/getFormFields'
         params = {"pageSize": 100, "pageNumber": 1,
                   "formWid": self.taskWid, "collectorWid": self.collectWid}
@@ -129,6 +136,7 @@ class Collection:
         self.form["uaIsCpadaily"] = True
         self.form["latitude"] = self.userInfo['lat']
         self.form["longitude"] = self.userInfo['lon']
+        self.form['instanceWid'] = self.instanceWid
 
     def getSubmitExtension(self):
         '''生成各种额外参数'''
