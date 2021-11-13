@@ -56,6 +56,7 @@ class AutoSign:
             LL.log(1, '最后一个未签到的任务', latestTask['taskName'])
             self.taskInfo = {'signInstanceWid': latestTask['signInstanceWid'],
                              'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
+            return self.taskInfo
         # 获取匹配标题的任务
         for righttask in taskList:
             if righttask['taskName'] == self.userInfo['title']:
