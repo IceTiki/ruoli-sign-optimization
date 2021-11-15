@@ -1,9 +1,5 @@
-import base64
 import json
 import re
-import uuid
-import math
-import yaml
 
 from requests_toolbelt import MultipartEncoder
 

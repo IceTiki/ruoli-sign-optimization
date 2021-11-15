@@ -1,7 +1,6 @@
 import base64
 import json
 import re
-import uuid
 from pyDes import PAD_PKCS5, des, CBC
 
 from todayLoginService import TodayLoginService
@@ -23,6 +22,7 @@ class workLog:
             'User-Agent': self.session.headers['User-Agent'],
             'Content-type': 'application/json; charset=utf-8;'
         }
+        raise Exception('工作日志尚未升级维护')
 
     # 检查是否存在已创建且未提交的模板
     def checkHasLog(self):
@@ -121,7 +121,7 @@ class workLog:
             "userId": self.userInfo['username'],
             "systemName": self.userInfo['systemName'],
             "lat": self.userInfo['lat'],
-            "deviceId": str(uuid.uuid1())
+            "deviceId": self.userInfo['deviceId']
         }
         headers = {
             'User-Agent': self.session.headers['User-Agent'],

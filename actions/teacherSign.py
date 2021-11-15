@@ -1,9 +1,5 @@
-import base64
 import json
 import re
-import uuid
-import yaml
-from pyDes import PAD_PKCS5, des, CBC
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
