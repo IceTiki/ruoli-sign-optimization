@@ -47,6 +47,7 @@ class RT:
         if offset == 0:
             return (lon, lat)
         # 限定函数(经度-180~180，维度-90~90)
+
         def limit(n, a, b):
             if n < a:
                 n = a
@@ -112,6 +113,7 @@ class RT:
             return dir
         else:
             files = filter(lambda x: x.endswith('.jpg'), os.listdir(dir))
+            files = list(files)
             if len(files) == 0:
                 raise Exception("路径(%s)指向一个没有图片(.jpg)的文件夹" % dir)
             return os.path.join(dir, random.choice(files))
@@ -160,6 +162,7 @@ class DT:
 
 class LL:
     '''lite log'''
+    prefix = "V-T3.0.0"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0
@@ -179,7 +182,7 @@ class LL:
     @staticmethod
     def log2FormatStr(logItem):
         logType = LL.logTypeDisplay[logItem[1]]
-        return '|||%s|||%0.3fs|||\n%s' % (logType, logItem[0], logItem[2])
+        return '|||%s|||%s|||%0.3fs|||\n%s' % (LL.prefix, logType, logItem[0], logItem[2])
 
     @staticmethod
     def log(logType=1, *args):
