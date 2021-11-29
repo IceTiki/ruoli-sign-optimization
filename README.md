@@ -1,6 +1,6 @@
 ## [ruoli-sign-optimization](https://github.com/IceTiki/ruoli-sign-optimization)
 
-基于[若离自动签到](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到。
+基于[若离自动签到](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到(但配置文件不通用)。
 
 ## 声明
 
