@@ -1,5 +1,6 @@
 import json
 import re
+from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
 from liteTools import *
@@ -18,7 +19,43 @@ class Collection:
         self.instanceWid = None
         self.form = {}
 
+    # 上传图片到阿里云oss
+    def uploadPicture(self, picDir):
+        url = f'{self.host}wec-counselor-collector-apps/stu/oss/getUploadPolicy'
+        res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
+                                verify=False)
+        datas = DT.resJsonEncode(res).get('datas')
+        fileName = datas.get('fileName')
+        policy = datas.get('policy')
+        accessKeyId = datas.get('accessid')
+        signature = datas.get('signature')
+        policyHost = datas.get('host')
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'
+        }
+        multipart_encoder = MultipartEncoder(
+            fields={  # 这里根据需要进行参数格式设置
+                'key': fileName, 'policy': policy, 'OSSAccessKeyId': accessKeyId, 'success_action_status': '200',
+                'signature': signature,
+                'file': ('blob', open(picDir, 'rb'), 'image/jpg')
+            })
+        headers['Content-Type'] = multipart_encoder.content_type
+        res = self.session.post(url=policyHost,
+                                headers=headers,
+                                data=multipart_encoder)
+        self.fileName = fileName
+
+    # 获取图片上传位置
+    def getPictureUrl(self):
+        url = f'{self.host}wec-counselor-collector-apps/stu/collector/previewAttachment'
+        params = {'ossKey': self.fileName}
+        res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
+                                verify=False)
+        photoUrl = res.json().get('datas')
+        return photoUrl
+
     # 查询表单
+
     def queryForm(self):
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
@@ -116,6 +153,31 @@ class Collection:
                             f'\r\n{userForm}配置项的选项不正确，该选项为多选，且未找到您配置的值'
                         )
                     formItem['value'] = ','.join(itemWidArr)
+                # 图片（健康码）上传类型
+                elif formItem['fieldType'] == '4':
+                    # 如果是传图片的话，那么是将图片的地址（相对/绝对都行）存放于此value中
+                    picDir = RT.choicePhoto(userForm['value'])
+                    self.uploadPicture(picDir)
+                    formItem['value'] = self.getPictureUrl()
+                    # 填充其他信息
+                    formItem.setdefault('http', {
+                        'defaultOptions': {
+                            'customConfig': {
+                                'pageNumberKey': 'pageNumber',
+                                'pageSizeKey': 'pageSize',
+                                'pageDataKey': 'pageData',
+                                'pageTotalKey': 'pageTotal',
+                                'data': 'datas',
+                                'codeKey': 'code',
+                                'messageKey': 'message'
+                            }
+                        }
+                    })
+                    formItem['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/oss/getUploadPolicy'
+                    formItem['saveAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/saveAttachment'
+                    formItem['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
+                    formItem['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
+
                 else:
                     raise Exception(
                         f'\r\n{userForm}配置项属于未知配置项，请反馈'
