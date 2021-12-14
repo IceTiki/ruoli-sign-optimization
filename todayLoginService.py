@@ -30,9 +30,7 @@ class TodayLoginService:
         self.session.adapters.DEFAULT_RETRIES = 5
         self.session.headers = headers
         # 如果设置了用户的代理，那么该用户将走代理的方式进行访问
-        if 'proxy' in userInfo and userInfo['proxy'] is not None:
-            LL.log(1,f'{Utils.getAsiaTime()} 检测到代理ip配置，正在使用代理')
-            self.session.proxies = {'http': userInfo['proxy'], 'https': userInfo['proxy']}
+        self.session.proxies = userInfo['proxy']
         # 添加hooks进行拦截判断该请求是否被418拦截
         self.session.hooks['response'].append(Utils.checkStatus)
         self.login_url = ''

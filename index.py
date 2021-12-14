@@ -15,6 +15,7 @@ def loadConfig():
     config = DT.loadYml('config.yml')
     # 用户配置初始化
     for user in config['users']:
+        LL.log(1, f"正在初始化{user['username']}的配置")
         defaultConfig = {
             'remarkName': '默认备注名',
             'state': None,
@@ -28,6 +29,22 @@ def loadConfig():
 
         user['deviceId'] = user.get(
             'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
+
+        # 用户代理
+        user['proxy'] = user.get('proxy')
+        requestsProxies = dict()
+        if not user['proxy']: # 如果用户代理设置为空，则不设置代理。
+            requestsProxies = dict()
+        elif type(user['proxy']) == str:
+            if "http://" in user['proxy'][0:7]:
+                requestsProxies['http'] = user['proxy']
+            elif "https://" == user['proxy'][0:8]:
+                requestsProxies['https'] = user['proxy']
+            else:
+                raise Exception("代理应以http://或https://为开头")
+        elif type(user['proxy']) == dict:
+            requestsProxies = user['proxy']
+        user['proxy'] = requestsProxies
 
         # 坐标随机偏移
         user['lon'], user['lat'] = RT.locationOffset(
