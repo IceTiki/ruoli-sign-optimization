@@ -3,9 +3,10 @@ author: 若离|IceTiki|https://github.com/IceTiki/ruoli-sign-optimization
 # ======================================================================
 # 全局设置
 # ======================================================================
-locationOffsetRange: 50 # 坐标偏移范围(单位：米)
+locationOffsetRange: 50 # 坐标偏移范围(单位：米)(可以为0)
 maxTry: 1 # 最大尝试次数
 logDir: 'log/' # 日志保存地址
+delay: [5,10] # 多用户时，各用户之间任务执行延迟(时间范围可以使用浮点数)
 sendMessage: # 推送函数的整体运行情况
   rl_emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
   rl_email: "" # email 接受通知消息的邮箱(不需要推送不用填)

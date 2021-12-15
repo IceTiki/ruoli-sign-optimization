@@ -56,7 +56,7 @@
 
 # [ruoli-sign-optimization](https://github.com/IceTiki/ruoli-sign-optimization)
 
-基于[若离自动签到](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到(但配置文件不通用)。
+基于[若离自动签到](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到(但**配置文件不通用**)。
 
 ## 声明
 
@@ -91,7 +91,7 @@
 
 - [x] DeviceID通过用户名伪随机生成
 - [ ] UA随机生成
-- [ ] 随机签到时间延迟
+- [x] 随机签到时间延迟
 
 ------
 
@@ -135,7 +135,9 @@
 
 ### 图片
 
-查寝、政工签到都有```  photo```可填项。可以填入一个本地图片的位置。
+查寝、政工签到都有```  photo```可填项。可以填入一个本地图片的位置（绝对/相对都可以）。
+
+信息收集如果有图片收集，则可以作为问题答案填入```value```中。
 
 > 备注：图片最好是.jpg格式
 

@@ -119,12 +119,14 @@ class RT:
             return os.path.join(dir, random.choice(files))
 
     @staticmethod
-    def randomSleep(a: int, b: int = None):
+    def randomSleep(timeRange: tuple = (5, 7)):
         '''随机暂停一段时间'''
-        if b == None:
-            b = a/2
-        sleepTime = random.randint(a, b)
-        LL.log(0, f'程序正在暂停({sleepTime})')
+        if len(timeRange) != 2:
+            raise Exception("时间范围应包含开始与结束，列表长度应为2")
+        a = timeRange[0]
+        b = timeRange[1]
+        sleepTime = random.uniform(a, b)
+        LL.log(0, '程序正在暂停%.3f秒'%sleepTime)
         time.sleep(sleepTime)
 
     @staticmethod

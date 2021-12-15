@@ -13,6 +13,9 @@ from liteTools import *
 
 def loadConfig():
     config = DT.loadYml('config.yml')
+    # 全局配置初始化
+    config['delay'] = tuple(config.get("delay",[5,10]))
+
     # 用户配置初始化
     for user in config['users']:
         LL.log(1, f"正在初始化{user['username']}的配置")
@@ -124,6 +127,9 @@ def main():
             if type(user['state']) == str:
                 continue
             LL.log(1, '即将在第%d轮尝试中为[%s]签到' % (tryTimes, user['username']))
+
+            # 用户间随机延迟
+            RT.randomSleep(config['delay'])
 
             try:
                 msg = working(user)
