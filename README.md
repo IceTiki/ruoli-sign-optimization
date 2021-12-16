@@ -71,6 +71,7 @@
 ## 公告
 
 * 2021-11-7更新，配置文件有修改(<u>请**删掉**配置中不需要用到的**可选项**</u>，不然会出现"今日校园版本过旧，请更新")
+* 2021-12-16更新，[pushplus](https://pushplus.hxtrip.com/index)使用方式更新，需要重新配置
 * 发现bug记得提交issue
 
 ## 修改摘要
@@ -196,6 +197,39 @@
 
 * ```http://用户名:密码@123.123.123.123:1234```
 * ```http://123.123.123.123:1234```
+
+### 单独推送
+
+用户配置中可以添加```sendMessage```推送仅该用户的签到情况，格式同整体推送（不需要的选项可以删掉）。
+
+```yaml
+  - type: 
+    schoolName: 
+    username: ""
+    password: ""
+    checkTitle: 
+    forms: 
+      - form:
+          title: 
+          value: 
+    lon: 104.616858
+    lat: 28.793022
+    address:
+    photo: 
+    sendMessage: # 推送函数的整体运行情况
+      rl_emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
+      rl_email: "" # email 接受通知消息的邮箱(不需要推送不用填)
+      qmsg_key: "" # qmsg推送的key(不需要推送不用填)
+      qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)
+      qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
+      pushplus_parameters: "" # pushplus参数，填入令牌即可推送。也可以填入"token=xxx&topic=xxx"形式自定义更多参数(注册pushplus请前往https://pushplus.hxtrip.com/index)
+      smtp_host: "smtp.qq.com" # SMTP服务器域名
+      smtp_user: "*****@qq.com" # SMTP服务器用户名
+      smtp_key: "" # SMTP服务器密钥
+      smtp_sender: "*****@qq.com" # 发送邮箱
+      smtp_receivers:
+        - "*****@qq.com" # 接收邮箱(可填多个)
+```
 
 
 

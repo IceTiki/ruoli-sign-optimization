@@ -3,6 +3,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 import re
+from urllib import parse
 
 
 # 通知类
@@ -16,24 +17,24 @@ class SendMessage:
                          con.get('smtp_key'), con.get('smtp_sender'), con.get('smtp_receivers'))
         self.rl = RlMessage(con.get('rl_email'),
                             con.get('rl_emailApiUrl'))
-        self.pp = Pushplus(con.get('pushplus_token'))
+        self.pp = Pushplus(con.get('pushplus_parameters'))
         self.log_str = '推送情况\n'
 
     def send(self, msg='no msg', title='no title'):
         try:
-            self.qmsg.send(msg)
+            self.log_str += '\n' + self.qmsg.send(msg)
         except Exception as e:
             self.log_str += '\nqmsg酱推送失败|%s' % e
         try:
-            self.smtp.sendmail(msg, title)
+            self.log_str += '\n' + self.smtp.sendmail(msg, title)
         except Exception as e:
             self.log_str += '\nSMTP推送失败|%s' % e
         try:
-            self.rl.sendMail(msg, title)
+            self.log_str += '\n' + self.rl.sendMail(msg, title)
         except Exception as e:
             self.log_str += '\n若离消息推送失败|%s' % e
         try:
-            self.pp.sendPushplus(msg, title)
+            self.log_str += '\n' + self.pp.sendPushplus(msg, title)
         except Exception as e:
             self.log_str += '\nPushplus消息推送失败|%s' % e
 
@@ -76,30 +77,36 @@ class RlMessage:
 class Pushplus:
     '''Pushplus推送类'''
 
-    def __init__(self, token: str):
+    def __init__(self, parameters:str):
         """
-        :param token: 令牌
+        :param parameters: "xxx"形式的令牌 或者 "token=xxx&topic=xxx&yyy=xxx"形式参数列表
         """
-        self.token = token
+        self.parameters = parameters
         self.configIsCorrect = self.isCorrectConfig()
 
     def isCorrectConfig(self):
         # 简单检查邮箱地址或API地址是否合法
-        if not type(self.token) == str:
+        if not type(self.parameters) == str:
             return 0
-        if not self.token:
+        if not self.parameters:
             return 0
         return 1
 
     def sendPushplus(self, msg, title):
-        msg=str(msg)
-        title=str(title)
+        msg = str(msg)
+        title = str(title)
         if self.configIsCorrect:
-            params = {
-                'token': self.token,
-                'title': title,
-                'content': msg,
-            }
+            if "=" in self.parameters:
+                params = parse.parse_qs(parse.urlparse(self.parameters).path)
+                for k in params:
+                    params[k] = params[k][0]
+                params.update({'title': title, 'content': msg})
+            else:
+                params = {
+                    'token': self.parameters,
+                    'title': title,
+                    'content': msg,
+                }
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
             }

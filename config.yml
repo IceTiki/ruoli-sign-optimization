@@ -13,7 +13,7 @@ sendMessage: # 推送函数的整体运行情况
   qmsg_key: "" # qmsg推送的key(不需要推送不用填)
   qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)
   qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
-  pushplus_token: "" # pushplus令牌
+  pushplus_parameters: "" # pushplus参数，填入令牌即可推送。也可以填入"token=xxx&topic=xxx"形式自定义更多参数(注册pushplus请前往https://pushplus.hxtrip.com/index)
   smtp_host: "smtp.qq.com" # SMTP服务器域名
   smtp_user: "*****@qq.com" # SMTP服务器用户名
   smtp_key: "" # SMTP服务器密钥
