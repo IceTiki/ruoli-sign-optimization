@@ -77,7 +77,7 @@ class RlMessage:
 class Pushplus:
     '''Pushplus推送类'''
 
-    def __init__(self, parameters:str):
+    def __init__(self, parameters: str):
         """
         :param parameters: "xxx"形式的令牌 或者 "token=xxx&topic=xxx&yyy=xxx"形式参数列表
         """
@@ -94,7 +94,9 @@ class Pushplus:
 
     def sendPushplus(self, msg, title):
         msg = str(msg)
+        msg = msg.replace("\n", "</br>")
         title = str(title)
+
         if self.configIsCorrect:
             if "=" in self.parameters:
                 params = parse.parse_qs(parse.urlparse(self.parameters).path)
