@@ -119,7 +119,7 @@ class Collection:
                 formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
                 # 开始填充表单
                 # 文本选项直接赋值
-                if formItem['fieldType'] == '1' or formItem['fieldType'] == '5' or formItem['fieldType'] == '7':
+                if formItem['fieldType'] in ('1','5','6','7'):
                     formItem['value'] = userForm['value']
                 # 单选框填充
                 elif formItem['fieldType'] == '2':
