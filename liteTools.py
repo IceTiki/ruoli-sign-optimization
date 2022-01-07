@@ -44,6 +44,8 @@ class RT:
         offset——偏移范围(单位m)
         round_——保留位数
         '''
+        lon = float(lon)
+        lat = float(lat)
         if offset == 0:
             return (lon, lat)
         # 限定函数(经度-180~180，维度-90~90)
@@ -137,6 +139,7 @@ class RT:
             random.choices('0123456789ABCDEF', k=x))  # 指定长度随机Hex字符串生成
         deviceId = "-".join([ranHex(8), ranHex(4), ranHex(4),
                             ranHex(4), ranHex(12)])  # 拼合字符串
+        random.seed(str(time.time()), version=2) # 随机化种子(避免影响到其他随机功能)
         return deviceId
 
 

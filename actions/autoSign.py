@@ -64,12 +64,83 @@ class AutoSign:
         LL.log(1, '没有匹配标题的任务')
         raise TaskError('没有匹配标题的任务')
 
-    # 获取具体的签到任务详情
+    # 获取历史签到任务详情
+    def getHistoryTaskInfo(self):
+        '''获取历史签到任务详情'''
+        headers = self.session.headers
+        headers['Content-Type'] = 'application/json;charset=UTF-8'
+
+        # 获取签到月历
+        url = f'{self.host}wec-counselor-sign-apps/stu/sign/getStuIntervalMonths'
+        res = self.session.post(url, headers=headers,
+                                data=json.dumps({}), verify=False)
+        res = DT.resJsonEncode(res)
+        monthList = [i['id'] for i in res['datas']['rows']]
+        monthList.sort(reverse=True)  # 降序排序月份
+
+        # 按月遍历
+        for month in monthList:
+            # 获取对应历史月签到情况
+            req = {"statisticYearMonth": month}
+            url = f'{self.host}wec-counselor-sign-apps/stu/sign/getStuSignInfosByWeekMonth'
+            res = self.session.post(
+                url, headers=headers, data=json.dumps(req), verify=False)
+            res = DT.resJsonEncode(res)
+            monthSignList = list(res['datas']['rows'])
+            # 遍历查找历史月中每日的签到情况
+            monthSignList.sort(
+                key=lambda x: x['dayInMonth'], reverse=True)  # 降序排序日信息
+            for daySignList in monthSignList:
+                # 遍历寻找和当前任务匹配的历史已签到任务
+                for task in daySignList['signedTasks']:
+                    if task['signWid'] == self.taskInfo['signWid']:
+                        # 找到和当前任务匹配的历史已签到任务，开始更新表单
+                        historyTaskId = {
+                            "wid": task['signInstanceWid'], "content": task['signWid']}
+                        # 更新cookie
+                        url = f'{self.host}wec-counselor-sign-apps/stu/sign/getUnSeenQuestion'
+                        self.session.post(url, headers=headers, data=json.dumps(
+                            historyTaskId), verify=False)
+                        # 获取历史任务详情
+                        historyTaskId = {
+                            "signInstanceWid": task['signInstanceWid'], "signWid": task['signWid']}
+                        url = f'{self.host}wec-counselor-sign-apps/stu/sign/detailSignInstance'
+                        res = self.session.post(
+                            url, headers=headers, data=json.dumps(historyTaskId), verify=False)
+                        res = DT.resJsonEncode(res)
+                        # 其他模拟请求
+                        url = f'{self.host}wec-counselor-sign-apps/stu/sign/queryNotice'
+                        self.session.post(url, headers=headers,
+                                          data=json.dumps({}), verify=False)
+                        url = f'{self.host}wec-counselor-sign-apps/stu/sign/getQAconfigration'
+                        self.session.post(url, headers=headers,
+                                          data=json.dumps({}), verify=False)
+                        # 一些数据处理
+                        result = res['datas']
+
+                        result['longitude'] = float(result['longitude'])
+                        result['latitude'] = float(result['latitude'])
+                        self.userInfo['lon'] = result['longitude']
+                        self.userInfo['lat'] = result['latitude']
+
+                        result['photograph'] = result['photograph'] if len(
+                            result['photograph']) != 0 else ""
+                        result['extraFieldItems'] = [{"extraFieldItemValue": i['extraFieldItem'],
+                                                      "extraFieldItemWid": i['extraFieldItemWid']} for i in result['signedStuInfo']['extraFieldItemVos']]
+                        # 返回结果
+                        LL.log(1, '历史签到情况的详情', result)
+                        self.historyTaskInfo = result
+                        return result
+
+        # 如果没有遍历找到结果
+        LL.log(2, "没有找到匹配的历史任务")
+        return "没有找到匹配的历史任务"
+
     def getDetailTask(self):
         LL.log(1, '获取具体的签到任务详情')
         url = f'{self.host}wec-counselor-sign-apps/stu/sign/detailSignInstance'
         headers = self.session.headers
-        headers['Content-Type'] = 'application/json'
+        headers['Content-Type'] = 'application/json;charset=UTF-8'
         res = self.session.post(url, headers=headers, data=json.dumps(
             self.taskInfo), verify=False)
         res = DT.resJsonEncode(res)
@@ -115,58 +186,81 @@ class AutoSign:
     # 填充表单
     def fillForm(self):
         LL.log(1, '填充表单')
-        # 判断签到是否需要照片
-        if self.task['isPhoto'] == 1:
-            self.uploadPicture()
-            self.form['signPhotoUrl'] = self.getPictureUrl()
-            # self.form['signPhotoUrl'] = 'https://www.campushoy.com/wp-content/uploads/2019/06/cropped-hoy.png'
+        if self.userInfo['getHistorySign']:
+            self.getHistoryTaskInfo()
+            hti = self.historyTaskInfo
+
+            self.form['isNeedExtra'] = self.task['isNeedExtra']
+            self.form['signInstanceWid'] = self.task['signInstanceWid']
+
+            self.form['signPhotoUrl'] = hti['photograph']  # WARNING：存疑
+            self.form['extraFieldItems'] = hti['extraFieldItems']
+            self.form['longitude'], self.form['latitude'] = RT.locationOffset(
+                hti['longitude'], hti['latitude'], self.userInfo['global_locationOffsetRange'])
+            # 检查是否在签到范围内
+            self.form['isMalposition'] = 1
+            for place in self.task['signPlaceSelected']:
+                if MT.geoDistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
+                    self.form['isMalposition'] = 0
+                    break
+            self.form['abnormalReason'] = hti.get(
+                'abnormalReason', '回家')  # WARNING: 未在历史信息中找到这个
+            self.form['position'] = hti['signAddress']
+            self.form['uaIsCpadaily'] = True
+            self.form['signVersion'] = '1.0.0'
         else:
-            self.form['signPhotoUrl'] = ''
-        self.form['isNeedExtra'] = self.task['isNeedExtra']
-        if self.task['isNeedExtra'] == 1:
-            extraFields = self.task['extraField']
-            userItems = self.userInfo['forms']
-            extraFieldItemValues = []
-            for i in range(len(extraFields)):
-                userItem = userItems[i]['form']
-                extraField = extraFields[i]
-                if self.userInfo['checkTitle'] == 1:
-                    if userItem['title'] != extraField['title']:
-                        raise Exception(
-                            f'\r\n第{i + 1}个配置出错了\r\n您的标题为：{userItem["title"]}\r\n系统的标题为：{extraField["title"]}')
-                extraFieldItems = extraField['extraFieldItems']
-                flag = False
-                for extraFieldItem in extraFieldItems:
-                    if extraFieldItem['isSelected']:
-                        data = extraFieldItem['content']
-                    # LL.log(1,extraFieldItem)
-                    if extraFieldItem['content'] == userItem['value']:
-                        flag = True
-                        extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
-                                               'extraFieldItemWid': extraFieldItem['wid']}
-                        # 其他 额外的文本
-                        if extraFieldItem['isOtherItems'] == 1:
+            # 判断签到是否需要照片
+            if self.task['isPhoto'] == 1:
+                self.uploadPicture()
+                self.form['signPhotoUrl'] = self.getPictureUrl()
+            else:
+                self.form['signPhotoUrl'] = ''
+            # 检查是否需要额外信息
+            self.form['isNeedExtra'] = self.task['isNeedExtra']
+            if self.task['isNeedExtra'] == 1:
+                extraFields = self.task['extraField']
+                userItems = self.userInfo['forms']
+                extraFieldItemValues = []
+                for i in range(len(extraFields)):
+                    userItem = userItems[i]['form']
+                    extraField = extraFields[i]
+                    if self.userInfo['checkTitle'] == 1:
+                        if userItem['title'] != extraField['title']:
+                            raise Exception(
+                                f'\r\n第{i + 1}个配置出错了\r\n您的标题为：{userItem["title"]}\r\n系统的标题为：{extraField["title"]}')
+                    extraFieldItems = extraField['extraFieldItems']
+                    flag = False
+                    for extraFieldItem in extraFieldItems:
+                        if extraFieldItem['isSelected']:
+                            data = extraFieldItem['content']
+                        if extraFieldItem['content'] == userItem['value']:
                             flag = True
                             extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
                                                    'extraFieldItemWid': extraFieldItem['wid']}
-                        extraFieldItemValues.append(extraFieldItemValue)
-                if not flag:
-                    raise Exception(
-                        f'\r\n第{ i + 1 }个配置出错了\r\n表单未找到你设置的值：{userItem["value"]}\r\n，你上次系统选的值为：{ data }')
-            self.form['extraFieldItems'] = extraFieldItemValues
-        self.form['signInstanceWid'] = self.task['signInstanceWid']
-        self.form['longitude'] = self.userInfo['lon']
-        self.form['latitude'] = self.userInfo['lat']
-        # 检查是否在签到范围内
-        self.form['isMalposition'] = 1
-        for place in self.task['signPlaceSelected']:
-            if MT.geoDistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
-                self.form['isMalposition'] = 0
-                break
-        self.form['abnormalReason'] = self.userInfo['abnormalReason']
-        self.form['position'] = self.userInfo['address']
-        self.form['uaIsCpadaily'] = True
-        self.form['signVersion'] = '1.0.0'
+                            # 其他 额外的文本
+                            if extraFieldItem['isOtherItems'] == 1:
+                                flag = True
+                                extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
+                                                       'extraFieldItemWid': extraFieldItem['wid']}
+                            extraFieldItemValues.append(extraFieldItemValue)
+                    if not flag:
+                        raise Exception(
+                            f'\r\n第{ i + 1 }个配置出错了\r\n表单未找到你设置的值：{userItem["value"]}\r\n，你上次系统选的值为：{ data }')
+                self.form['extraFieldItems'] = extraFieldItemValues
+            self.form['signInstanceWid'] = self.task['signInstanceWid']
+            self.form['longitude'] = self.userInfo['lon']
+            self.form['latitude'] = self.userInfo['lat']
+            # 检查是否在签到范围内
+            self.form['isMalposition'] = 1
+            for place in self.task['signPlaceSelected']:
+                if MT.geoDistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
+                    self.form['isMalposition'] = 0
+                    break
+            self.form['abnormalReason'] = self.userInfo['abnormalReason']
+            self.form['position'] = self.userInfo['address']
+            self.form['uaIsCpadaily'] = True
+            self.form['signVersion'] = '1.0.0'
+        LL.log(1, "填充完毕的表单", self.form)
 
     def getSubmitExtension(self):
         '''生成各种额外参数'''

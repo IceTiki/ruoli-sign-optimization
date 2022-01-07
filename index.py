@@ -19,17 +19,20 @@ def loadConfig():
     # 用户配置初始化
     for user in config['users']:
         LL.log(1, f"正在初始化{user['username']}的配置")
+        # 初始化静态配置项目
         defaultConfig = {
             'remarkName': '默认备注名',
             'state': None,
             'model': 'OPPO R11 Plus',
             'appVersion': '9.0.12',
             'systemVersion': '4.4.4',
-            'systemName': 'android'
+            'systemName': 'android',
+            'getHistorySign': False
         }
         defaultConfig.update(user)
         user.update(defaultConfig)
 
+        # 用户设备ID
         user['deviceId'] = user.get(
             'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
 
@@ -50,8 +53,10 @@ def loadConfig():
         user['proxy'] = requestsProxies
 
         # 坐标随机偏移
-        user['lon'], user['lat'] = RT.locationOffset(
-            user['lon'], user['lat'], config['locationOffsetRange'])
+        user['global_locationOffsetRange'] = config['locationOffsetRange']
+        if 'lon' in user and 'lat' in user:
+            user['lon'], user['lat'] = RT.locationOffset(
+                user['lon'], user['lat'], config['locationOffsetRange'])
     return config
 
 
