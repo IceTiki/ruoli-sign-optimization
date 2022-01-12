@@ -4,6 +4,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 import re
 from urllib import parse
+import json
 
 
 # 通知类
@@ -68,7 +69,8 @@ class RlMessage:
                 'title': title,
                 'content': msg
             }
-            res = requests.post(url=self.apiUrl, params=params).json()
+            res = requests.post(url=self.apiUrl, params=json.dumps(params))
+            res = res.json()
             return res['message']
         else:
             return '邮箱或邮件api填写无效，已取消发送邮件！'
