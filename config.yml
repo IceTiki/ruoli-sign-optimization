@@ -8,7 +8,7 @@ maxTry: 1 # 最大尝试次数
 logDir: 'log/' # 日志保存地址
 delay: [5,10] # 多用户时，各用户之间任务执行延迟(时间范围可以使用浮点数)
 sendMessage: # 推送函数的整体运行情况
-  rl_emailApiUrl: http://mail.ruoli.cc/api/sendMail # 邮箱API的地址(不需要推送不用填)
+  rl_emailApiUrl: http://api.ruoli.cc/mail/sendMail # 邮箱API的地址(不需要推送不用填)
   rl_email: "" # email 接受通知消息的邮箱(不需要推送不用填)
   qmsg_key: "" # qmsg推送的key(不需要推送不用填)
   qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)

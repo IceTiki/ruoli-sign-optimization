@@ -64,12 +64,12 @@ class RlMessage:
         # 若离邮件api， 将会存储消息到数据库，并保存1周以供查看，请勿乱用，谢谢合作
         if self.configIsCorrect:
             params = {
-                'to': self.mail,
+                'recipient': self.mail,
                 'title': title,
                 'content': msg
             }
             res = requests.post(url=self.apiUrl, params=params).json()
-            return res['msg']
+            return res['message']
         else:
             return '邮箱或邮件api填写无效，已取消发送邮件！'
 
