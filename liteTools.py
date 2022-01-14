@@ -31,6 +31,20 @@ class MT:
         return distance
 
 
+class PseudoRandom:
+    '''随机数种子临时固定类(用于with语句)'''
+
+    def __init__(self, seed = time.time()):
+        self.seed = str(seed)
+        random.seed(self.seed, version=2)
+
+    def __enter__(self):
+        return self.seed
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        random.seed(str(time.time()), version=2)
+
+
 class RT:
     '''randomTools'''
     default_offset = 50
@@ -128,18 +142,17 @@ class RT:
         a = timeRange[0]
         b = timeRange[1]
         sleepTime = random.uniform(a, b)
-        LL.log(0, '程序正在暂停%.3f秒'%sleepTime)
+        LL.log(0, '程序正在暂停%.3f秒' % sleepTime)
         time.sleep(sleepTime)
 
     @staticmethod
-    def genDeviceID(seed):
-        '''根据种子伪随机生成uuid'''
-        random.seed(seed, version=2)  # 种子设置
-        def ranHex(x): return ''.join(
-            random.choices('0123456789ABCDEF', k=x))  # 指定长度随机Hex字符串生成
-        deviceId = "-".join([ranHex(8), ranHex(4), ranHex(4),
-                            ranHex(4), ranHex(12)])  # 拼合字符串
-        random.seed(str(time.time()), version=2) # 随机化种子(避免影响到其他随机功能)
+    def genDeviceID(seed=time.time()):
+        '''根据种子生成uuid'''
+        with PseudoRandom(seed):
+            def ranHex(x): return ''.join(
+                random.choices('0123456789ABCDEF', k=x))  # 指定长度随机Hex字符串生成
+            deviceId = "-".join([ranHex(8), ranHex(4), ranHex(4),
+                                ranHex(4), ranHex(12)])  # 拼合字符串
         return deviceId
 
 
