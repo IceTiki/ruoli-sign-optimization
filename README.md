@@ -119,6 +119,11 @@
 凄凄不似向前声，满座重闻皆掩泣。
 座中泣下谁最多？江州司马青衫湿。
 
+# 闻乐天授江州司马
+
+残灯无焰影幢幢，此夕闻君谪九江。
+垂死病中惊坐起，暗风吹雨入寒窗。
+
 # [ruoli-sign-optimization](https://github.com/IceTiki/ruoli-sign-optimization)
 
 基于[若离自动签到](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到(但**配置文件不通用**)。
@@ -137,6 +142,7 @@
 
 * 2021-11-7更新，配置文件有修改(<u>请**删掉**配置中不需要用到的**可选项**</u>，不然会出现"今日校园版本过旧，请更新")
 * 2021-12-16更新，[pushplus](https://pushplus.hxtrip.com/index)使用方式更新，需要重新配置
+* 2022-1-20更新，随今日校园更新
 * 发现bug记得提交issue
 
 ## 概述

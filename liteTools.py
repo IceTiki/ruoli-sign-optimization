@@ -8,6 +8,7 @@ from Crypto.Cipher import AES
 from pyDes import des, CBC, PAD_PKCS5
 import base64
 import hashlib
+import urllib.parse
 
 
 class TaskError(Exception):
@@ -34,7 +35,7 @@ class MT:
 class PseudoRandom:
     '''随机数种子临时固定类(用于with语句)'''
 
-    def __init__(self, seed = time.time()):
+    def __init__(self, seed=time.time()):
         self.seed = str(seed)
         random.seed(self.seed, version=2)
 
@@ -180,7 +181,7 @@ class DT:
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.2.0"  # 版本标识
+    prefix = "V-T3.3.0"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0
@@ -244,7 +245,7 @@ class CT:
     @staticmethod
     def encrypt_BodyString(text):
         """BodyString加密"""
-        key = b"ytUQ7l2ZZu8mLvJZ"
+        key = b"&SASEoK4Pa5d4SssO"
         iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
         cipher = AES.new(key, AES.MODE_CBC, iv)
 
@@ -257,7 +258,7 @@ class CT:
     @staticmethod
     def decrypt_BodyString(text):
         """BodyString解密"""
-        key = b"ytUQ7l2ZZu8mLvJZ"
+        key = b"&SASEoK4Pa5d4SssO"
         iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
         cipher = AES.new(key, AES.MODE_CBC, iv)
 
@@ -281,7 +282,7 @@ class CT:
     @staticmethod
     def encrypt_CpdailyExtension(text):
         '''CpdailyExtension加密'''
-        key = 'b3L26XNL'
+        key = 'XCE927=='
         iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
         d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
 
@@ -293,7 +294,7 @@ class CT:
     @staticmethod
     def decrypt_CpdailyExtension(text):
         '''CpdailyExtension加密'''
-        key = 'b3L26XNL'
+        key = 'XCE927=='
         iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
         d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
 
@@ -377,3 +378,13 @@ class HSF:
         bstr = str_.encode(charset)
         hashObj.update(bstr)
         return hashObj.hexdigest()
+
+    @staticmethod
+    def signAbstract(submitData: dict, key="&SASEoK4Pa5d4SssO"):
+        '''表单中sign项目生成'''
+        abstractKey = ["appVersion", "bodyString", "deviceId", "lat",
+                       "lon", "model", "systemName", "systemVersion", "userId"]
+        abstractSubmitData = {k: submitData[k] for k in abstractKey}
+        abstract = urllib.parse.urlencode(abstractSubmitData) + key
+        abstract_md5 = HSF.strHash(abstract, 5)
+        return abstract_md5

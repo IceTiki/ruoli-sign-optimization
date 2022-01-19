@@ -121,8 +121,8 @@ class teacherSign:
 
         self.submitData = {
             "lon": self.userInfo['lon'],
-            "version": "first_v2",
-            "calVersion": "firstv",
+            "version": self.userInfo['signVersion'],
+            "calVersion": self.userInfo['calVersion'],
             "deviceId": self.userInfo['deviceId'],
             "userId": self.userInfo['username'],
             "systemName": self.userInfo['systemName'],
@@ -133,10 +133,7 @@ class teacherSign:
             "model": self.userInfo['model'],
         }
 
-        sign = ''.join("%s=%s&" % (i, self.submitData[i]) for i in [
-                       "appVersion", "bodyString", "deviceId", "lat", "lon", "model", "systemName", "systemVersion", "userId"]) + "ytUQ7l2ZZu8mLvJZ"
-        sign = HSF.strHash(sign, 5)
-        self.submitData['sign'] = sign
+        self.submitData['sign'] = HSF.signAbstract(self.submitData)
 
     # 提交签到信息
     def submitForm(self):

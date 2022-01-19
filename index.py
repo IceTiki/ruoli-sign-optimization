@@ -14,7 +14,7 @@ from liteTools import *
 def loadConfig():
     config = DT.loadYml('config.yml')
     # 全局配置初始化
-    config['delay'] = tuple(config.get("delay",[5,10]))
+    config['delay'] = tuple(config.get("delay", [5, 10]))
 
     # 用户配置初始化
     for user in config['users']:
@@ -24,9 +24,11 @@ def loadConfig():
             'remarkName': '默认备注名',
             'state': None,
             'model': 'OPPO R11 Plus',
-            'appVersion': '9.0.12',
+            'appVersion': '9.0.14',
             'systemVersion': '4.4.4',
             'systemName': 'android',
+            "signVersion": "first_v3",
+            "calVersion": "firstv",
             'getHistorySign': False
         }
         defaultConfig.update(user)
@@ -39,7 +41,7 @@ def loadConfig():
         # 用户代理
         user['proxy'] = user.get('proxy')
         requestsProxies = dict()
-        if not user['proxy']: # 如果用户代理设置为空，则不设置代理。
+        if not user['proxy']:  # 如果用户代理设置为空，则不设置代理。
             requestsProxies = dict()
         elif type(user['proxy']) == str:
             if "http://" in user['proxy'][0:7]:
