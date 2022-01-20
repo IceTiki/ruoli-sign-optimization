@@ -18,7 +18,8 @@ class SendMessage:
                          con.get('smtp_key'), con.get('smtp_sender'), con.get('smtp_receivers'))
         self.rl = RlMessage(con.get('rl_email'),
                             con.get('rl_emailApiUrl'))
-        self.pp = Pushplus(con.get('pushplus_parameters'))
+        self.pp = Pushplus(con.get('pushplus_parameters'),
+                           con.get('pushplus_isNew'))
         self.log_str = '推送情况\n'
 
     def send(self, msg='no msg', title='no title'):
@@ -79,11 +80,15 @@ class RlMessage:
 class Pushplus:
     '''Pushplus推送类'''
 
-    def __init__(self, parameters: str):
+    def __init__(self, parameters: str, isNew):
         """
         :param parameters: "xxx"形式的令牌 或者 "token=xxx&topic=xxx&yyy=xxx"形式参数列表
         """
         self.parameters = parameters
+        if isNew:
+            self.api = "https://www.pushplus.plus/send"
+        else:
+            self.api = "https://pushplus.hxtrip.com/send"
         self.configIsCorrect = self.isCorrectConfig()
 
     def isCorrectConfig(self):
@@ -100,22 +105,25 @@ class Pushplus:
         title = str(title)
 
         if self.configIsCorrect:
-            if "=" in self.parameters:
-                params = parse.parse_qs(parse.urlparse(self.parameters).path)
-                for k in params:
-                    params[k] = params[k][0]
+            # 解析参数
+            if "=" in self.parameters:  # 如果是url形式的参数
+                params = parse.parse_qs(
+                    parse.urlparse(self.parameters).path)  # 解析参数
+                params = {k: params.copy()[k][0]
+                          for k in params.copy()}  # 解析参数
                 params.update({'title': title, 'content': msg})
-            else:
+            else:  # 如果参数是token本身
                 params = {
                     'token': self.parameters,
                     'title': title,
                     'content': msg,
                 }
+            # 准备发送
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0'
             }
             res = requests.post(
-                "https://pushplus.hxtrip.com/send", headers=headers, params=params)
+                self.api, headers=headers, params=params)
             if res.status_code == 200:
                 return "发送成功"
             else:

@@ -141,8 +141,9 @@
 ## 公告
 
 * 2021-11-7更新，配置文件有修改(<u>请**删掉**配置中不需要用到的**可选项**</u>，不然会出现"今日校园版本过旧，请更新")
-* 2021-12-16更新，[pushplus](https://pushplus.hxtrip.com/index)使用方式更新，需要重新配置
+* 2021-12-16更新，pushplus使用方式更新，需要重新配置
 * 2022-1-20更新，随今日校园更新
+* 2022-1-20更新，pushplus支持[旧版](https://pushplus.hxtrip.com/index)和[新版](http://www.pushplus.plus/)。(兼容旧版配置文件)
 * 发现bug记得提交issue
 
 ## 概述
@@ -352,7 +353,8 @@
       qmsg_key: "" # qmsg推送的key(不需要推送不用填)
       qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)
       qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
-      pushplus_parameters: "" # pushplus参数，填入令牌即可推送。也可以填入"token=xxx&topic=xxx"形式自定义更多参数(注册pushplus请前往https://pushplus.hxtrip.com/index)
+      pushplus_parameters: "" # pushplus参数，填入令牌(token)即可推送。也可以填入"token=xxx&topic=xxx"形式自定义更多参数
+      pushplus_isNew: False # False使用旧版pushplus(https://pushplus.hxtrip.com)，True使用新版pushplus(http://www.pushplus.plus/)
       smtp_host: "smtp.qq.com" # SMTP服务器域名
       smtp_user: "*****@qq.com" # SMTP服务器用户名
       smtp_key: "" # SMTP服务器密钥
