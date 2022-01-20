@@ -162,12 +162,16 @@ class Qmsg:
     def send(self, msg):
         """发送消息
         :param msg: 要发送的消息(自动转为字符串类型)"""
-        # msg：要发送的信息|消息推送函数
+        # msg处理
         msg = str(msg)
+        # 替换数字(避开qmsg的屏蔽规则)
+        for i, k in zip(list('0123456789'), list('𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')):
+            msg = msg.replace(i, k)
         # 简单检查配置
         if not self.configIsCorrect:
             return('Qmsg配置错误，信息取消发送')
         else:
+            # 开始推送
             sendtype = 'group/' if self.isGroup else 'send/'
             res = requests.post(url='https://qmsg.zendee.cn/'+sendtype +
                                 self.key, data={'msg': msg, 'qq': self.qq})
