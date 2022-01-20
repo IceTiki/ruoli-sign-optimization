@@ -275,10 +275,11 @@ class AutoSign:
             "deviceId": self.userInfo['deviceId']
         }
 
-        self.cpdailyExtension = CT.encrypt_CpdailyExtension(
+        self.cpdailyExtension = CpdailyTools.encrypt_CpdailyExtension(
             json.dumps(extension))
 
-        self.bodyString = CT.encrypt_BodyString(json.dumps(self.form))
+        self.bodyString = CpdailyTools.encrypt_BodyString(
+            json.dumps(self.form))
 
         self.submitData = {
             "lon": self.userInfo['lon'],
@@ -294,7 +295,7 @@ class AutoSign:
             "model": self.userInfo['model'],
         }
 
-        self.submitData['sign'] = HSF.signAbstract(self.submitData)
+        self.submitData['sign'] = CpdailyTools.signAbstract(self.submitData)
 
     # 提交签到信息
     def submitForm(self):

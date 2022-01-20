@@ -16,6 +16,69 @@ class TaskError(Exception):
     pass
 
 
+class CpdailyTools:
+    '''今日校园相关函数'''
+    desKey = 'XCE927=='
+    aesKey = b"SASEoK4Pa5d4SssO"
+    aesKey_str = "SASEoK4Pa5d4SssO"
+
+    @staticmethod
+    def encrypt_CpdailyExtension(text, key=desKey):
+        '''CpdailyExtension加密'''
+        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
+        d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
+
+        text = d.encrypt(text)  # 加密
+        text = base64.b64encode(text)  # base64编码
+        text = text.decode()  # 解码
+        return text
+
+    @staticmethod
+    def decrypt_CpdailyExtension(text, key=desKey):
+        '''CpdailyExtension加密'''
+        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
+        d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
+
+        text = base64.b64decode(text)  # Base64解码
+        text = d.decrypt(text)  # 解密
+        text = text.decode()  # 解码
+        return text
+
+    @staticmethod
+    def encrypt_BodyString(text, key=aesKey):
+        """BodyString加密"""
+        iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+
+        text = CT.pkcs7padding(text)  # 填充
+        text = text.encode(CT.charset)  # 编码
+        text = cipher.encrypt(text)  # 加密
+        text = base64.b64encode(text).decode(CT.charset)  # Base64编码
+        return text
+
+    @staticmethod
+    def decrypt_BodyString(text, key=aesKey):
+        """BodyString解密"""
+        iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+
+        text = base64.b64decode(text)  # Base64解码
+        text = cipher.decrypt(text)  # 解密
+        text = text.decode(CT.charset)  # 解码
+        text = CT.pkcs7unpadding(text)  # 删除填充
+        return text
+
+    @staticmethod
+    def signAbstract(submitData: dict, key=aesKey_str):
+        '''表单中sign项目生成'''
+        abstractKey = ["appVersion", "bodyString", "deviceId", "lat",
+                       "lon", "model", "systemName", "systemVersion", "userId"]
+        abstractSubmitData = {k: submitData[k] for k in abstractKey}
+        abstract = urllib.parse.urlencode(abstractSubmitData) + '&' + key
+        abstract_md5 = HSF.strHash(abstract, 5)
+        return abstract_md5
+
+
 class MT:
     '''MiscTools'''
     @staticmethod
@@ -181,7 +244,7 @@ class DT:
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.3.0"  # 版本标识
+    prefix = "V-T3.3.1"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0
@@ -243,32 +306,6 @@ class CT:
     charset = 'utf-8'
 
     @staticmethod
-    def encrypt_BodyString(text):
-        """BodyString加密"""
-        key = b"&SASEoK4Pa5d4SssO"
-        iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-
-        text = CT.pkcs7padding(text)  # 填充
-        text = text.encode(CT.charset)  # 编码
-        text = cipher.encrypt(text)  # 加密
-        text = base64.b64encode(text).decode(CT.charset)  # Base64编码
-        return text
-
-    @staticmethod
-    def decrypt_BodyString(text):
-        """BodyString解密"""
-        key = b"&SASEoK4Pa5d4SssO"
-        iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-
-        text = base64.b64decode(text)  # Base64解码
-        text = cipher.decrypt(text)  # 解密
-        text = text.decode(CT.charset)  # 解码
-        text = CT.pkcs7unpadding(text)  # 删除填充
-        return text
-
-    @staticmethod
     def pkcs7padding(text: str):
         """明文使用PKCS7填充"""
         remainder = 16 - len(text.encode(CT.charset)) % 16
@@ -278,30 +315,6 @@ class CT:
     def pkcs7unpadding(text: str):
         """去掉填充字符"""
         return text[:-ord(text[-1])]
-
-    @staticmethod
-    def encrypt_CpdailyExtension(text):
-        '''CpdailyExtension加密'''
-        key = 'XCE927=='
-        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
-        d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
-
-        text = d.encrypt(text)  # 加密
-        text = base64.b64encode(text)  # base64编码
-        text = text.decode()  # 解码
-        return text
-
-    @staticmethod
-    def decrypt_CpdailyExtension(text):
-        '''CpdailyExtension加密'''
-        key = 'XCE927=='
-        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
-        d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
-
-        text = base64.b64decode(text)  # Base64解码
-        text = d.decrypt(text)  # 解密
-        text = text.decode()  # 解码
-        return text
 
 
 class HSF:
@@ -378,13 +391,3 @@ class HSF:
         bstr = str_.encode(charset)
         hashObj.update(bstr)
         return hashObj.hexdigest()
-
-    @staticmethod
-    def signAbstract(submitData: dict, key="&SASEoK4Pa5d4SssO"):
-        '''表单中sign项目生成'''
-        abstractKey = ["appVersion", "bodyString", "deviceId", "lat",
-                       "lon", "model", "systemName", "systemVersion", "userId"]
-        abstractSubmitData = {k: submitData[k] for k in abstractKey}
-        abstract = urllib.parse.urlencode(abstractSubmitData) + key
-        abstract_md5 = HSF.strHash(abstract, 5)
-        return abstract_md5
