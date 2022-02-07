@@ -7,11 +7,11 @@ locationOffsetRange: 50 # 坐标偏移范围(单位：米)(可以为0)
 maxTry: 1 # 最大尝试次数
 logDir: 'log/' # 日志保存地址
 delay: [5,10] # 多用户时，各用户之间任务执行延迟(时间范围可以使用浮点数)
-sendMessage: # 推送函数的整体运行情况
-  rl_emailApiUrl: http://api.ruoli.cc/mail/sendMail # 邮箱API的地址(不需要推送不用填)
-  rl_email: "" # email 接受通知消息的邮箱(不需要推送不用填)
-  qmsg_key: "" # qmsg推送的key(不需要推送不用填)
-  qmsg_qq: "" # qmsg推送的qq号(不需要推送不用填)
+sendMessage: # 推送函数的整体运行情况(不需要的项目不用填，可以删掉或者放着不管)
+  rl_emailApiUrl: http://api.ruoli.cc/mail/sendMail # 邮箱API的地址
+  rl_email: "" # email 接受通知消息的邮箱
+  qmsg_key: "" # qmsg推送的key
+  qmsg_qq: "" # qmsg推送的qq号
   qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
   pushplus_parameters: "" # pushplus参数，填入令牌(token)即可推送。也可以填入"token=xxx&topic=xxx"形式自定义更多参数
   pushplus_isNew: False # False使用旧版pushplus(https://pushplus.hxtrip.com)，True使用新版pushplus(http://www.pushplus.plus/)

@@ -1,18 +1,66 @@
+# ====================开始导入模块====================
+# 导入标准库
 import traceback
 import os
-from todayLoginService import TodayLoginService
-from actions.autoSign import AutoSign
-from actions.collection import Collection
-from actions.sleepCheck import sleepCheck
-from actions.workLog import workLog
-from actions.sendMessage import SendMessage
-from actions.teacherSign import teacherSign
-from login.Utils import Utils
-from liteTools import *
+import imp
+
+# 检查第三方模块
+try:
+    for i in ("requests", "requests_toolbelt", "urllib3", "bs4", "Crypto", "pyDes", "yaml", "lxml", "rsa"):
+        imp.find_module(i)
+except ImportError as e:
+    print(f"""!!!!!!!!!!!!!!缺少第三方模块(依赖)!!!!!!!!!!!!!!
+请使用pip命令安装或者手动将依赖拖入文件夹
+错误信息: {e}""")
+    raise e
+# 检查Crypto是否对应系统版本
+try:
+    from Crypto.Cipher import AES
+except OSError as e:
+    print(f"""!!!!!!!!!!!!!!Crypto模块版本错误!!!!!!!!!!!!!!
+请不要将linux系统(比如云函数)和windows系统的依赖混用
+错误信息: {e}""")
+    raise e
+
+# 将工作路径设置为脚本位置
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+# 将时区设为UTC+8
+os.environ['TZ'] = "Asia/Shanghai"
+
+# 检查代码完整性
+try:
+    for i in ("todayLoginService", "actions\\autoSign", "actions\\collection", "actions\\sleepCheck", "actions\\workLog", "actions\\sendMessage", "actions\\teacherSign", "login\\Utils", "login\\casLogin", "login\\iapLogin", "login\\RSALogin", "liteTools"):
+        imp.find_module(i)
+except ImportError as e:
+    print(f"""!!!!!!!!!!!!!!脚本代码文件缺失!!!!!!!!!!!!!!
+请尝试重新下载代码
+错误信息: {e}""")
+    raise e
+# 导入脚本的其他部分(不适用try结构时, 格式化代码会将import挪至最上)
+try:
+    from liteTools import TaskError, RT, DT, LL
+    from login.Utils import Utils
+    from actions.teacherSign import teacherSign
+    from actions.sendMessage import SendMessage
+    from actions.workLog import workLog
+    from actions.sleepCheck import sleepCheck
+    from actions.collection import Collection
+    from actions.autoSign import AutoSign
+    from todayLoginService import TodayLoginService
+except ImportError as e:
+    raise e
+# ====================完成导入模块====================
 
 
 def loadConfig():
-    config = DT.loadYml('config.yml')
+    '''配置文件载入'''
+    try:
+        config = DT.loadYml('config.yml')
+    except Exception as e:
+        print(f"""!!!!!!!!!!!!!!读取配置文件出错!!!!!!!!!!!!!!
+请尝试检查配置文件(建议下载VSCode并安装yaml插件进行检查)
+错误信息: {e}""")
+        raise e
     # 全局配置初始化
     config['delay'] = tuple(config.get("delay", [5, 10]))
 
@@ -63,6 +111,7 @@ def loadConfig():
 
 
 def working(user):
+    '''任务执行入口函数'''
     LL.log(1, '准备登录')
     today = TodayLoginService(user)
     today.login()
@@ -118,6 +167,7 @@ def working(user):
 
 
 def main():
+    '''主函数'''
     os.chdir(os.path.dirname(os.path.abspath(__file__)))  # 将工作路径设置为脚本位置
 
     # 加载配置
@@ -179,6 +229,7 @@ def main_handler(event, context):
 
 
 if __name__ == '__main__':
+    '''本地执行入口位置'''
     try:
         main()
     finally:

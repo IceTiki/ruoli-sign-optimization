@@ -244,7 +244,7 @@ class DT:
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.3.1"  # 版本标识
+    prefix = "V-T3.3.2"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0

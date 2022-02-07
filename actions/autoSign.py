@@ -193,7 +193,7 @@ class AutoSign:
             self.form['isNeedExtra'] = self.task['isNeedExtra']
             self.form['signInstanceWid'] = self.task['signInstanceWid']
 
-            self.form['signPhotoUrl'] = hti['photograph']  # WARNING：存疑
+            self.form['signPhotoUrl'] = hti['signPhotoUrl']
             self.form['extraFieldItems'] = hti['extraFieldItems']
             self.form['longitude'], self.form['latitude'] = RT.locationOffset(
                 hti['longitude'], hti['latitude'], self.userInfo['global_locationOffsetRange'])
