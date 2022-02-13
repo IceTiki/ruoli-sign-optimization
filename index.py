@@ -39,8 +39,8 @@ except ImportError as e:
 请尝试重新下载代码
 错误信息: {e}""")
     raise e
-# 导入脚本的其他部分(不使用try结构时, 格式化代码会将import挪至最上)
-try:
+# 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
+if True:
     from liteTools import TaskError, RT, DT, LL
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
@@ -50,8 +50,6 @@ try:
     from actions.collection import Collection
     from actions.autoSign import AutoSign
     from todayLoginService import TodayLoginService
-except Exception as e:
-    raise e
 # ====================完成导入模块====================
 
 

@@ -154,6 +154,7 @@
 * 2021-12-16更新，pushplus使用方式更新，需要重新配置
 * 2022-1-20更新，随今日校园更新
 * 2022-1-20更新，pushplus支持[旧版](https://pushplus.hxtrip.com/index)和[新版](http://www.pushplus.plus/)。(兼容旧版配置文件)
+* 2022-2-13更新，增强caslogin适配(同时也暂时删除了验证码识别)
 * 发现bug记得提交issue
 
 ## 概述
@@ -379,23 +380,49 @@
 
 ## 使用方法
 
-### 第一步
+### 通用步骤
+
+1. [下载代码包](https://github.com/IceTiki/ruoli-sign-optimization/archive/refs/heads/master.zip)
+
+2. 准备python3环境([windows系统下python3安装教程](https://moe.best/baidu/?知乎%20windows系统怎么安装python3))
+
+3. 安装第三方模块(依赖)
+
+   1. 方法1——pip安装([教程](https://moe.best/baidu/?怎么用pip指令安装requirement.txt))
+
+      > 一般先用```cd 地址```指令切换目录到代码文件夹
+      >
+      > 然后用```pip3 install -r requirements.txt -t ./ -i https://mirrors.aliyun.com/pypi/simple```安装第三方模块
+
+   2. 方法2——手动将模块文件拖入代码文件夹
+
+4. 安装[VScode](https://code.visualstudio.com/Download)，安装```yaml```和```python```相应的插件([教程](https://moe.best/baidu/?怎么安装vscode插件))
+
+5. 用VScode打开```config.yml```，按照里面的注释填写配置
+
+6. 运行```index.py```
+
+7. 备注：如果签到不成功，问问题的时候请附带完整**日志**
+
+### 腾讯云函数
+
+#### 第一步
 
 登录腾讯云，进入腾讯云函数https://console.cloud.tencent.com/scf/list
 
-### 第二步
+#### 第二步
 
 选择一个**非广州的内陆节点**(比如上海、北京、成都)
 
 ![image-20210808213157826](README.assets/image-20210808213157826.png)
 
-### 第三步
+#### 第三步
 
 点击 **新建**
 
 ![image-20210808213307298](README.assets/image-20210808213307298.png)
 
-### 第四步
+#### 第四步
 
 选择自定义创建
 
@@ -407,7 +434,7 @@
 
 ![image-20210808213748344](README.assets/image-20210808213748344.png)
 
-### 第五步
+#### 第五步
 
 触发器选择 **自定义创建**
 
@@ -419,7 +446,7 @@ Cron表达式填```15 0,8 * * *```(意思是每天0点和8点15分触发)
 
 ![image-20210808214224780](README.assets/image-20210808214224780.png)
 
-### 第六步
+#### 第六步
 
 自动跳转到函数管理，进入函数配置
 
@@ -435,7 +462,7 @@ Cron表达式填```15 0,8 * * *```(意思是每天0点和8点15分触发)
 
 ![image-20210808214601868](README.assets/image-20210808214601868.png)
 
-### 第七步
+#### 第七步
 
 进入 **函数代码**
 
@@ -445,7 +472,7 @@ Cron表达式填```15 0,8 * * *```(意思是每天0点和8点15分触发)
 
 ![image-20210808214956680](README.assets/image-20210808214956680.png)
 
-### 第八步
+#### 第八步
 
 点击 **终端-新终端**
 
