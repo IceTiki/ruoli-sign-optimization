@@ -31,7 +31,7 @@ sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())  # 设置默认输�
 
 # 检查代码完整性
 try:
-    for i in ("todayLoginService", "actions\\autoSign", "actions\\collection", "actions\\sleepCheck", "actions\\workLog", "actions\\sendMessage", "actions\\teacherSign", "login\\Utils", "login\\casLogin", "login\\iapLogin", "login\\RSALogin", "liteTools"):
+    for i in ("todayLoginService", "actions/autoSign", "actions/collection", "actions/sleepCheck", "actions/workLog", "actions/sendMessage", "actions/teacherSign", "login/Utils", "login/casLogin", "login/iapLogin", "login/RSALogin", "liteTools"):
         i = os.path.normpath(i)  # 路径适配系统
         imp.find_module(i)
 except ImportError as e:
