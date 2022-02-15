@@ -6,28 +6,42 @@ import sys
 import codecs
 import traceback
 
+
+# 环境变量初始化
+try:
+    print("==========脚本开始初始化==========")
+except UnicodeEncodeError:
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())  # 设置默认输出编码为utf-8, WARNING!!!但是会影响腾讯云函数日志输出。
+os.chdir(os.path.dirname(os.path.abspath(__file__)))  # 将工作路径设置为脚本位置
+os.environ['TZ'] = "Asia/Shanghai"  # 将时区设为UTC+8
+
 # 检查第三方模块
 try:
     for i in ("requests", "requests_toolbelt", "urllib3", "bs4", "Crypto", "pyDes", "yaml", "lxml", "rsa"):
         imp.find_module(i)
 except ImportError as e:
-    print(f"""!!!!!!!!!!!!!!缺少第三方模块(依赖)!!!!!!!!!!!!!!
+    # =======WARNING!!!start=======
+    # 在腾讯云函数中将e嵌入字符串中，或者print(e)会导致“except结构中的print()输出”在日志中丢失。但是在Exception中使用格式化，再print出Excetion是正常的。
+    # 同时，似乎不能直接raise ImportError，要raise其他类型的异常“except结构中的print()输出”才会正常。
+    # 同时似乎还要对e创建一些引用，特性太复杂了
+    # 最后放弃了print()出错误信息
+    # e2 = e
+    # c2 = "asdads%sasda"%e
+    # e3 =Exception(c2)
+    # print(e3)
+    # print("ccc")
+    # raise e2
+    # =======WARNING!!!end=======
+    raise ImportError(f"""!!!!!!!!!!!!!!缺少第三方模块(依赖)!!!!!!!!!!!!!!
 请使用pip命令安装或者手动将依赖拖入文件夹
-错误信息: {e}""")
-    raise e
+错误信息: [{e}]""")
 # 检查Crypto是否对应系统版本
 try:
     from Crypto.Cipher import AES
 except OSError as e:
-    print(f"""!!!!!!!!!!!!!!Crypto模块版本错误!!!!!!!!!!!!!!
+    raise OSError(f"""!!!!!!!!!!!!!!Crypto模块版本错误!!!!!!!!!!!!!!
 请不要将linux系统(比如云函数)和windows系统的依赖混用
-错误信息: {e}""")
-    raise e
-
-# 环境变量初始化
-os.chdir(os.path.dirname(os.path.abspath(__file__)))  # 将工作路径设置为脚本位置
-os.environ['TZ'] = "Asia/Shanghai"  # 将时区设为UTC+8
-sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())  # 设置默认输出编码为utf-8
+错误信息: [{e}]""")
 
 # 检查代码完整性
 try:
@@ -35,10 +49,9 @@ try:
         i = os.path.normpath(i)  # 路径适配系统
         imp.find_module(i)
 except ImportError as e:
-    print(f"""!!!!!!!!!!!!!!脚本代码文件缺失!!!!!!!!!!!!!!
+    raise ImportError(f"""!!!!!!!!!!!!!!脚本代码文件缺失!!!!!!!!!!!!!!
 请尝试重新下载代码
-错误信息: {e}""")
-    raise e
+错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
     from liteTools import TaskError, RT, DT, LL
@@ -169,7 +182,7 @@ def working(user):
 
 def main():
     '''主函数'''
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))  # 将工作路径设置为脚本位置
+    print("==========脚本开始执行==========")
 
     # 加载配置
     config = loadConfig()
