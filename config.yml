@@ -28,7 +28,7 @@ users: # ------别误删了这一行------
   - # 信息收集模板=======
     # 通用必填项-------
     type: 0 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
-    schoolName: 宜宾学院 # 学校全称
+    schoolName: 五道口职业技术学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
     # 一般需填项-------
@@ -36,21 +36,21 @@ users: # ------别误删了这一行------
     forms: # 表单信息
       - form:
           title: 今日具体所在地
-          value: 四川省/宜宾市/翠屏区 # 如果是多选请用"|"分割值
+          value: 北京市/东城区 # 如果是多选请用"|"分割值
           isNeed: 1 # 是否需要提交此问题，必填问题一定要填1(1:提交|0:不提交)
       - form:
           title: 是否在校
           value: 是
           isNeed: 1
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 104.616858 # 经度
-    lat: 28.793022 # 纬度
-    address: "宜宾市（自己改）" # 地址信息
+    lon: 116.404165 # 经度
+    lat: 39.910966 # 纬度
+    address: "北京市东城区天安门广场中央" # 地址信息
 
   - # 签到模板=======
     # 通用必填项-------
     type: 1 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
-    schoolName: 宜宾学院 # 学校全称
+    schoolName: 五道口职业技术学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
     # 一般需填项-------
@@ -67,28 +67,28 @@ users: # ------别误删了这一行------
           title: 今天你的身体状况是？
           value: 健康
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 104.616858 # 经度
-    lat: 28.793022 # 纬度
-    address: "宜宾市（自己改）" # 地址信息
+    lon: 116.404165 # 经度
+    lat: 39.910966 # 纬度
+    address: "xx学院" # 地址信息
 
   - # 查寝模板=======
     # 通用必填项-------
     type: 2 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
-    schoolName: 宜宾学院 # 学校全称
+    schoolName: 五道口职业技术学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
     # 一般需填项-------
     abnormalReason: "" # abnormalReason 反馈信息（这个一般不用配置，但是不能删除，删除会报错）
     photo: sign.jpg # 签到照片，不需要可不填。如果填入文件夹路径或路径列表，则会自动从中随机选择图片(.jpg)
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 104.616858 # 经度
-    lat: 28.793022 # 纬度
-    address: "宜宾市（自己改）" # 地址信息
+    lon: 116.404165 # 经度
+    lat: 39.910966 # 纬度
+    address: "北京市东城区天安门广场中央" # 地址信息
 
   - # 教师工作日志模板=======
     # 通用必填项-------
     type: 3 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
-    schoolName: 宜宾学院 # 学校全称
+    schoolName: 五道口职业技术学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
     # 一般需填项-------
@@ -113,23 +113,23 @@ users: # ------别误删了这一行------
           title: 7.是否请假
           value: 否
       - form:
-          title: 8.今日是否返回宜宾市
+          title: 8.今日是否返回北京市
           value: 否
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 104.616858 # 经度
-    lat: 28.793022 # 纬度
-    address: "宜宾市（自己改）" # 地址信息
+    lon: 116.404165 # 经度
+    lat: 39.910966 # 纬度
+    address: "北京市东城区天安门广场中央" # 地址信息
 
   - # 政工签到模板=======
     # 通用必填项-------
     type: 4 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
-    schoolName: 宜宾学院 # 学校全称
+    schoolName: 五道口职业技术学院 # 学校全称
     username: "" # 学号或者工号
     password: "" # 密码
     # 一般需填项-------
     abnormalReason: "" # abnormalReason 反馈信息（这个一般不用配置，但是不能删除，删除会报错）
     photo: sign.jpg # 签到照片，不需要可不填。如果填入文件夹路径或路径列表，则会自动从中随机选择图片(.jpg)
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 104.616858 # 经度
-    lat: 28.793022 # 纬度
-    address: "宜宾市（自己改）" # 地址信息
+    lon: 116.404165 # 经度
+    lat: 39.910966 # 纬度
+    address: "北京市东城区天安门广场中央" # 地址信息
