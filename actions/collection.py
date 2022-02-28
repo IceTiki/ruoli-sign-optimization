@@ -74,7 +74,24 @@ class Collection:
         if res['datas']['totalSize'] < 1:
             raise TaskError('没有查询到信息收集任务')
         LL.log(1, '查询任务返回结果', res['datas'])
-        task = res['datas']['rows'][0]
+        # 根据表单名称匹配对应任务
+        try:
+            failedName = []
+            subjectName = self.userInfo['subjectName']
+            for task in res['datas']['rows']:
+                if subjectName in task['subject']:
+                    break
+                failedName.append(task['subject'])
+            else:
+                failedName = '”、“'.join(failedName)
+                raise Exception(f'\r\n有配置项的标题不正确\r\n您的标题为：{subjectName}\r\n系统的标题为：“{failedName}”')
+        # 若未填写名称则默认为第一个
+        except KeyError:
+            LL.log(1, '用户未配置任务名称，默认选取第一个任务')
+            task = res['datas']['rows'][0]
+        except TypeError:
+            LL.log(1, '用户未配置任务名称，默认选取第一个任务')
+            task = res['datas']['rows'][0]
         self.collectWid = task['wid']
         self.taskWid = task['formWid']
         self.instanceWid = task.get('instanceWid', '')

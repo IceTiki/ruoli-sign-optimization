@@ -222,9 +222,11 @@ def main():
             LL.log(1, sm.log_str)
 
     # 签到情况推送
-    msg = '==签到情况==\n'
+    msg = '==签到成功==\n'
     for i in config['users']:
         msg += '[%s]\n%s\n' % (i['remarkName'], i['state'])
+    if '签到失败' in msg:
+        msg = msg.replace('==签到成功==','××签到失败××')
     LL.log(1, msg)
     sm = SendMessage(config.get('sendMessage'))
     sm.send(msg+'\n'+LL.getLog(4), '自动健康打卡')
