@@ -11,7 +11,9 @@ import traceback
 try:
     print("==========脚本开始初始化==========")
 except UnicodeEncodeError:
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())  # 设置默认输出编码为utf-8, WARNING!!!但是会影响腾讯云函数日志输出。
+    # 设置默认输出编码为utf-8, 但是会影响腾讯云函数日志输出。
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+    print("==========脚本开始初始化(utf-8输出)==========")
 os.chdir(os.path.dirname(os.path.abspath(__file__)))  # 将工作路径设置为脚本位置
 os.environ['TZ'] = "Asia/Shanghai"  # 将时区设为UTC+8
 
@@ -91,7 +93,10 @@ def loadConfig():
             'systemName': 'android',
             "signVersion": "first_v3",
             "calVersion": "firstv",
-            'getHistorySign': False
+            'getHistorySign': False,
+            'title': 0,
+            'signLevel': 0,
+            'abnormalReason': "回家"
         }
         defaultConfig.update(user)
         user.update(defaultConfig)

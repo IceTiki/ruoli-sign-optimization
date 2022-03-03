@@ -13,11 +13,12 @@ class Collection:
         self.host = todaLoginService.host
         self.userInfo = userInfo
         self.task = None
-        self.collectWid = None
-        self.taskWid = None
+        self.wid = None
+        self.formWid = None
         self.schoolTaskWid = None
         self.instanceWid = None
         self.form = {}
+        self.historyTaskData = {}
 
     # 上传图片到阿里云oss
     def uploadPicture(self, picDir):
@@ -59,148 +60,316 @@ class Collection:
     def queryForm(self):
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
-        queryUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/queryCollectorProcessingList'
-        params = {
-            'pageSize': 20,
-            "pageNumber": 1
-        }
+        url = f'{self.host}wec-counselor-collector-apps/stu/collector/queryCollectorProcessingList'
         # 第一次请求接口获取cookies（MOD_AUTH_CAS）
-        self.session.post(queryUrl, headers=headers,
+        self.session.post(url, headers=headers,
                           data=json.dumps({}), verify=False)
-        # 第二次请求接口，真正的拿到具体任务
-        res = self.session.post(queryUrl, data=json.dumps(
-            params), headers=headers, verify=False)
-        res = DT.resJsonEncode(res)
-        if res['datas']['totalSize'] < 1:
-            raise TaskError('没有查询到信息收集任务')
-        LL.log(1, '查询任务返回结果', res['datas'])
-        task = res['datas']['rows'][0]
-        self.collectWid = task['wid']
-        self.taskWid = task['formWid']
-        self.instanceWid = task.get('instanceWid', '')
-        detailUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
-        res = self.session.post(detailUrl, headers=headers, data=json.dumps({'collectorWid': self.collectWid}),
-                                verify=False)
-        res = DT.resJsonEncode(res)
-        try:
-            self.schoolTaskWid = res['datas']['collector']['schoolTaskWid']
-        except TypeError:
-            self.schoolTaskWid = ''
-            LL.log(1, '循环普通任务实例wid为空')
-        getFormUrl = f'{self.host}wec-counselor-collector-apps/stu/collector/getFormFields'
-        params = {"pageSize": 100, "pageNumber": 1,
-                  "formWid": self.taskWid, "collectorWid": self.collectWid}
-        res = self.session.post(
-            getFormUrl, headers=headers, data=json.dumps(params), verify=False)
-        res = DT.resJsonEncode(res)
-        LL.log(1, '查询任务详情返回结果', res['datas'])
-        self.task = res['datas']['rows']
+        # 获取首页信息, 获取页数
+        pageSize = 20
+        pageReq = {"pageNumber": 1, "pageSize": pageSize}
+        pageNumber = 0
+        totalSize = 1
+        # 按页遍历
+        while pageNumber*pageSize <= totalSize:
+            pageNumber += 1
+            pageReq["pageNumber"] = pageNumber
+            # 获取**任务列表**数据
+            res = self.session.post(url, headers=headers,
+                                    data=json.dumps(pageReq), verify=False)
+            res = DT.resJsonEncode(res)
+            # 在**首页**获取历史信息收集**总数**
+            if pageNumber == 1:
+                # 历史信息收集总数
+                totalSize = res['datas']['totalSize']
+                # 如果没有获取到历史任务则报错
+                if totalSize < 0:
+                    LL.log(2, "没有获取到信息收集任务")
+                    raise TaskError("没有获取到信息收集任务")
+            # 按页中任务遍历
+            for task in res['datas']['rows']:
+                if self.userInfo.get('title'):
+                    # 如果任务需要匹配标题
+                    if not re.search(self.userInfo['title'], task["subject"]):
+                        # 跳过标题不匹配的任务
+                        continue
+                    if not (self.userInfo.get('signLevel') and (not task['isHandled'])):
+                        # 如果signLevel为真，则无论收集是否完成都会正常进入填报流程
+                        # 如果signLevel为假，则只有收集未被完成时才会进入填报流程，否则报错
+                        LL.log(2, f"收集任务({task['subject']})已经被填报")
+                        raise TaskError(f"收集任务({task['subject']})已经被填报")
+                else:
+                    # 如果不需要匹配标题，则获取第一个任务
+                    if not (self.userInfo.get('signLevel') and (not task['isHandled'])):
+                        # 如果signLevel为真，则无论收集是否完成都会正常进入填报流程
+                        # 如果signLevel为假，则只有收集未被完成时才会进入填报流程，否则该任务被跳过
+                        continue
+                # 提取任务的基本信息
+                self.wid = task['wid']
+                self.formWid = task['formWid']
+                self.instanceWid = task.get('instanceWid', '')
+                self.taskName = task['subject']
+                # 获取任务详情
+                url = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
+                params = {"collectorWid": self.wid,
+                          "instanceWid": self.instanceWid}
+                res = self.session.post(
+                    url, headers=headers, data=json.dumps(params), verify=False)
+                res = DT.resJsonEncode(res)
+                try:
+                    self.schoolTaskWid = res['datas']['collector']['schoolTaskWid']
+                except TypeError:
+                    self.schoolTaskWid = ''
+                    LL.log(1, '循环普通任务实例wid为空')
+                # 获取任务表单
+                url = f'{self.host}wec-counselor-collector-apps/stu/collector/getFormFields'
+                params = {"pageSize": 9999, "pageNumber": 1,
+                          "formWid": self.formWid, "collectorWid": self.wid}
+                res = self.session.post(
+                    url, headers=headers, data=json.dumps(params), verify=False)
+                res = DT.resJsonEncode(res)
+                LL.log(1, '查询任务详情返回结果', res['datas'])
+                self.task = res['datas']['rows']
+                return
+
+    # 获取历史签到任务详情
+    def getHistoryTaskInfo(self):
+        '''获取历史签到任务详情'''
+        headers = self.session.headers
+        headers['Content-Type'] = 'application/json;charset=UTF-8'
+        # 获取首页信息, 获取页数
+        pageSize = 20
+        url = f'{self.host}wec-counselor-collector-apps/stu/collector/queryCollectorHistoryList'
+        pageReq = {"pageNumber": 1, "pageSize": pageSize}
+        pageNumber = 0
+        totalSize = 1
+        # 按页遍历
+        while pageNumber*pageSize <= totalSize:
+            pageNumber += 1
+            pageReq["pageNumber"] = pageNumber
+            # 获取**任务列表**数据
+            res = self.session.post(url, headers=headers,
+                                    data=json.dumps(pageReq), verify=False)
+            res = DT.resJsonEncode(res)
+            # 在**首页**获取历史信息收集**总数**
+            if pageNumber == 1:
+                # 历史信息收集总数
+                totalSize = res['datas']['totalSize']
+                # 如果没有获取到历史任务则报错
+                if totalSize < 0:
+                    LL.log(2, "没有获取到历史任务")
+                    raise TaskError("没有获取到历史任务")
+            # 按页中任务遍历
+            for task in res['datas']['rows']:
+                if task['isHandled'] == 1 and task['formWid'] == self.formWid:
+                    # 找到和当前任务匹配的历史已处理任务，开始获取表单
+                    historyInstanceWid = task['instanceWid']
+                    historyWid = task['wid']
+                    # 模拟请求
+                    url = f'{self.host}wec-counselor-collector-apps/stu/collector/getUnSeenQuestion'
+                    res = self.session.post(url, headers=headers, data=json.dumps({"wid": self.wid, "instanceWid": self.instanceWid}),
+                                            verify=False)
+                    # 获取历史签到地址
+                    url = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
+                    res = self.session.post(url, headers=headers, data=json.dumps({"collectorWid": self.wid, "instanceWid": self.instanceWid}),
+                                            verify=False)
+                    res = DT.resJsonEncode(res)
+                    self.form
+                    # 获取表单
+                    url = f'{self.host}wec-counselor-collector-apps/stu/collector/getFormFields'
+                    formReq = {"pageNumber": 1, "pageSize": 9999, "formWid": self.formWid,
+                               "collectorWid": historyWid, "instanceWid": historyInstanceWid}
+                    res = self.session.post(url, headers=headers, data=json.dumps(formReq),
+                                            verify=False)
+                    res = DT.resJsonEncode(res)
+                    self.historyTaskData['address'] = res['datas'].get(
+                        'collector', {}).get('address', "")
+                    # 模拟请求
+                    url = f'{self.host}wec-counselor-collector-apps/stu/collector/queryNotice'
+                    res = self.session.post(
+                        url, headers=headers, data=json.dumps({}), verify=False)
+                    res = DT.resJsonEncode(res)
+                    # 处理表单
+                    form = res['datas']['rows']
+                    # 逐个处理表单内问题
+                    for item in form:
+                        # 填充额外参数
+                        item['show'] = True
+                        item['formType'] = '0'  # 盲猜是任务类型、待确认
+                        item['sortNum'] = str(item['sort'])  # 盲猜是sort排序
+                        if item['fieldType'] == '2':
+                            '''如果是单选题，需要删掉多余选项'''
+                            item['fieldItems'] = list(
+                                filter(lambda x: x['isSelected'], item['fieldItems']))
+                            item['value'] = item['fieldItems'][0]['itemWid']
+                        elif item['fieldType'] == '3':
+                            '''如果是多选题，也需要删掉多余选项'''
+                            item['fieldItems'] = list(
+                                filter(lambda x: x['isSelected'], item['fieldItems']))
+                            item['value'] = ','.join(
+                                [i['itemWid'] for i in item['fieldItems']])
+                        elif item['fieldType'] == '4':
+                            '''如果是图片上传类型'''
+                            # 填充其他信息
+                            item.setdefault('http', {
+                                'defaultOptions': {
+                                    'customConfig': {
+                                        'pageNumberKey': 'pageNumber',
+                                        'pageSizeKey': 'pageSize',
+                                        'pageDataKey': 'pageData',
+                                        'pageTotalKey': 'pageTotal',
+                                        'data': 'datas',
+                                        'codeKey': 'code',
+                                        'messageKey': 'message'
+                                    }
+                                }
+                            })
+                            item['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/oss/getUploadPolicy'
+                            item['saveAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/saveAttachment'
+                            item['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
+                            item['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
+                    self.historyTaskData['form'] = form
+                    # 处理坐标
+                    # 获取百度地图API的密钥
+                    url = 'https://feres.cpdaily.com/bower_components/baidumap/baidujsSdk@2.js'
+                    res = self.session.get(url, headers=headers, verify=False)
+                    baiduMap_ak = re.findall(r"ak=(\w*)", res.text)[0]
+                    # 用地址获取相应坐标(NOTION!!!转换不是很精确，但是信息收集对位置精度要求也不高)
+                    url = f'http://api.map.baidu.com/geocoding/v3'
+                    params = {
+                        "output": "json", "address": self.historyTaskData['address'], "ak": baiduMap_ak}
+                    res = self.session.get(
+                        url, headers=headers, params=params, verify=False)
+                    res = DT.resJsonEncode(res)
+                    lon = res['result']['location']['lng']
+                    lat = res['result']['location']['lat']
+                    self.historyTaskData['longitude'], self.historyTaskData['latitude'] = RT.locationOffset(
+                        lon, lat, offset=self.userInfo['global_locationOffsetRange'])
+                    LL.log(1, '历史信息收集填报详情', self.historyTaskData)
+                    return self.historyTaskData
+        # 如果没有获取到历史信息收集则报错
+        LL.log(2, "没有找到匹配的历史任务")
+        raise TaskError("没有找到匹配的历史任务")
 
     # 填写表单
+
     def fillForm(self):
-        task_form = []
-        # 检查用户配置长度与查询到的表单长度是否匹配
-        if len(self.task) != len(self.userInfo['forms']):
-            raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
-                len(self.userInfo['forms']), len(self.task)))
-        for formItem, userForm in zip(self.task, self.userInfo['forms']):
-            userForm = userForm['form']
-            # 根据用户配置决定是否要填此选项
-            if userForm['isNeed'] == 1:
-                # 判断用户是否需要检查标题
-                if self.userInfo['checkTitle'] == 1:
-                    # 如果检查到标题不相等
-                    if formItem['title'] != userForm['title']:
-                        raise Exception(
-                            f'\r\n有配置项的标题不正确\r\n您的标题为：{userForm["title"]}\r\n系统的标题为：{formItem["title"]}')
-                # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
-                formItem['show'] = True
-                formItem['formType'] = '0'  # 盲猜是任务类型、待确认
-                formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
-                # 开始填充表单
-                # 文本选项直接赋值
-                if formItem['fieldType'] in ('1', '5', '6', '7'):
-                    formItem['value'] = userForm['value']
-                # 单选框填充
-                elif formItem['fieldType'] == '2':
-                    # 定义单选框的wid
-                    itemWid = ''
-                    # 单选需要移除多余的选项
-                    for fieldItem in formItem['fieldItems'].copy():
-                        if fieldItem['content'] != userForm['value']:
-                            formItem['fieldItems'].remove(fieldItem)
-                        else:
-                            itemWid = fieldItem['itemWid']
-                    if itemWid == '':
-                        raise Exception(
-                            f'\r\n{userForm}配置项的选项不正确，该选项为单选，且未找到您配置的值'
-                        )
-                    formItem['value'] = itemWid
-                # 多选填充
-                elif formItem['fieldType'] == '3':
-                    # 定义单选框的wid
-                    itemWidArr = []
-                    userItems = userForm['value'].split('|')
-                    for fieldItem in formItem['fieldItems'].copy():
-                        if fieldItem['content'] in userItems:
-                            formItem['value'] += fieldItem['content'] + ' '
-                            itemWidArr.append(fieldItem['itemWid'])
-                        else:
-                            formItem['fieldItems'].remove(fieldItem)
-                    # 若多选一个都未选中
-                    if len(itemWidArr) == 0:
-                        raise Exception(
-                            f'\r\n{userForm}配置项的选项不正确，该选项为多选，且未找到您配置的值'
-                        )
-                    formItem['value'] = ','.join(itemWidArr)
-                # 图片（健康码）上传类型
-                elif formItem['fieldType'] == '4':
-                    # 如果是传图片的话，那么是将图片的地址（相对/绝对都行）存放于此value中
-                    picDir = RT.choicePhoto(userForm['value'])
-                    self.uploadPicture(picDir)
-                    formItem['value'] = self.getPictureUrl()
-                    # 填充其他信息
-                    formItem.setdefault('http', {
-                        'defaultOptions': {
-                            'customConfig': {
-                                'pageNumberKey': 'pageNumber',
-                                'pageSizeKey': 'pageSize',
-                                'pageDataKey': 'pageData',
-                                'pageTotalKey': 'pageTotal',
-                                'data': 'datas',
-                                'codeKey': 'code',
-                                'messageKey': 'message'
+        LL.log(1, '填充表单')
+        if self.userInfo['getHistorySign']:
+            hti = self.getHistoryTaskInfo()
+            self.form['form'] = hti['form']
+            self.form["formWid"] = self.formWid
+            self.form["address"] = hti['address']
+            self.form["collectWid"] = self.wid
+            self.form["schoolTaskWid"] = self.schoolTaskWid
+            self.form["uaIsCpadaily"] = True
+            self.form["latitude"] = hti['latitude']
+            self.form["longitude"] = hti['longitude']
+            self.form['instanceWid'] = self.instanceWid
+        else:
+            task_form = []
+            # 检查用户配置长度与查询到的表单长度是否匹配
+            if len(self.task) != len(self.userInfo['forms']):
+                raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
+                    len(self.userInfo['forms']), len(self.task)))
+            for formItem, userForm in zip(self.task, self.userInfo['forms']):
+                userForm = userForm['form']
+                # 根据用户配置决定是否要填此选项
+                if userForm['isNeed'] == 1:
+                    # 判断用户是否需要检查标题
+                    if self.userInfo['checkTitle'] == 1:
+                        # 如果检查到标题不相等
+                        if formItem['title'] != userForm['title']:
+                            raise Exception(
+                                f'\r\n有配置项的标题不正确\r\n您的标题为：{userForm["title"]}\r\n系统的标题为：{formItem["title"]}')
+                    # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
+                    formItem['show'] = True
+                    formItem['formType'] = '0'  # 盲猜是任务类型、待确认
+                    formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
+                    # 开始填充表单
+                    # 文本选项直接赋值
+                    if formItem['fieldType'] in ('1', '5', '6', '7'):
+                        formItem['value'] = userForm['value']
+                    # 单选框填充
+                    elif formItem['fieldType'] == '2':
+                        # 定义单选框的wid
+                        itemWid = ''
+                        # 单选需要移除多余的选项
+                        for fieldItem in formItem['fieldItems'].copy():
+                            if fieldItem['content'] != userForm['value']:
+                                formItem['fieldItems'].remove(fieldItem)
+                            else:
+                                itemWid = fieldItem['itemWid']
+                        if itemWid == '':
+                            raise Exception(
+                                f'\r\n{userForm}配置项的选项不正确，该选项为单选，且未找到您配置的值'
+                            )
+                        formItem['value'] = itemWid
+                    # 多选填充
+                    elif formItem['fieldType'] == '3':
+                        # 定义单选框的wid
+                        itemWidArr = []
+                        userItems = userForm['value'].split('|')
+                        # 多选也需要移除多余的选项
+                        for fieldItem in formItem['fieldItems'].copy():
+                            if fieldItem['content'] in userItems:
+                                # formItem['value'] += fieldItem['content'] + ' ' # 这句不知道有什么用
+                                itemWidArr.append(fieldItem['itemWid'])
+                            else:
+                                formItem['fieldItems'].remove(fieldItem)
+                        # 若多选一个都未选中
+                        if len(itemWidArr) == 0:
+                            raise Exception(
+                                f'\r\n{userForm}配置项的选项不正确，该选项为多选，且未找到您配置的值'
+                            )
+                        formItem['value'] = ','.join(itemWidArr)
+                    # 图片（健康码）上传类型
+                    elif formItem['fieldType'] == '4':
+                        # 如果是传图片的话，那么是将图片的地址（相对/绝对都行）存放于此value中
+                        picDir = RT.choicePhoto(userForm['value'])
+                        self.uploadPicture(picDir)
+                        formItem['value'] = self.getPictureUrl()
+                        # 填充其他信息
+                        formItem.setdefault('http', {
+                            'defaultOptions': {
+                                'customConfig': {
+                                    'pageNumberKey': 'pageNumber',
+                                    'pageSizeKey': 'pageSize',
+                                    'pageDataKey': 'pageData',
+                                    'pageTotalKey': 'pageTotal',
+                                    'data': 'datas',
+                                    'codeKey': 'code',
+                                    'messageKey': 'message'
+                                }
                             }
-                        }
-                    })
-                    formItem['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/oss/getUploadPolicy'
-                    formItem['saveAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/saveAttachment'
-                    formItem['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
-                    formItem['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
+                        })
+                        formItem['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/oss/getUploadPolicy'
+                        formItem['saveAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/saveAttachment'
+                        formItem['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
+                        formItem['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
 
+                    else:
+                        raise Exception(
+                            f'\r\n{userForm}配置项属于未知配置项，请反馈'
+                        )
+                    task_form.append(formItem)
                 else:
-                    raise Exception(
-                        f'\r\n{userForm}配置项属于未知配置项，请反馈'
-                    )
-                task_form.append(formItem)
-            else:
-                pass
+                    pass
 
-        self.form["form"] = task_form
-        self.form["formWid"] = self.taskWid
-        self.form["address"] = self.userInfo['address']
-        self.form["collectWid"] = self.collectWid
-        self.form["schoolTaskWid"] = self.schoolTaskWid
-        self.form["uaIsCpadaily"] = True
-        self.form["latitude"] = self.userInfo['lat']
-        self.form["longitude"] = self.userInfo['lon']
-        self.form['instanceWid'] = self.instanceWid
+            self.form["form"] = task_form
+            self.form["formWid"] = self.formWid
+            self.form["address"] = self.userInfo['address']
+            self.form["collectWid"] = self.wid
+            self.form["schoolTaskWid"] = self.schoolTaskWid
+            self.form["uaIsCpadaily"] = True
+            self.form["latitude"] = self.userInfo['lat']
+            self.form["longitude"] = self.userInfo['lon']
+            self.form['instanceWid'] = self.instanceWid
 
     def getSubmitExtension(self):
         '''生成各种额外参数'''
         extension = {
-            "lon": self.userInfo['lon'],
-            "lat": self.userInfo['lat'],
+            "lon": self.form['longitude'],
+            "lat": self.form['latitude'],
             "model": self.userInfo['model'],
             "appVersion": self.userInfo['appVersion'],
             "systemVersion": self.userInfo['systemVersion'],
@@ -216,14 +385,14 @@ class Collection:
             json.dumps(self.form))
 
         self.submitData = {
-            "lon": self.userInfo['lon'],
+            "lon": self.form['longitude'],
             "version": self.userInfo['signVersion'],
             "calVersion": self.userInfo['calVersion'],
             "deviceId": self.userInfo['deviceId'],
             "userId": self.userInfo['username'],
             "systemName": self.userInfo['systemName'],
             "bodyString": self.bodyString,
-            "lat": self.userInfo['lat'],
+            "lat": self.form['latitude'],
             "systemVersion": self.userInfo['systemVersion'],
             "appVersion": self.userInfo['appVersion'],
             "model": self.userInfo['model'],
@@ -253,4 +422,4 @@ class Collection:
         data = self.session.post(
             submitUrl, headers=headers, data=json.dumps(self.submitData), verify=False)
         data = DT.resJsonEncode(data)
-        return data['message']
+        return '[%s]%s' % (data['message'], self.taskName)

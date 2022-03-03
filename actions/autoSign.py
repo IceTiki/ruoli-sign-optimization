@@ -32,6 +32,7 @@ class AutoSign:
         res = self.session.post(url, headers=headers,
                                 data=json.dumps({}), verify=False)
         res = DT.resJsonEncode(res)
+        LL.log(1, '返回的列表数据', res['datas'])
 
         signLevel = self.userInfo.get('signLevel', 1)
         if signLevel >= 0:
@@ -41,28 +42,29 @@ class AutoSign:
         if signLevel == 2:
             taskList += res['datas']['signedTasks']  # 已签到任务
         # 查询是否没有未签到任务
-        LL.log(1, '获取到的签到任务列表', taskList)
         if len(taskList) < 1:
-            LL.log(1, '签到任务列表为空')
-            raise TaskError('签到任务列表为空')
-        # 自动获取最后一个未签到任务(如果title==0)
-        if self.userInfo['title'] == 0:
+            LL.log(1, '无需要签到的任务')
+            raise TaskError('无需要签到的任务')
+        if self.userInfo.get('title'):
+            # 获取匹配标题的任务
+            for righttask in taskList:
+                if re.search(self.userInfo['title'], righttask['taskName']):
+                    self.taskName = righttask['taskName']
+                    LL.log(1, '匹配标题的任务', righttask['taskName'])
+                    self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
+                                     'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
+                    return self.taskInfo
+            # 如果没有找到匹配的任务
+            LL.log(1, '没有匹配标题的任务')
+            raise TaskError('没有匹配标题的任务')
+        else:  # 如果没有填title字段
+            # 自动获取最后一个未签到任务
             latestTask = taskList[0]
             self.taskName = latestTask['taskName']
             LL.log(1, '最后一个未签到的任务', latestTask['taskName'])
             self.taskInfo = {'signInstanceWid': latestTask['signInstanceWid'],
                              'signWid': latestTask['signWid'], 'taskName': latestTask['taskName']}
             return self.taskInfo
-        # 获取匹配标题的任务
-        for righttask in taskList:
-            if righttask['taskName'] == self.userInfo['title']:
-                self.taskName = righttask['taskName']
-                LL.log(1, '匹配标题的任务', righttask['taskName'])
-                self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
-                                 'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
-                return self.taskInfo
-        LL.log(1, '没有匹配标题的任务')
-        raise TaskError('没有匹配标题的任务')
 
     # 获取历史签到任务详情
     def getHistoryTaskInfo(self):
@@ -94,7 +96,7 @@ class AutoSign:
                 # 遍历寻找和当前任务匹配的历史已签到任务
                 for task in daySignList['signedTasks']:
                     if task['signWid'] == self.taskInfo['signWid']:
-                        # 找到和当前任务匹配的历史已签到任务，开始更新表单
+                        # 找到和当前任务匹配的历史已签到任务，开始获取表单
                         historyTaskId = {
                             "wid": task['signInstanceWid'], "content": task['signWid']}
                         # 更新cookie
@@ -118,10 +120,11 @@ class AutoSign:
                         # 一些数据处理
                         result = res['datas']
 
+                        # 坐标随机
                         result['longitude'] = float(result['longitude'])
                         result['latitude'] = float(result['latitude'])
-                        self.userInfo['lon'] = result['longitude']
-                        self.userInfo['lat'] = result['latitude']
+                        result['longitude'], result['latitude'] = RT.locationOffset(
+                            result['longitude'], result['latitude'], self.userInfo['global_locationOffsetRange'])
 
                         result['photograph'] = result['photograph'] if len(
                             result['photograph']) != 0 else ""
@@ -134,7 +137,7 @@ class AutoSign:
 
         # 如果没有遍历找到结果
         LL.log(2, "没有找到匹配的历史任务")
-        return "没有找到匹配的历史任务"
+        raise TaskError("没有找到匹配的历史任务")
 
     def getDetailTask(self):
         LL.log(1, '获取具体的签到任务详情')
@@ -195,8 +198,7 @@ class AutoSign:
 
             self.form['signPhotoUrl'] = hti['signPhotoUrl']
             self.form['extraFieldItems'] = hti['extraFieldItems']
-            self.form['longitude'], self.form['latitude'] = RT.locationOffset(
-                hti['longitude'], hti['latitude'], self.userInfo['global_locationOffsetRange'])
+            self.form['longitude'], self.form['latitude'] = hti['longitude'], hti['latitude']
             # 检查是否在签到范围内
             self.form['isMalposition'] = 1
             for place in self.task['signPlaceSelected']:
@@ -265,8 +267,8 @@ class AutoSign:
     def getSubmitExtension(self):
         '''生成各种额外参数'''
         extension = {
-            "lon": self.userInfo['lon'],
-            "lat": self.userInfo['lat'],
+            "lon": self.form['longitude'],
+            "lat": self.form['latitude'],
             "model": self.userInfo['model'],
             "appVersion": self.userInfo['appVersion'],
             "systemVersion": self.userInfo['systemVersion'],
@@ -282,14 +284,14 @@ class AutoSign:
             json.dumps(self.form))
 
         self.submitData = {
-            "lon": self.userInfo['lon'],
+            "lon": self.form['longitude'],
             "version": self.userInfo['signVersion'],
             "calVersion": self.userInfo['calVersion'],
             "deviceId": self.userInfo['deviceId'],
             "userId": self.userInfo['username'],
             "systemName": self.userInfo['systemName'],
             "bodyString": self.bodyString,
-            "lat": self.userInfo['lat'],
+            "lat": self.form['latitude'],
             "systemVersion": self.userInfo['systemVersion'],
             "appVersion": self.userInfo['appVersion'],
             "model": self.userInfo['model'],
