@@ -80,7 +80,7 @@ class casLogin:
         #             imgUrl = self.host + 'authserver/getCaptcha.htl'
         #             params['captcha'] = Utils.getCodeFromImg(self.session, imgUrl)
         # ==============end旧版参数查找end==============
-        
+
         # 在html中寻找所有form元素(备注: form几乎不会嵌套form)
         formElementList = re.findall(r"<form[\s\S]*?</form>", html)
         # 初始化需要的参数
@@ -110,6 +110,11 @@ class casLogin:
                         value = ""
                     # 填入即将提交的参数字典中
                     params[key] = value
+        if not salt:
+            '''salt可能藏在script中'''
+            maySalt = re.findall(r'var pwdDefaultEncryptSalt ?= ?"(.*?)"', html)
+            if maySalt:
+                salt = maySalt[0]
         # 将用户名填入即将提交的参数中
         params['username'] = self.username
         # 将密码填入即将提交的参数中
@@ -125,9 +130,10 @@ class casLogin:
             #         params['captcha'] = Utils.getCodeFromImg(self.session, imgUrl)
         else:
             params['password'] = self.password
-            
+
         # 发送数据尝试登录
-        data = self.session.post(self.login_url, params=params, allow_redirects=False)
+        data = self.session.post(
+            self.login_url, params=params, allow_redirects=False)
         # 如果等于302强制跳转，代表登陆成功
         if data.status_code == 302:
             jump_url = data.headers['Location']
@@ -136,7 +142,8 @@ class casLogin:
             if res.status_code == 200:
                 return self.session.cookies
             else:
-                res = self.session.get(re.findall(r'\w{4,5}\:\/\/.*?\/', self.login_url)[0], verify=False)
+                res = self.session.get(re.findall(
+                    r'\w{4,5}\:\/\/.*?\/', self.login_url)[0], verify=False)
                 if res.status_code == 200 or res.status_code == 404:
                     return self.session.cookies
                 else:

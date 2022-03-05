@@ -77,6 +77,7 @@ class Collection:
             res = self.session.post(url, headers=headers,
                                     data=json.dumps(pageReq), verify=False)
             res = DT.resJsonEncode(res)
+            LL.log(1, f"获取到的第{pageNumber}页任务列表", res)
             # 在**首页**获取历史信息收集**总数**
             if pageNumber == 1:
                 # 历史信息收集总数
@@ -92,16 +93,14 @@ class Collection:
                     if not re.search(self.userInfo['title'], task["subject"]):
                         # 跳过标题不匹配的任务
                         continue
-                    if not (self.userInfo.get('signLevel') and (not task['isHandled'])):
-                        # 如果signLevel为真，则无论收集是否完成都会正常进入填报流程
-                        # 如果signLevel为假，则只有收集未被完成时才会进入填报流程，否则报错
+                    if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
+                        # 如果仅填报"未填报的任务"且相应任务已被填报，则报错
                         LL.log(2, f"收集任务({task['subject']})已经被填报")
                         raise TaskError(f"收集任务({task['subject']})已经被填报")
                 else:
                     # 如果不需要匹配标题，则获取第一个任务
-                    if not (self.userInfo.get('signLevel') and (not task['isHandled'])):
-                        # 如果signLevel为真，则无论收集是否完成都会正常进入填报流程
-                        # 如果signLevel为假，则只有收集未被完成时才会进入填报流程，否则该任务被跳过
+                    if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
+                        # 仅填报"未填报的任务"时如果任务已被填报，则跳过该任务
                         continue
                 # 提取任务的基本信息
                 self.wid = task['wid']
@@ -150,6 +149,7 @@ class Collection:
             res = self.session.post(url, headers=headers,
                                     data=json.dumps(pageReq), verify=False)
             res = DT.resJsonEncode(res)
+            LL.log(1, f"获取到第{pageNumber}页历史信息收集数据", res)
             # 在**首页**获取历史信息收集**总数**
             if pageNumber == 1:
                 # 历史信息收集总数
@@ -166,14 +166,12 @@ class Collection:
                     historyWid = task['wid']
                     # 模拟请求
                     url = f'{self.host}wec-counselor-collector-apps/stu/collector/getUnSeenQuestion'
-                    res = self.session.post(url, headers=headers, data=json.dumps({"wid": self.wid, "instanceWid": self.instanceWid}),
-                                            verify=False)
-                    # 获取历史签到地址
+                    self.session.post(url, headers=headers, data=json.dumps(
+                        {"wid": self.wid, "instanceWid": self.instanceWid}), verify=False)
+                    # 模拟请求:获取历史信息收集信息
                     url = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
-                    res = self.session.post(url, headers=headers, data=json.dumps({"collectorWid": self.wid, "instanceWid": self.instanceWid}),
-                                            verify=False)
-                    res = DT.resJsonEncode(res)
-                    self.form
+                    self.session.post(url, headers=headers, data=json.dumps(
+                        {"collectorWid": self.wid, "instanceWid": self.instanceWid}), verify=False)
                     # 获取表单
                     url = f'{self.host}wec-counselor-collector-apps/stu/collector/getFormFields'
                     formReq = {"pageNumber": 1, "pageSize": 9999, "formWid": self.formWid,
@@ -181,13 +179,10 @@ class Collection:
                     res = self.session.post(url, headers=headers, data=json.dumps(formReq),
                                             verify=False)
                     res = DT.resJsonEncode(res)
-                    self.historyTaskData['address'] = res['datas'].get(
-                        'collector', {}).get('address', "")
                     # 模拟请求
                     url = f'{self.host}wec-counselor-collector-apps/stu/collector/queryNotice'
-                    res = self.session.post(
-                        url, headers=headers, data=json.dumps({}), verify=False)
-                    res = DT.resJsonEncode(res)
+                    self.session.post(url, headers=headers,
+                                      data=json.dumps({}), verify=False)
                     # 处理表单
                     form = res['datas']['rows']
                     # 逐个处理表单内问题
@@ -200,13 +195,17 @@ class Collection:
                             '''如果是单选题，需要删掉多余选项'''
                             item['fieldItems'] = list(
                                 filter(lambda x: x['isSelected'], item['fieldItems']))
-                            item['value'] = item['fieldItems'][0]['itemWid']
+                            if item['fieldItems']:
+                                '''如果已选有选项，则将itemWid填入value中'''
+                                item['value'] = item['fieldItems'][0]['itemWid']
                         elif item['fieldType'] == '3':
                             '''如果是多选题，也需要删掉多余选项'''
                             item['fieldItems'] = list(
                                 filter(lambda x: x['isSelected'], item['fieldItems']))
-                            item['value'] = ','.join(
-                                [i['itemWid'] for i in item['fieldItems']])
+                            if item['fieldItems']:
+                                '''如果已选有选项，则将itemWid填入value中'''
+                                item['value'] = ','.join(
+                                    [i['itemWid'] for i in item['fieldItems']])
                         elif item['fieldType'] == '4':
                             '''如果是图片上传类型'''
                             # 填充其他信息
@@ -228,23 +227,6 @@ class Collection:
                             item['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
                             item['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
                     self.historyTaskData['form'] = form
-                    # 处理坐标
-                    # 获取百度地图API的密钥
-                    url = 'https://feres.cpdaily.com/bower_components/baidumap/baidujsSdk@2.js'
-                    res = self.session.get(url, headers=headers, verify=False)
-                    baiduMap_ak = re.findall(r"ak=(\w*)", res.text)[0]
-                    # 用地址获取相应坐标(NOTION!!!转换不是很精确，但是信息收集对位置精度要求也不高)
-                    url = f'http://api.map.baidu.com/geocoding/v3'
-                    params = {
-                        "output": "json", "address": self.historyTaskData['address'], "ak": baiduMap_ak}
-                    res = self.session.get(
-                        url, headers=headers, params=params, verify=False)
-                    res = DT.resJsonEncode(res)
-                    lon = res['result']['location']['lng']
-                    lat = res['result']['location']['lat']
-                    self.historyTaskData['longitude'], self.historyTaskData['latitude'] = RT.locationOffset(
-                        lon, lat, offset=self.userInfo['global_locationOffsetRange'])
-                    LL.log(1, '历史信息收集填报详情', self.historyTaskData)
                     return self.historyTaskData
         # 如果没有获取到历史信息收集则报错
         LL.log(2, "没有找到匹配的历史任务")
@@ -258,12 +240,12 @@ class Collection:
             hti = self.getHistoryTaskInfo()
             self.form['form'] = hti['form']
             self.form["formWid"] = self.formWid
-            self.form["address"] = hti['address']
+            self.form["address"] = self.userInfo['address']
             self.form["collectWid"] = self.wid
             self.form["schoolTaskWid"] = self.schoolTaskWid
             self.form["uaIsCpadaily"] = True
-            self.form["latitude"] = hti['latitude']
-            self.form["longitude"] = hti['longitude']
+            self.form["latitude"] = self.userInfo['lat']
+            self.form["longitude"] = self.userInfo['lon']
             self.form['instanceWid'] = self.instanceWid
         else:
             task_form = []

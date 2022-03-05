@@ -9,6 +9,7 @@ from pyDes import des, CBC, PAD_PKCS5
 import base64
 import hashlib
 import urllib.parse
+import re
 
 
 class TaskError(Exception):
@@ -77,6 +78,44 @@ class CpdailyTools:
         abstract = urllib.parse.urlencode(abstractSubmitData) + '&' + key
         abstract_md5 = HSF.strHash(abstract, 5)
         return abstract_md5
+
+    @staticmethod
+    def baiduGeocoding(address: str):
+        '''地址转坐标'''
+        # 获取百度地图API的密钥
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'}
+        url = 'https://feres.cpdaily.com/bower_components/baidumap/baidujsSdk@2.js'
+        res = requests.get(url, headers=headers, verify=False)
+        baiduMap_ak = re.findall(r"ak=(\w*)", res.text)[0]
+        # 用地址获取相应坐标
+        url = f'http://api.map.baidu.com/geocoding/v3'
+        params = {
+            "output": "json", "address": address, "ak": baiduMap_ak}
+        res = requests.get(
+            url, headers=headers, params=params, verify=False)
+        res = DT.resJsonEncode(res)
+        lon = res['result']['location']['lng']
+        lat = res['result']['location']['lat']
+        return (lon, lat)
+
+    @staticmethod
+    def baiduReverseGeocoding(lon: float, lat: float):
+        '''地址转坐标'''
+        # 获取百度地图API的密钥
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'}
+        url = 'https://feres.cpdaily.com/bower_components/baidumap/baidujsSdk@2.js'
+        res = requests.get(url, headers=headers, verify=False)
+        baiduMap_ak = re.findall(r"ak=(\w*)", res.text)[0]
+        # 用地址获取相应坐标
+        url = f'http://api.map.baidu.com/reverse_geocoding/v3'
+        params = {
+            "output": "json", "location": "%f,%f" % (lon, lat), "ak": baiduMap_ak}
+        res = requests.get(url, headers=headers, params=params, verify=False)
+        res = DT.resJsonEncode(res)
+        address = res['result']['formatted_address']
+        return address
 
 
 class MT:
@@ -244,7 +283,7 @@ class DT:
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.4.1"  # 版本标识
+    prefix = "V-T3.5.0"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0

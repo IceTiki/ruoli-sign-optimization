@@ -32,7 +32,9 @@ users: # ------别误删了这一行------
     username: "" # 学号或者工号
     password: "" # 密码
     # 一般需填项-------
-    checkTitle: 1 # 是否检查表单的标题（1:检查|0:不检查）
+    signLevel: 1 # 签到等级[1:仅填报未填报的任务|2:已填报的任务也重复填报]
+    title: 0 # 签到任务的标题(使用正则表达式进行匹配(注: yaml中单引号包裹字符串不进行转义，适合写正则表达式))[0:自动取最后一个未签到的任务]
+    checkTitle: 1 # 是否检查表单各项的标题[1:检查|0:不检查]
     forms: # 表单信息
       - form:
           title: 今日具体所在地
@@ -56,9 +58,9 @@ users: # ------别误删了这一行------
     # 一般需填项-------
     abnormalReason: "" # abnormalReason 反馈信息（这个一般不用配置，但是不能删除，删除会报错）
     photo: sign.jpg # 签到照片，不需要可不填。如果填入文件夹路径或路径列表，则会自动从中随机选择图片(.jpg)
-    title: 0 # 签到任务的标题[0:自动取最后一个未签到的任务]
-    checkTitle: 1 # 是否检查表单各项的标题[1:检查|0:不检查]
     signLevel: 1 # 签到等级[0:正常签到|1:请假后依然签到|2:请假或已经打卡后依然重复签到]
+    title: 0 # 签到任务的标题(使用正则表达式进行匹配(注: yaml中单引号包裹字符串不进行转义，适合写正则表达式))[0:自动取最后一个未签到的任务]
+    checkTitle: 1 # 是否检查表单各项的标题[1:检查|0:不检查]
     forms: # 表单信息
       - form:
           title: 今天你的体温是多少？
@@ -78,43 +80,10 @@ users: # ------别误删了这一行------
     username: "" # 学号或者工号
     password: "" # 密码
     # 一般需填项-------
+    signLevel: 1 # 签到等级[0:正常签到|1:请假后依然签到|2:请假或已经打卡后依然重复签到]
+    title: 0 # 签到任务的标题(使用正则表达式进行匹配(注: yaml中单引号包裹字符串不进行转义，适合写正则表达式))[0:自动取最后一个未签到的任务]
     abnormalReason: "" # abnormalReason 反馈信息（这个一般不用配置，但是不能删除，删除会报错）
     photo: sign.jpg # 签到照片，不需要可不填。如果填入文件夹路径或路径列表，则会自动从中随机选择图片(.jpg)
-    # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 116.404165 # 经度
-    lat: 39.910966 # 纬度
-    address: "北京市东城区天安门广场中央" # 地址信息
-
-  - # 教师工作日志模板=======
-    # 通用必填项-------
-    type: 3 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
-    schoolName: 五道口职业技术学院 # 学校全称
-    username: "" # 学号或者工号
-    password: "" # 密码
-    # 一般需填项-------
-    checkTitle: 1 # 是否检查表单的标题（1:检查|0:不检查）
-    forms: # 表单信息
-      - form:
-          title: 2.是否在校上班或居住
-          value: 是
-      - form:
-          title: 3.上午体温
-          value: 36.2
-      - form:
-          title: 4.下午体温
-          value: 36.4
-      - form:
-          title: 5.晚上体温
-          value: 36.1
-      - form:
-          title: 6.身体状况
-          value: 身体健康
-      - form:
-          title: 7.是否请假
-          value: 否
-      - form:
-          title: 8.今日是否返回北京市
-          value: 否
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
     lon: 116.404165 # 经度
     lat: 39.910966 # 纬度
@@ -133,3 +102,38 @@ users: # ------别误删了这一行------
     lon: 116.404165 # 经度
     lat: 39.910966 # 纬度
     address: "北京市东城区天安门广场中央" # 地址信息
+
+  # - # 教师工作日志模板=======
+  #   # 通用必填项-------
+  #   type: 3 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
+  #   schoolName: 五道口职业技术学院 # 学校全称
+  #   username: "" # 学号或者工号
+  #   password: "" # 密码
+  #   # 一般需填项-------
+  #   checkTitle: 1 # 是否检查表单的标题（1:检查|0:不检查）
+  #   forms: # 表单信息
+  #     - form:
+  #         title: 2.是否在校上班或居住
+  #         value: 是
+  #     - form:
+  #         title: 3.上午体温
+  #         value: 36.2
+  #     - form:
+  #         title: 4.下午体温
+  #         value: 36.4
+  #     - form:
+  #         title: 5.晚上体温
+  #         value: 36.1
+  #     - form:
+  #         title: 6.身体状况
+  #         value: 身体健康
+  #     - form:
+  #         title: 7.是否请假
+  #         value: 否
+  #     - form:
+  #         title: 8.今日是否返回北京市
+  #         value: 否
+  #   # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
+  #   lon: 116.404165 # 经度
+  #   lat: 39.910966 # 纬度
+  #   address: "北京市东城区天安门广场中央" # 地址信息

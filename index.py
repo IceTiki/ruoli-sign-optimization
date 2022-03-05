@@ -95,7 +95,7 @@ def loadConfig():
             "calVersion": "firstv",
             'getHistorySign': False,
             'title': 0,
-            'signLevel': 0,
+            'signLevel': 1,
             'abnormalReason': "回家"
         }
         defaultConfig.update(user)
