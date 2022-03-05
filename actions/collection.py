@@ -1,5 +1,6 @@
 import json
 import re
+from tracemalloc import take_snapshot
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
@@ -83,7 +84,7 @@ class Collection:
                 # 历史信息收集总数
                 totalSize = res['datas']['totalSize']
                 # 如果没有获取到历史任务则报错
-                if totalSize < 0:
+                if totalSize == 0:
                     LL.log(2, "没有获取到信息收集任务")
                     raise TaskError("没有获取到信息收集任务")
             # 按页中任务遍历
@@ -129,6 +130,8 @@ class Collection:
                 LL.log(1, '查询任务详情返回结果', res['datas'])
                 self.task = res['datas']['rows']
                 return
+        LL.log(1, "没有获取到合适的信息收集任务")
+        raise TaskError("没有获取到合适的信息收集任务")
 
     # 获取历史签到任务详情
     def getHistoryTaskInfo(self):
