@@ -2,7 +2,7 @@ import json
 import re
 
 from todayLoginService import TodayLoginService
-from liteTools import *
+from liteTools import LL
 
 
 class Collection:

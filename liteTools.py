@@ -17,6 +17,65 @@ class TaskError(Exception):
     pass
 
 
+class LL:
+    '''lite log'''
+    prefix = "V-T3.5.1"  # 版本标识
+    startTime = time.time()
+    log_list = []
+    printLevel = 0
+    logTypeDisplay = ['debug', 'info', 'warn', 'error', 'critical']
+
+    @staticmethod
+    def formatLog(logType: str, args):
+        '''返回logItem[时间,类型,内容]'''
+        string = ''
+        for item in args:
+            if type(item) == dict or type(item) == list:
+                string += yaml.dump(item, allow_unicode=True)+'\n'
+            else:
+                string += str(item)+'\n'
+        return [time.time()-LL.startTime, logType, string]
+
+    @staticmethod
+    def log2FormatStr(logItem):
+        logType = LL.logTypeDisplay[logItem[1]]
+        return '|||%s|||%s|||%0.3fs|||\n%s' % (LL.prefix, logType, logItem[0], logItem[2])
+
+    @staticmethod
+    def log(logType=1, *args):
+        '''日志函数
+        logType:int = debug:0|info:1|warn:2|error:3|critical:4'''
+        if not args:
+            return
+        logItem = LL.formatLog(logType, args)
+        LL.log_list.append(logItem)
+        if logType >= LL.printLevel:
+            print(LL.log2FormatStr(logItem))
+
+    @staticmethod
+    def getLog(level=0):
+        '''获取日志函数'''
+        string = ''
+        for item in LL.log_list:
+            if level <= item[1]:
+                string += LL.log2FormatStr(item)
+        return string
+
+    @staticmethod
+    def saveLog(dir, level=0):
+        '''保存日志函数'''
+        if type(dir) != str:
+            return
+
+        log = LL.getLog(level)
+        if not os.path.isdir(dir):
+            os.makedirs(dir)
+        dir = os.path.join(dir, time.strftime(
+            "LOG#t=%Y-%m-%d--%H-%M-%S##.txt", time.localtime()))
+        with open(dir, 'w', encoding='utf-8') as f:
+            f.write(log)
+
+
 class CpdailyTools:
     '''今日校园相关函数'''
     desKey = 'XCE927=='
@@ -279,65 +338,6 @@ class DT:
         except Exception as e:
             raise Exception(
                 f'响应内容以json格式解析失败({e})，响应内容:\n\n{res.text}')
-
-
-class LL:
-    '''lite log'''
-    prefix = "V-T3.5.1"  # 版本标识
-    startTime = time.time()
-    log_list = []
-    printLevel = 0
-    logTypeDisplay = ['debug', 'info', 'warn', 'error', 'critical']
-
-    @staticmethod
-    def formatLog(logType: str, args):
-        '''返回logItem[时间,类型,内容]'''
-        string = ''
-        for item in args:
-            if type(item) == dict or type(item) == list:
-                string += yaml.dump(item, allow_unicode=True)+'\n'
-            else:
-                string += str(item)+'\n'
-        return [time.time()-LL.startTime, logType, string]
-
-    @staticmethod
-    def log2FormatStr(logItem):
-        logType = LL.logTypeDisplay[logItem[1]]
-        return '|||%s|||%s|||%0.3fs|||\n%s' % (LL.prefix, logType, logItem[0], logItem[2])
-
-    @staticmethod
-    def log(logType=1, *args):
-        '''日志函数
-        logType:int = debug:0|info:1|warn:2|error:3|critical:4'''
-        if not args:
-            return
-        logItem = LL.formatLog(logType, args)
-        LL.log_list.append(logItem)
-        if logType >= LL.printLevel:
-            print(LL.log2FormatStr(logItem))
-
-    @staticmethod
-    def getLog(level=0):
-        '''获取日志函数'''
-        string = ''
-        for item in LL.log_list:
-            if level <= item[1]:
-                string += LL.log2FormatStr(item)
-        return string
-
-    @staticmethod
-    def saveLog(dir, level=0):
-        '''保存日志函数'''
-        if type(dir) != str:
-            return
-
-        log = LL.getLog(level)
-        if not os.path.isdir(dir):
-            os.makedirs(dir)
-        dir = os.path.join(dir, time.strftime(
-            "LOG#t=%Y-%m-%d--%H-%M-%S##.txt", time.localtime()))
-        with open(dir, 'w', encoding='utf-8') as f:
-            f.write(log)
 
 
 class CT:

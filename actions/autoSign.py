@@ -4,7 +4,7 @@ import re
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
-from liteTools import *
+from liteTools import LL, DT, RT, MT, TaskError, CpdailyTools
 
 
 class AutoSign:

@@ -4,7 +4,7 @@ import re
 from pyDes import PAD_PKCS5, des, CBC
 
 from todayLoginService import TodayLoginService
-from liteTools import *
+from liteTools import LL, DT, RT, MT, TaskError, CpdailyTools
 
 # 教师工作日志类
 

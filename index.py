@@ -21,21 +21,9 @@ os.environ['TZ'] = "Asia/Shanghai"  # 将时区设为UTC+8
 try:
     for i in ("requests", "requests_toolbelt", "urllib3", "bs4", "Crypto", "pyDes", "yaml", "lxml", "rsa"):
         imp.find_module(i)
-except ImportError as e:
-    # =======WARNING!!!start=======
-    # 在腾讯云函数中将e嵌入字符串中，或者print(e)会导致“except结构中的print()输出”在日志中丢失。但是在Exception中使用格式化，再print出Excetion是正常的。
-    # 同时，似乎不能直接raise ImportError，要raise其他类型的异常“except结构中的print()输出”才会正常。
-    # 同时似乎还要对e创建一些引用，特性太复杂了
-    # 最后放弃了print()出错误信息
-    # e2 = e
-    # c2 = "asdads%sasda"%e
-    # e3 =Exception(c2)
-    # print(e3)
-    # print("ccc")
-    # raise e2
-    # =======WARNING!!!end=======
+except ImportError as e: #  腾讯云函数在初始化过程中print运作不正常，所以将信息丢入异常中
     raise ImportError(f"""!!!!!!!!!!!!!!缺少第三方模块(依赖)!!!!!!!!!!!!!!
-请使用pip命令安装或者手动将依赖拖入文件夹
+请使用pip3命令安装或者手动将依赖拖入文件夹
 错误信息: [{e}]""")
 # 检查Crypto是否对应系统版本
 try:
@@ -69,7 +57,7 @@ if True:
 
 
 def loadConfig():
-    '''配置文件载入'''
+    '''配置文件载入函数'''
     try:
         config = DT.loadYml('config.yml')
     except Exception as e:
@@ -207,6 +195,7 @@ def main():
             # 用户间随机延迟
             RT.randomSleep(config['delay'])
 
+            # 执行签到
             try:
                 msg = working(user)
             except TaskError as e:
@@ -223,7 +212,7 @@ def main():
             LL.log(1, msg)
             # 消息推送
             sm = SendMessage(user.get('sendMessage'))
-            sm.send(msg, '今日校园自动签到')
+            sm.send(msg, '用户签到情况')
             LL.log(1, sm.log_str)
 
     # 签到情况推送
@@ -232,7 +221,7 @@ def main():
         msg += '[%s]\n%s\n' % (i['remarkName'], i['state'])
     LL.log(1, msg)
     sm = SendMessage(config.get('sendMessage'))
-    sm.send(msg+'\n'+LL.getLog(4), '自动健康打卡')
+    sm.send(msg+'\n'+LL.getLog(4), '全局签到情况')
     LL.log(1, sm.log_str)
 
 
