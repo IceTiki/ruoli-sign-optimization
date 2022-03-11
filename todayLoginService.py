@@ -8,7 +8,7 @@ from login.Utils import Utils
 from login.casLogin import casLogin
 from login.iapLogin import iapLogin
 from login.RSALogin import RSALogin
-from liteTools import *
+from liteTools import TaskError
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
