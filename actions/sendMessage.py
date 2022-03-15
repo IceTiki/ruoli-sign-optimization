@@ -24,21 +24,21 @@ class SendMessage:
 
     def send(self, msg='no msg', title='no title'):
         try:
-            self.log_str += '\n' + self.qmsg.send(msg)
+            self.log_str += '\nQMSG酱|' + self.qmsg.send(msg)
         except Exception as e:
-            self.log_str += '\nqmsg酱推送失败|%s' % e
+            self.log_str += '\nQMSG酱|推送失败|%s' % e
         try:
-            self.log_str += '\n' + self.smtp.sendmail(msg, title)
+            self.log_str += '\nSMTP|' + self.smtp.sendmail(msg, title)
         except Exception as e:
-            self.log_str += '\nSMTP推送失败|%s' % e
+            self.log_str += '\nSMTP|推送失败|%s' % e
         try:
-            self.log_str += '\n' + self.rl.sendMail(msg, title)
+            self.log_str += '\n若离邮箱API|' + self.rl.sendMail(msg, title)
         except Exception as e:
-            self.log_str += '\n若离消息推送失败|%s' % e
+            self.log_str += '\n若离邮箱API|推送失败|%s' % e
         try:
-            self.log_str += '\n' + self.pp.sendPushplus(msg, title)
+            self.log_str += '\nPushplus|' + self.pp.sendPushplus(msg, title)
         except Exception as e:
-            self.log_str += '\nPushplus消息推送失败|%s' % e
+            self.log_str += '\nPushplus|消息推送失败|%s' % e
 
 
 class RlMessage:
