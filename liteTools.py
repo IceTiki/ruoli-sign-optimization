@@ -19,7 +19,7 @@ class TaskError(Exception):
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.6.2"  # 版本标识
+    prefix = "V-T3.6.3"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0

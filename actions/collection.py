@@ -1,5 +1,6 @@
 import json
 import re
+import os
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
@@ -44,7 +45,7 @@ class Collection:
         res = self.session.post(url=policyHost,
                                 headers=headers,
                                 data=multipart_encoder)
-        return fileName
+        return fileName + re.findall(r'(\.[^\.\\/]+)$', picDir)[0]
 
     # 获取图片上传位置
     def getPictureUrl(self, fileName):
@@ -55,8 +56,16 @@ class Collection:
         photoUrl = res.json().get('datas')
         return photoUrl
 
-    # 查询表单
+    # 保存图片
+    def savePicture(self, picSize, picNumber, ossKey):
+        url = f'{self.host}wec-counselor-collector-apps/stu/collector/saveAttachment'
+        attachName = '图片-' + str(picNumber).rjust(2, '0')
+        params = {'attachmentSize': picSize,
+                  'ossKey': ossKey, "attachName": attachName}
+        res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
+                                verify=False)
 
+    # 查询表单
     def queryForm(self):
         headers = self.session.headers
         headers['Content-Type'] = 'application/json'
@@ -216,9 +225,9 @@ class Collection:
                                     'customConfig': {
                                         'pageNumberKey': 'pageNumber',
                                         'pageSizeKey': 'pageSize',
-                                        'pageDataKey': 'pageData',
-                                        'pageTotalKey': 'pageTotal',
-                                        'data': 'datas',
+                                        'pageDataKey': 'rows',
+                                        'pageTotalKey': 'totalSize',
+                                        'dataKey': 'datas',
                                         'codeKey': 'code',
                                         'messageKey': 'message'
                                     }
@@ -318,10 +327,11 @@ class Collection:
                             raise TaskError(f'配置中填写的图片路径({dirListLen})过多')
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
-                        for pic in dirList:
+                        for i, pic in enumerate(dirList, 1):
                             pic = RT.choicePhoto(pic)
                             ossKey = self.uploadPicture(pic)
                             imgUrlList.append(self.getPictureUrl(ossKey))
+                            self.savePicture(os.path.getsize(pic), i, ossKey)
                         formItem['value'] = ",".join(imgUrlList)
                         # 填充其他信息
                         formItem.setdefault('http', {
