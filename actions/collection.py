@@ -21,7 +21,7 @@ class Collection:
 
     # 上传图片到阿里云oss
     def uploadPicture(self, picDir):
-        url = f'{self.host}wec-counselor-collector-apps/stu/oss/getUploadPolicy'
+        url = f'{self.host}wec-counselor-collector-apps/stu/obs/getUploadPolicy'
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
                                 verify=False)
         datas = DT.resJsonEncode(res).get('datas')
@@ -223,7 +223,7 @@ class Collection:
                                     }
                                 }
                             })
-                            item['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/oss/getUploadPolicy'
+                            item['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/obs/getUploadPolicy'
                             item['saveAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/saveAttachment'
                             item['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
                             item['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
