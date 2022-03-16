@@ -19,7 +19,7 @@ class TaskError(Exception):
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.5.3"  # 版本标识
+    prefix = "V-T3.6.0"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0
@@ -208,6 +208,11 @@ class MT:
         else:
             raise TypeError("字符串时间格式化函数仅支持 元组/字符串/列表 输入")
 
+    @staticmethod
+    def getImgType(dir: str):
+        '''输入图片路径，返回"image/xxx"形式字符串'''
+        return 'image/' + re.findall(r'\.([^\.\\/]+)$', dir)[0]
+
 
 class PseudoRandom:
     '''随机数种子临时固定类(用于with语句)'''
@@ -281,12 +286,15 @@ class RT:
     @staticmethod
     def choiceFile(dir):
         '''从指定路径(路径列表)中随机选取一个文件路径'''
-        if type(dir) == list:
+        if type(dir) == list or type(dir) == tuple:
+            '''如果路径是一个列表/元组，则从中随机选择一项'''
             dir = random.choice(dir)
         if os.path.isfile(dir):
+            '''如果路径指向一个文件，则返回这个路径'''
             return dir
         else:
             files = os.listdir(dir)
+            '''如果路径指向一个文件夹，则随机返回一个文件夹里的文件'''
             if len(files) == 0:
                 raise Exception("路径(%s)指向一个空文件夹" % dir)
             return os.path.join(dir, random.choice(files))
@@ -300,16 +308,20 @@ class RT:
 
     @staticmethod
     def choicePhoto(dir):
-        '''从指定路径(路径列表)中随机选取一个图片路径'''
-        if type(dir) == list:
+        '''从指定路径(路径列表)中随机选取一个图片(路径)'''
+        if type(dir) == list or type(dir) == tuple:
+            '''如果路径是一个列表/元组，则从中随机选择一项'''
             dir = random.choice(dir)
         if os.path.isfile(dir):
+            '''如果路径指向一个图片，则返回这个路径'''
             return dir
         else:
-            files = filter(lambda x: x.endswith('.jpg'), os.listdir(dir))
+            '''如果路径指向一个文件夹，则随机返回一个文件夹里的图片'''
+            files = filter(lambda x: bool(re.search(
+                r'\.(bmp|jpg|png|tif|gif|pcx|tga|exif|fpx|svg|psd|cdr|pcd|dxf|ufo|eps|ai|raw|WMF|webp|jpeg)$', x)), os.listdir(dir))
             files = list(files)
             if len(files) == 0:
-                raise Exception("路径(%s)指向一个没有图片(.jpg)的文件夹" % dir)
+                raise Exception("路径(%s)指向一个没有图片的文件夹" % dir)
             return os.path.join(dir, random.choice(files))
 
     @staticmethod

@@ -3,7 +3,7 @@ import re
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
-from liteTools import LL, DT, RT, TaskError, CpdailyTools
+from liteTools import LL, DT, RT, MT, TaskError, CpdailyTools
 
 
 class teacherSign:
@@ -59,6 +59,9 @@ class teacherSign:
         accessKeyId = datas.get('accessid')
         signature = datas.get('signature')
         policyHost = datas.get('host')
+        photoDir = self.userInfo['photo']
+        photoDir = MT.timeListFormat(photoDir)
+        photoDir = RT.choicePhoto(photoDir)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'
         }
@@ -66,7 +69,7 @@ class teacherSign:
             fields={  # 这里根据需要进行参数格式设置
                 'key': fileName, 'policy': policy, 'OSSAccessKeyId': accessKeyId, 'success_action_status': '200',
                 'signature': signature,
-                'file': ('blob', open(RT.choicePhoto(self.userInfo['photo']), 'rb'), 'image/jpg')
+                'file': ('blob', open(photoDir), 'rb', MT.getImgType(photoDir))
             })
         headers['Content-Type'] = multipart_encoder.content_type
         res = self.session.post(url=policyHost,

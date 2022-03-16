@@ -37,18 +37,18 @@ class Collection:
             fields={  # 这里根据需要进行参数格式设置
                 'key': fileName, 'policy': policy, 'OSSAccessKeyId': accessKeyId, 'success_action_status': '200',
                 'signature': signature,
-                'file': ('blob', open(picDir, 'rb'), 'image/jpg')
+                'file': ('blob', open(picDir, 'rb'), MT.getImgType(picDir))
             })
         headers['Content-Type'] = multipart_encoder.content_type
         res = self.session.post(url=policyHost,
                                 headers=headers,
                                 data=multipart_encoder)
-        self.fileName = fileName
+        return fileName
 
     # 获取图片上传位置
-    def getPictureUrl(self):
+    def getPictureUrl(self, fileName):
         url = f'{self.host}wec-counselor-collector-apps/stu/collector/previewAttachment'
-        params = {'ossKey': self.fileName}
+        params = {'ossKey': fileName}
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
                                 verify=False)
         photoUrl = res.json().get('datas')
@@ -291,7 +291,7 @@ class Collection:
                     elif formItem['fieldType'] == '3':
                         # 定义单选框的wid
                         itemWidArr = []
-                        userItems = userForm['value'].split('|')
+                        userItems = userForm['value']
                         # 多选也需要移除多余的选项
                         for fieldItem in formItem['fieldItems'].copy():
                             if fieldItem['content'] in userItems:
@@ -308,9 +308,20 @@ class Collection:
                     # 图片（健康码）上传类型
                     elif formItem['fieldType'] == '4':
                         # 如果是传图片的话，那么是将图片的地址（相对/绝对都行）存放于此value中
-                        picDir = RT.choicePhoto(userForm['value'])
-                        self.uploadPicture(picDir)
-                        formItem['value'] = self.getPictureUrl()
+                        dirList = userForm['value']
+                        # 将时间占位符格式化
+                        dirList = MT.timeListFormat(dirList)
+                        # 检查列表长度
+                        dirListLen = len(dirList)
+                        if dirListLen > 10 or dirListLen == 0:
+                            raise TaskError(f'配置中填写的图片路径({dirListLen})过多')
+                        # 将列表中的每一项都加入到value中
+                        imgUrlList = []
+                        for i in dirList:
+                            i = RT.choicePhoto(i)
+                            ossKey = self.uploadPicture(dirList)
+                            imgUrlList.append(self.getPictureUrl(ossKey))
+                        formItem['value'] = ",".join(imgUrlList)
                         # 填充其他信息
                         formItem.setdefault('http', {
                             'defaultOptions': {

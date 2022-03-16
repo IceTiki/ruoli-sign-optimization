@@ -38,11 +38,22 @@ users: # ------别误删了这一行------
     forms: # 表单信息
       - form:
           title: 今日具体所在地
-          value: 北京市/东城区 # 如果是多选请用"|"分割值
+          value: 北京市/东城区
           isNeed: 1 # 是否需要提交此问题，必填问题一定要填1(1:提交|0:不提交)
       - form:
           title: 是否在校
           value: 是
+          isNeed: 1
+      - form:
+          title: 请选择A,B,C # 多选示例
+          value: 
+            - A
+            - B
+            - C
+          isNeed: 1
+      - form:
+          title: 请上传图片
+          value: "图片.jpg"
           isNeed: 1
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
     lon: 116.404165 # 经度
