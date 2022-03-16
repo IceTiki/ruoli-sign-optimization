@@ -1,5 +1,6 @@
 import json
 import re
+from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
 from liteTools import LL, DT, RT, MT, TaskError, CpdailyTools
@@ -317,9 +318,9 @@ class Collection:
                             raise TaskError(f'配置中填写的图片路径({dirListLen})过多')
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
-                        for i in dirList:
-                            i = RT.choicePhoto(i)
-                            ossKey = self.uploadPicture(dirList)
+                        for pic in dirList:
+                            pic = RT.choicePhoto(pic)
+                            ossKey = self.uploadPicture(pic)
                             imgUrlList.append(self.getPictureUrl(ossKey))
                         formItem['value'] = ",".join(imgUrlList)
                         # 填充其他信息
