@@ -19,7 +19,7 @@ class TaskError(Exception):
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.5.2"  # 版本标识
+    prefix = "V-T3.5.3"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0
@@ -191,6 +191,22 @@ class MT:
             math.cos(lat2) * math.sin(dlon/2)**2
         distance = 2*math.asin(math.sqrt(a))*6371393  # 地球平均半径，6371393m
         return distance
+
+    @staticmethod
+    def timeListFormat(raw):
+        '''将列表中的字符串用time.strftime格式化(参数接受元组/字符串/列表)'''
+        # 类型转换
+        if type(raw) == str:
+            raw = [raw]
+        if type(raw) == tuple:
+            raw = list(raw)
+        # 开始格式化
+        if type(raw) == list:
+            for i, v in enumerate(raw):
+                raw[i] = time.strftime(v, time.localtime())
+            return raw
+        else:
+            raise TypeError("字符串时间格式化函数仅支持 元组/字符串/列表 输入")
 
 
 class PseudoRandom:

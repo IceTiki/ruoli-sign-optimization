@@ -325,7 +325,7 @@ class Collection:
                                 }
                             }
                         })
-                        formItem['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/oss/getUploadPolicy'
+                        formItem['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/obs/getUploadPolicy'
                         formItem['saveAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/saveAttachment'
                         formItem['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
                         formItem['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
