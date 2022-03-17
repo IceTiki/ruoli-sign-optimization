@@ -187,7 +187,7 @@ class AutoSign:
                 ossKey = CpdailyTools.uploadPicture(
                     url_getUploadPolicy, self.session, pic)
                 # 获取图片url
-                url_previewAttachment = f'{self.host}wec-counselor-collector-apps/stu/collector/previewAttachment'
+                url_previewAttachment = f'{self.host}wec-counselor-sign-apps/stu/sign/previewAttachment'
                 imgUrl = CpdailyTools.getPictureUrl(
                     url_previewAttachment, self.session, ossKey)
                 self.form['signPhotoUrl'] = imgUrl

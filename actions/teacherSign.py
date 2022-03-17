@@ -48,51 +48,23 @@ class teacherSign:
         LL.log(1, '具体查寝任务', res['datas'])
         self.task = res['datas']
 
-    # 上传图片到阿里云oss
-    def uploadPicture(self):
-        url = f'{self.host}wec-counselor-teacher-sign-apps/teacher/oss/getUploadPolicy'
-        res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
-                                verify=False)
-        datas = DT.resJsonEncode(res).get('datas')
-        fileName = datas.get('fileName')
-        policy = datas.get('policy')
-        accessKeyId = datas.get('accessid')
-        signature = datas.get('signature')
-        policyHost = datas.get('host')
-        photoDir = self.userInfo['photo']
-        photoDir = MT.timeListFormat(photoDir)
-        photoDir = RT.choicePhoto(photoDir)
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'
-        }
-        multipart_encoder = MultipartEncoder(
-            fields={  # 这里根据需要进行参数格式设置
-                'key': fileName, 'policy': policy, 'OSSAccessKeyId': accessKeyId, 'success_action_status': '200',
-                'signature': signature,
-                'file': ('blob', open(photoDir), 'rb', MT.getImgType(photoDir))
-            })
-        headers['Content-Type'] = multipart_encoder.content_type
-        res = self.session.post(url=policyHost,
-                                headers=headers,
-                                data=multipart_encoder)
-        self.fileName = fileName
-
-    # 获取图片上传位置
-    def getPictureUrl(self):
-        url = f'{self.host}wec-counselor-teacher-sign-apps/teacher/sign/previewAttachment'
-        params = {'ossKey': self.fileName}
-        res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
-                                verify=False)
-        photoUrl = res.json().get('datas')
-        return photoUrl
-
     # 填充表单
 
     def fillForm(self):
         # 判断签到是否需要照片
         if self.task['isPhoto'] == 1:
-            self.uploadPicture()
-            self.form['signPhotoUrl'] = self.getPictureUrl()
+            pic = self.userInfo['photo']
+            pic = MT.timeListFormat(pic)
+            pic = RT.choicePhoto(pic)
+            # 上传图片
+            url_getUploadPolicy = f'{self.host}wec-counselor-teacher-sign-apps/teacher/obs/getUploadPolicy'
+            ossKey = CpdailyTools.uploadPicture(
+                url_getUploadPolicy, self.session, pic)
+            # 获取图片url
+            url_previewAttachment = f'{self.host}wec-counselor-teacher-sign-apps/teacher/sign/previewAttachment'
+            imgUrl = CpdailyTools.getPictureUrl(
+                url_previewAttachment, self.session, ossKey)
+            self.form['signPhotoUrl'] = imgUrl
         else:
             self.form['signPhotoUrl'] = ''
         self.form['signInstanceWid'] = self.taskInfo['signInstanceWid']
