@@ -23,6 +23,7 @@ class Collection:
 
     # 上传图片到阿里云oss
     def uploadPicture(self, picDir):
+        picSuffix = re.findall(r'(\.[^\.\\/]+)$', picDir)[0]
         url = f'{self.host}wec-counselor-collector-apps/stu/obs/getUploadPolicy'
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
                                 verify=False)
@@ -37,15 +38,15 @@ class Collection:
         }
         multipart_encoder = MultipartEncoder(
             fields={  # 这里根据需要进行参数格式设置
-                'key': fileName, 'policy': policy, 'OSSAccessKeyId': accessKeyId, 'success_action_status': '200',
-                'signature': signature,
+                'key': fileName + picSuffix, 'policy': policy, 'AccessKeyId': accessKeyId,
+                'signature': signature, 'x-obs-acl': 'public-read',
                 'file': ('blob', open(picDir, 'rb'), MT.getImgType(picDir))
             })
         headers['Content-Type'] = multipart_encoder.content_type
         res = self.session.post(url=policyHost,
                                 headers=headers,
                                 data=multipart_encoder)
-        return fileName + re.findall(r'(\.[^\.\\/]+)$', picDir)[0]
+        return fileName + picSuffix
 
     # 获取图片上传位置
     def getPictureUrl(self, fileName):
@@ -339,9 +340,9 @@ class Collection:
                                 'customConfig': {
                                     'pageNumberKey': 'pageNumber',
                                     'pageSizeKey': 'pageSize',
-                                    'pageDataKey': 'pageData',
-                                    'pageTotalKey': 'pageTotal',
-                                    'data': 'datas',
+                                    'pageDataKey': 'rows',
+                                    'pageTotalKey': 'totalSize',
+                                    'dataKey': 'datas',
                                     'codeKey': 'code',
                                     'messageKey': 'message'
                                 }
