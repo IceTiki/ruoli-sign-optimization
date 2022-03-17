@@ -21,42 +21,6 @@ class Collection:
         self.form = {}
         self.historyTaskData = {}
 
-    # 上传图片到阿里云oss
-    def uploadPicture(self, picDir):
-        picSuffix = re.findall(r'(\.[^\.\\/]+)$', picDir)[0]
-        url = f'{self.host}wec-counselor-collector-apps/stu/obs/getUploadPolicy'
-        res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
-                                verify=False)
-        datas = DT.resJsonEncode(res).get('datas')
-        fileName = datas.get('fileName')
-        policy = datas.get('policy')
-        accessKeyId = datas.get('accessid')
-        signature = datas.get('signature')
-        policyHost = datas.get('host')
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'
-        }
-        multipart_encoder = MultipartEncoder(
-            fields={  # 这里根据需要进行参数格式设置
-                'key': fileName + picSuffix, 'policy': policy, 'AccessKeyId': accessKeyId,
-                'signature': signature, 'x-obs-acl': 'public-read',
-                'file': ('blob', open(picDir, 'rb'), MT.getImgType(picDir))
-            })
-        headers['Content-Type'] = multipart_encoder.content_type
-        res = self.session.post(url=policyHost,
-                                headers=headers,
-                                data=multipart_encoder)
-        return fileName + picSuffix
-
-    # 获取图片上传位置
-    def getPictureUrl(self, fileName):
-        url = f'{self.host}wec-counselor-collector-apps/stu/collector/previewAttachment'
-        params = {'ossKey': fileName}
-        res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
-                                verify=False)
-        photoUrl = res.json().get('datas')
-        return photoUrl
-
     # 保存图片
     def savePicture(self, picSize, picNumber, ossKey):
         url = f'{self.host}wec-counselor-collector-apps/stu/collector/saveAttachment'
@@ -330,8 +294,17 @@ class Collection:
                         imgUrlList = []
                         for i, pic in enumerate(dirList, 1):
                             pic = RT.choicePhoto(pic)
-                            ossKey = self.uploadPicture(pic)
-                            imgUrlList.append(self.getPictureUrl(ossKey))
+                            # 上传图片
+                            url_getUploadPolicy = f'{self.host}wec-counselor-collector-apps/stu/obs/getUploadPolicy'
+                            ossKey = CpdailyTools.uploadPicture(
+                                url_getUploadPolicy, self.session, pic)
+                            # 获取图片url
+                            url_previewAttachment = f'{self.host}wec-counselor-collector-apps/stu/collector/previewAttachment'
+                            imgUrl = CpdailyTools.getPictureUrl(
+                                url_previewAttachment, self.session, ossKey)
+                            # 加入到value中
+                            imgUrlList.append(imgUrl)
+                            # 保存图片
                             self.savePicture(os.path.getsize(pic), i, ossKey)
                         formItem['value'] = ",".join(imgUrlList)
                         # 填充其他信息

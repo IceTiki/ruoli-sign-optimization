@@ -10,6 +10,8 @@ import base64
 import hashlib
 import urllib.parse
 import re
+import json
+from requests_toolbelt import MultipartEncoder
 
 
 class TaskError(Exception):
@@ -19,7 +21,7 @@ class TaskError(Exception):
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.6.4"  # 版本标识
+    prefix = "V-T3.7.0"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0
@@ -175,6 +177,43 @@ class CpdailyTools:
         res = DT.resJsonEncode(res)
         address = res['result']['formatted_address']
         return address
+
+    @staticmethod
+    def uploadPicture(url, session, picDir):
+        '''上传图片到阿里云oss'''
+        picSuffix = re.findall(r'(\.[^\.\\/]+)$', picDir)[0]
+        res = session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
+                           verify=False)
+        datas = DT.resJsonEncode(res).get('datas')
+        fileName = datas.get('fileName')
+        policy = datas.get('policy')
+        accessKeyId = datas.get('accessid')
+        signature = datas.get('signature')
+        policyHost = datas.get('host')
+        ossKey = fileName + picSuffix
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'
+        }
+        multipart_encoder = MultipartEncoder(
+            fields={  # 这里根据需要进行参数格式设置
+                'key': ossKey, 'policy': policy, 'AccessKeyId': accessKeyId,
+                'signature': signature, 'x-obs-acl': 'public-read',
+                'file': ('blob', open(picDir, 'rb'), MT.getImgType(picDir))
+            })
+        headers['Content-Type'] = multipart_encoder.content_type
+        res = session.post(url=policyHost,
+                           headers=headers,
+                           data=multipart_encoder)
+        return ossKey
+
+    @staticmethod
+    def getPictureUrl(url, session, ossKey):
+        '''获取图片上传位置'''
+        params = {'ossKey': ossKey}
+        res = session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
+                           verify=False)
+        photoUrl = res.json().get('datas')
+        return photoUrl
 
 
 class MT:
