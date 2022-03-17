@@ -169,11 +169,11 @@ class sleepCheck:
                 pic = MT.timeListFormat(pic)
                 pic = RT.choicePhoto(pic)
                 # 上传图片
-                url_getUploadPolicy = f'{self.host}wec-counselor-attendance-apps/stu/obs/getUploadPolicy'
+                url_getUploadPolicy = f'{self.host}wec-counselor-sign-apps/stu/obs/getUploadPolicy'
                 ossKey = CpdailyTools.uploadPicture(
                     url_getUploadPolicy, self.session, pic)
                 # 获取图片url
-                url_previewAttachment = f'{self.host}wec-counselor-attendance-apps/stu/attendance/previewAttachment'
+                url_previewAttachment = f'{self.host}wec-counselor-sign-apps/stu/sign/previewAttachment'
                 imgUrl = CpdailyTools.getPictureUrl(
                     url_previewAttachment, self.session, ossKey)
                 self.form['signPhotoUrl'] = imgUrl
