@@ -214,11 +214,11 @@ def main():
             LL.log(1, msg)
             # 消息推送
             sm = SendMessage(user.get('sendMessage'))
-            sm.send(msg, '用户签到情况')
+            sm.send(f"---[{LL.prefix}]签到情况---\n{msg}", '用户签到情况')
             LL.log(1, sm.log_str)
 
     # 签到情况推送
-    msg = '==签到情况==\n'
+    msg = f'---[{LL.prefix}]签到情况---\n'
     for i in config['users']:
         msg += '[%s]\n%s\n' % (i['remarkName'], i['state'])
     LL.log(1, msg)
