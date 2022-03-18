@@ -14,14 +14,16 @@ except UnicodeEncodeError:
     # 设置默认输出编码为utf-8, 但是会影响腾讯云函数日志输出。
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
     print("==========脚本开始初始化(utf-8输出)==========")
-os.chdir(os.path.dirname(os.path.abspath(__file__)))  # 将工作路径设置为脚本位置
+absScriptDir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(absScriptDir)  # 将工作路径设置为脚本位置
 os.environ['TZ'] = "Asia/Shanghai"  # 将时区设为UTC+8
+sys.path.append(absScriptDir)  # 将脚本路径加入模块搜索路径
 
 # 检查第三方模块
 try:
     for i in ("requests", "requests_toolbelt", "urllib3", "bs4", "Crypto", "pyDes", "yaml", "lxml", "rsa"):
         imp.find_module(i)
-except ImportError as e: #  腾讯云函数在初始化过程中print运作不正常，所以将信息丢入异常中
+except ImportError as e:  # 腾讯云函数在初始化过程中print运作不正常，所以将信息丢入异常中
     raise ImportError(f"""!!!!!!!!!!!!!!缺少第三方模块(依赖)!!!!!!!!!!!!!!
 请使用pip3命令安装或者手动将依赖拖入文件夹
 错误信息: [{e}]""")
@@ -201,8 +203,8 @@ def main():
             except TaskError as e:
                 msg = str(e)
             except Exception as e:
-                msg = str(e)
-                LL.log(3, traceback.format_exc(), user['username']+'签到失败'+msg)
+                msg = f"[{e}]\n{traceback.format_exc()}"
+                LL.log(3, msg, user['username']+'签到失败'+msg)
                 if maxTry != tryTimes:
                     continue
 
