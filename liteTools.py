@@ -340,7 +340,8 @@ class RT:
 
     @staticmethod
     def choiceInList(item):
-        if type(item) == list:
+        '''从列表/元组中随机选取一项'''
+        if type(item) in (list, tuple):
             return random.choice(item)
         else:
             return item
