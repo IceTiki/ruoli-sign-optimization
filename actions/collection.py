@@ -284,8 +284,8 @@ class Collection:
                     elif formItem['fieldType'] == '4':
                         # 如果是传图片的话，那么是将图片的地址（相对/绝对都行）存放于此value中
                         dirList = userForm['value']
-                        # 将时间占位符格式化
-                        dirList = MT.timeListFormat(dirList)
+                        # 序列/字符串转列表
+                        dirList = DT.formatStrList(dirList)
                         # 检查列表长度
                         dirListLen = len(dirList)
                         if dirListLen > 10 or dirListLen == 0:
@@ -293,11 +293,12 @@ class Collection:
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
                         for i, pic in enumerate(dirList, 1):
-                            pic = RT.choicePhoto(pic)
+                            picBlob, picType = RT.choicePhoto(
+                                pic, dirTimeFormat=True)
                             # 上传图片
                             url_getUploadPolicy = f'{self.host}wec-counselor-collector-apps/stu/obs/getUploadPolicy'
                             ossKey = CpdailyTools.uploadPicture(
-                                url_getUploadPolicy, self.session, pic)
+                                url_getUploadPolicy, self.session, picBlob, picType)
                             # 获取图片url
                             url_previewAttachment = f'{self.host}wec-counselor-collector-apps/stu/collector/previewAttachment'
                             imgUrl = CpdailyTools.getPictureUrl(
@@ -305,7 +306,7 @@ class Collection:
                             # 加入到value中
                             imgUrlList.append(imgUrl)
                             # 保存图片
-                            self.savePicture(os.path.getsize(pic), i, ossKey)
+                            self.savePicture(len(picBlob), i, ossKey)
                         formItem['value'] = ",".join(imgUrlList)
                         # 填充其他信息
                         formItem.setdefault('http', {

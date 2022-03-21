@@ -180,12 +180,11 @@ class AutoSign:
             # 判断签到是否需要照片
             if self.task['isPhoto'] == 1:
                 pic = self.userInfo['photo']
-                pic = MT.timeListFormat(pic)
-                pic = RT.choicePhoto(pic)
+                picBlob, picType = RT.choicePhoto(pic, dirTimeFormat=True)
                 # 上传图片
                 url_getUploadPolicy = f'{self.host}wec-counselor-sign-apps/stu/obs/getUploadPolicy'
                 ossKey = CpdailyTools.uploadPicture(
-                    url_getUploadPolicy, self.session, pic)
+                    url_getUploadPolicy, self.session, picBlob, picType)
                 # 获取图片url
                 url_previewAttachment = f'{self.host}wec-counselor-sign-apps/stu/sign/previewAttachment'
                 imgUrl = CpdailyTools.getPictureUrl(

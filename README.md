@@ -184,6 +184,13 @@
 - [ ] 系统版本伪随机生成
 - [ ] 手机型号伪随机生成
 
+------
+
+- [x] 图片上传支持本地图片
+- [x] 图片上传支持在线图片(http\https)
+- [ ] 支持本地文件形式存储的url地址集
+- [ ] 支持在线存储的url地址集
+
 ### 签到修改
 
 > 可以正常运作
@@ -316,7 +323,39 @@
     photo: "图片文件夹"
 ```
 
+#### 图片地址也可以填写在线图片的地址
+
+要**直接**点进去就能打开图片的那种，也就是所谓的直链，一般情况下是以文件拓展名（jpg,png,webp等）为结尾的
+>错误的直链： https://699pic.com/tupian-400863814.html
+正确的直链： https://tva4.sinaimg.cn/large/0072Vf1pgy1foxkioq4i5j31hc0u0e1o.jpg
+
+>
+
+**注意：目前requests仅支持http及https协议下的直链，如有ftp、sftp等协议的需求可提交pr进行支持（建议使用已有的依赖和标准库）**
+
+可以如下填写多个网络地址
+
+```yaml
+    photo:
+      - "http://sign.example.com/singphoto001.jpg"
+      - "https://sign.example.com/singphoto002.png"
+      - "https://sign.example.com/singphoto004.jpg"
+```
+
+也可以与本地地址混搭，程序会**优先**尝试在线地址，**全部失败**后会尝试使用本地地址。
+```yaml
+    photo:
+      - "http://sign.example.com/singphoto001.jpg"
+      - "https://sign.example.com/singphoto002.png"
+      - "图片文件夹/图片.jpg"
+      - "图片文件夹"
+```
+
+
 #### 地址中的时间占位符会被格式化([中文](https://www.runoob.com/python/python-date-time.html#%E6%A0%BC%E5%BC%8F%E5%8C%96%E6%97%B6%E9%97%B4)|[英文](https://docs.python.org/3/library/time.html#time.strftime)文档)
+
+> 此方法可以指定每日上传的图片，从而避免上传重复的文件
+**警告：因url中可能含有%，此功能可能导致url中正常字符被误格式化而无法正常使用，因此url中此项功能已被禁用**
 
 ```yaml
     photo:

@@ -54,7 +54,7 @@ users: #!!!!!别误删了这一行!!!!!
           isNeed: 1
       - form:
           title: 请上传图片
-          value: "图片.jpg"
+          value: "图片.jpg" #注，此处可参考 README.md 中图片的上传方式进行填写，方式类似于 photo 项。
           isNeed: 1
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
     lon: 116.404165 # 经度
@@ -70,7 +70,7 @@ users: #!!!!!别误删了这一行!!!!!
     password: "" # 密码
     # 一般需填项-------
     abnormalReason: "" # abnormalReason 反馈信息（这个一般不用配置，但是不能删除，删除会报错）
-    photo: sign.jpg # 签到照片，不需要可不填。如果填入文件夹路径或路径列表，则会自动从中随机选择图片(.jpg)
+    photo: sign.jpg # 签到照片，不需要可不填，详情较长，请参考 README.md 中的示例
     signLevel: 1 # 签到等级[0:正常签到|1:请假后依然签到|2:请假或已经打卡后依然重复签到]
     title: 0 # [str:签到任务的标题(使用正则表达式进行匹配(注1: "$()*+.[?\^{|"是特殊字符，如果要匹配这些字符，请在这些字符前面加反斜杠"\")(注2: yaml中单引号包裹字符串不进行转义，适合写正则表达式))|0:取最后一个未签到的任务]
     checkTitle: 1 # 是否检查表单各项的标题[1:检查|0:不检查]
@@ -97,7 +97,7 @@ users: #!!!!!别误删了这一行!!!!!
     signLevel: 1 # 签到等级[0:正常签到|1:请假后依然签到|2:请假或已经打卡后依然重复签到]
     title: 0 # [str:签到任务的标题(使用正则表达式进行匹配(注1: "$()*+.[?\^{|"是特殊字符，如果要匹配这些字符，请在这些字符前面加反斜杠"\")(注2: yaml中单引号包裹字符串不进行转义，适合写正则表达式))|0:取最后一个未签到的任务]
     abnormalReason: "" # abnormalReason 反馈信息（这个一般不用配置，但是不能删除，删除会报错）
-    photo: sign.jpg # 签到照片，不需要可不填。如果填入文件夹路径或路径列表，则会自动从中随机选择图片(.jpg)
+    photo: sign.jpg # 签到照片，不需要可不填，详情较长，请参考 README.md 中的示例
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
     lon: 116.404165 # 经度
     lat: 39.910966 # 纬度
@@ -111,7 +111,7 @@ users: #!!!!!别误删了这一行!!!!!
     password: "" # 密码
     # 一般需填项-------
     abnormalReason: "" # abnormalReason 反馈信息（这个一般不用配置，但是不能删除，删除会报错）
-    photo: sign.jpg # 签到照片，不需要可不填。如果填入文件夹路径或路径列表，则会自动从中随机选择图片(.jpg)
+    photo: sign.jpg # 签到照片，不需要可不填，详情较长，请参考 README.md 中的示例
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
     lon: 116.404165 # 经度
     lat: 39.910966 # 纬度
