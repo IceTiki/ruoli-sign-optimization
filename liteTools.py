@@ -1,4 +1,5 @@
 import time
+from typing import Sequence
 import requests
 import yaml
 import math
@@ -11,6 +12,7 @@ import hashlib
 import urllib.parse
 import re
 import json
+import imghdr
 from requests_toolbelt import MultipartEncoder
 
 
@@ -21,7 +23,7 @@ class TaskError(Exception):
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.7.1"  # 版本标识
+    prefix = "V-T3.7.2"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0
@@ -179,9 +181,8 @@ class CpdailyTools:
         return address
 
     @staticmethod
-    def uploadPicture(url, session, picDir):
+    def uploadPicture(url, session, picBlob, picType):
         '''上传图片到阿里云oss'''
-        picSuffix = re.findall(r'(\.[^\.\\/]+)$', picDir)[0]
         res = session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
                            verify=False)
         datas = DT.resJsonEncode(res).get('datas')
@@ -190,7 +191,7 @@ class CpdailyTools:
         accessKeyId = datas.get('accessid')
         signature = datas.get('signature')
         policyHost = datas.get('host')
-        ossKey = fileName + picSuffix
+        ossKey = f'{fileName}.{picType}'
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'
         }
@@ -198,7 +199,7 @@ class CpdailyTools:
             fields={  # 这里根据需要进行参数格式设置
                 'key': ossKey, 'policy': policy, 'AccessKeyId': accessKeyId,
                 'signature': signature, 'x-obs-acl': 'public-read',
-                'file': ('blob', open(picDir, 'rb'), MT.getImgType(picDir))
+                'file': ('blob', picBlob, f'image/{picType}')
             })
         headers['Content-Type'] = multipart_encoder.content_type
         res = session.post(url=policyHost,
@@ -235,22 +236,11 @@ class MT:
     def timeListFormat(raw):
         '''将列表中的字符串用time.strftime格式化(参数接受元组/字符串/列表)'''
         # 类型转换
-        if type(raw) == str:
-            raw = [raw]
-        if type(raw) == tuple:
-            raw = list(raw)
+        raw = DT.formatStrList(raw)
         # 开始格式化
-        if type(raw) == list:
-            for i, v in enumerate(raw):
-                raw[i] = time.strftime(v, time.localtime())
-            return raw
-        else:
-            raise TypeError("字符串时间格式化函数仅支持 元组/字符串/列表 输入")
-
-    @staticmethod
-    def getImgType(dir: str):
-        '''输入图片路径，返回"image/xxx"形式字符串'''
-        return 'image/' + re.findall(r'\.([^\.\\/]+)$', dir)[0]
+        for i, v in enumerate(raw):
+            raw[i] = time.strftime(v, time.localtime())
+        return raw
 
 
 class PseudoRandom:
@@ -347,22 +337,85 @@ class RT:
             return item
 
     @staticmethod
-    def choicePhoto(dir):
-        '''从指定路径(路径列表)中随机选取一个图片(路径)'''
-        if type(dir) == list or type(dir) == tuple:
-            '''如果路径是一个列表/元组，则从中随机选择一项'''
-            dir = random.choice(dir)
-        if os.path.isfile(dir):
-            '''如果路径指向一个图片，则返回这个路径'''
-            return dir
-        else:
-            '''如果路径指向一个文件夹，则随机返回一个文件夹里的图片'''
-            files = filter(lambda x: bool(re.search(
-                r'\.(bmp|jpg|png|tif|gif|pcx|tga|exif|fpx|svg|psd|cdr|pcd|dxf|ufo|eps|ai|raw|WMF|webp|jpeg)$', x)), os.listdir(dir))
-            files = list(files)
-            if len(files) == 0:
-                raise Exception("路径(%s)指向一个没有图片的文件夹" % dir)
-            return os.path.join(dir, random.choice(files))
+    def choicePhoto(picList, dirTimeFormat = False):
+        """
+        从图片(在线/本地/文件夹)文件夹中选取可用图片(优先选取在线图片)，并返回其对应的二进制文件和图片类型
+        
+        :param picList: 图片(在线/本地/文件夹)地址，可用是序列或字符串
+        :param dirTimeFormat: 是否对本地地址中的时间元素格式化(使用time.strftime)
+        :returns: 返回(picBlob: bytes二进制图片, picType: str图片类型)
+        """
+        # 格式化picList为list
+        picList = DT.formatStrList(picList)
+        # 打乱picList顺序
+        random.shuffle(picList)
+
+        # 根据图片地址前缀筛选出在线图片列表
+        urlList = filter(lambda x: re.match(r'https?:\/\/', x), picList)
+        for url in urlList:
+            '''遍历url列表, 寻找可用图片'''
+            # 下载图片
+            LL.log(1, f'正在尝试下载[{url}]')
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.46", }
+            try:
+                response = requests.get(
+                    url=url, headers=headers, timeout=(10, 20))
+            except requests.exceptions.ConnectionError:
+                LL.log(1, f'在线图片[{url}]下载失败，错误原因:\n{e}\
+                    \n可能造成此问题的原因有:\
+                    \n1. 图片链接失效(请自行验证链接是否可用)\
+                    \n2. 图片请求超时(过几分钟再试一下)\
+                    \n如持续遇到此问题，请检查该链接的有效性或移除此链接')
+                continue
+            picBlob = response.content
+            LL.log(1, f'在线图片[{url}]下载成功')
+            # 判断图片类型
+            picType = imghdr.what(None, picBlob)
+            if picType:
+                LL.log(1, f'在线图片[{url}]属于{picType}')
+                return picBlob, picType
+            else:
+                LL.log(1, f'在线图片[{url}]不是正常图片')
+                continue
+
+        # 根据图片地址前缀筛选出本地路径列表
+        dirList = list(set(picList) - set(urlList))
+        # 本地图片列表时间占位符格式化
+        if dirTimeFormat:
+            dirList = MT.timeListFormat(dirList)
+        # 将被路径指向文件加入列表
+        fileList = list(filter(lambda x: os.path.isfile(x), dirList))
+        # 将被路径指向文件夹中的图片加入列表
+        folderList = list(filter(lambda x: os.path.isdir(x), dirList))
+        for folder in folderList:
+            for root, _, files in os.walk(folder, topdown=False):
+                for name in files:
+                    fileDir = os.path.join(root, name)
+                    fileDir = os.path.abspath(fileDir)
+                    fileList.append(fileDir)
+        # 打乱文件列表
+        random.shuffle(fileList)
+
+        for file in fileList:
+            '''遍历路径列表, 寻找可用图片'''
+            with open(file, 'rb') as f:
+                picBlob = f.read()
+            picType = imghdr.what(None, picBlob)
+            if picType:
+                LL.log(1, f'本地图片[{file}]属于{picType}')
+                return picBlob, picType
+            else:
+                LL.log(1, f'本地图片[{file}]不是正常图片')
+                continue
+
+        # 如果没有找到可用图片，开始报错
+        LL.log(2, '图片列表中没有可用图片')
+        # 报出无效本地路径列表
+        invalidPath = list(set(dirList) - set(fileList) - set(folderList))
+        if invalidPath:
+            LL.log(1, '无效本地路径列表', invalidPath)
+        raise Exception('图片列表中没有可用图片')
 
     @staticmethod
     def randomSleep(timeRange: tuple = (5, 7)):
@@ -407,6 +460,15 @@ class DT:
             raise Exception(
                 f'响应内容以json格式解析失败({e})，响应内容:\n\n{res.text}')
 
+    @staticmethod
+    def formatStrList(item):
+        '''序列或字符串 格式化为 列表'''
+        if type(item) == str:
+            return [item]
+        elif isinstance(item, Sequence):
+            return list(item)
+        else:
+            raise TypeError('请传入序列/字符串')
 
 class CT:
     '''CryptoTools'''
