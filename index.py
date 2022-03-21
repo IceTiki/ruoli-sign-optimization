@@ -68,7 +68,12 @@ def loadConfig():
 错误信息: {e}""")
         raise e
     # 全局配置初始化
-    config['delay'] = tuple(config.get("delay", [5, 10]))
+    defaultConfig = {
+        'delay': (5, 10),
+        'locationOffsetRange': 50
+    }
+    defaultConfig.update(config)
+    config.update(defaultConfig)
 
     # 用户配置初始化
     for user in config['users']:
