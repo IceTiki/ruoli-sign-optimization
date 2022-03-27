@@ -5,6 +5,7 @@ import os
 import sys
 import codecs
 import traceback
+import re
 
 
 # 环境变量初始化
@@ -102,19 +103,21 @@ def loadConfig():
 
         # 用户代理
         user['proxy'] = user.get('proxy')
-        requestsProxies = dict()
         if not user['proxy']:  # 如果用户代理设置为空，则不设置代理。
-            requestsProxies = dict()
+            user['proxy'] = {}
         elif type(user['proxy']) == str:
-            if "http://" in user['proxy'][0:7]:
-                requestsProxies['http'] = user['proxy']
-            elif "https://" == user['proxy'][0:8]:
-                requestsProxies['https'] = user['proxy']
+            if re.match(r"https?:\/\/", user['proxy']):
+                userProxy = user['proxy']
+                user['proxy'] = {
+                    'http': userProxy,
+                    'https': userProxy
+                }
             else:
                 raise Exception("代理应以http://或https://为开头")
         elif type(user['proxy']) == dict:
-            requestsProxies = user['proxy']
-        user['proxy'] = requestsProxies
+            pass
+        else:
+            raise TypeError(f"不支持[{type(user['proxy'])}]类型的用户代理输入")
 
         # 坐标随机偏移
         user['global_locationOffsetRange'] = config['locationOffsetRange']

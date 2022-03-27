@@ -24,7 +24,7 @@ class Collection:
     # 保存图片
     def savePicture(self, picSize, picNumber, ossKey):
         url = f'{self.host}wec-counselor-collector-apps/stu/collector/saveAttachment'
-        attachName = '图片-' + str(picNumber).rjust(2, '0')
+        attachName = '图片-{:0>2d}'.format(picNumber)
         params = {'attachmentSize': picSize,
                   'ossKey': ossKey, "attachName": attachName}
         res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
