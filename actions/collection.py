@@ -244,10 +244,10 @@ class Collection:
                     formItem['formType'] = '0'  # 盲猜是任务类型、待确认
                     formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
                     # 开始填充表单
-                    # 文本选项直接赋值
+                    # 文本类型
                     if formItem['fieldType'] in ('1', '5', '6', '7'):
                         formItem['value'] = userForm['value']
-                    # 单选框填充
+                    # 单选类型
                     elif formItem['fieldType'] == '2':
                         # 定义单选框的wid
                         itemWid = ''
@@ -262,7 +262,7 @@ class Collection:
                                 f'\r\n{userForm}配置项的选项不正确，该选项为单选，且未找到您配置的值'
                             )
                         formItem['value'] = itemWid
-                    # 多选填充
+                    # 多选类型
                     elif formItem['fieldType'] == '3':
                         # 定义单选框的wid
                         itemWidArr = []
@@ -280,16 +280,17 @@ class Collection:
                                 f'\r\n{userForm}配置项的选项不正确，该选项为多选，且未找到您配置的值'
                             )
                         formItem['value'] = ','.join(itemWidArr)
-                    # 图片（健康码）上传类型
+                    # 图片类型
                     elif formItem['fieldType'] == '4':
-                        # 如果是传图片的话，那么是将图片的地址（相对/绝对都行）存放于此value中
                         dirList = userForm['value']
                         # 序列/字符串转列表
                         dirList = DT.formatStrList(dirList)
                         # 检查列表长度
                         dirListLen = len(dirList)
-                        if dirListLen > 10 or dirListLen == 0:
-                            raise TaskError(f'配置中填写的图片路径({dirListLen})过多')
+                        if dirListLen == 0:
+                            raise TaskError(f'请在配置中填写图片路径')
+                        elif dirListLen > 10:
+                            raise TaskError(f'配置中填写的图片路径[{dirListLen}个]过多')
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
                         for i, pic in enumerate(dirList, 1):
