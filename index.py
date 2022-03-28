@@ -1,3 +1,4 @@
+# coding=utf-8
 # ====================开始导入模块====================
 # 导入标准库
 import imp
@@ -7,7 +8,10 @@ import codecs
 import traceback
 import re
 
-
+# 检查python版本
+if not (sys.version_info[0] == 3 and sys.version_info[1] >= 6):
+    raise Exception(
+        "!!!!!!!!!!!!!!Python版本错误!!!!!!!!!!!!!!\n请使用python3.6及以上版本，而不是[python %s]" % sys.version)
 # 环境变量初始化
 try:
     print("==========脚本开始初始化==========")
