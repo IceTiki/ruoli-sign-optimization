@@ -51,7 +51,7 @@ except ImportError as e:
 错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
-    from liteTools import TaskError, RT, DT, LL
+    from liteTools import TaskError, RT, DT, LL, NT
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
     from actions.sendMessage import SendMessage
@@ -106,7 +106,7 @@ def loadConfig():
             'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
 
         # 用户代理
-        user['proxy'] = user.get('proxy')
+        user.setdefault('proxy')
         if not user['proxy']:  # 如果用户代理设置为空，则不设置代理。
             user['proxy'] = {}
         elif type(user['proxy']) == str:
@@ -122,7 +122,11 @@ def loadConfig():
             pass
         else:
             raise TypeError(f"不支持[{type(user['proxy'])}]类型的用户代理输入")
-
+        # 检查代理可用性
+        if user['proxy'] and NT.isDisableProxies(user['proxy']):
+            user['proxy'] = {}
+            LL.log(2, '用户代理已取消使用')
+        
         # 坐标随机偏移
         user['global_locationOffsetRange'] = config['locationOffsetRange']
         if 'lon' in user and 'lat' in user:

@@ -217,6 +217,23 @@ class CpdailyTools:
         return photoUrl
 
 
+class NT:
+    '''NetTools'''
+    @staticmethod
+    def isDisableProxies(proxies: dict):
+        '''
+        检查代理是否可用
+        :return 如果代理正常返回0，代理异常返回1
+        '''
+        try:
+            requests.get(url='www.baidu.com', proxies=proxies, timeout=10)
+        except requests.RequestException as e:
+            LL.log(4, f'代理[{proxies}]存在问题\n错误: [{e}]')
+            return 1
+        LL.log(1, f'代理[{proxies}]可用')
+        return 0
+
+
 class MT:
     '''MiscTools'''
     @staticmethod
@@ -337,10 +354,10 @@ class RT:
             return item
 
     @staticmethod
-    def choicePhoto(picList, dirTimeFormat = False):
+    def choicePhoto(picList, dirTimeFormat=False):
         """
         从图片(在线/本地/文件夹)文件夹中选取可用图片(优先选取在线图片)，并返回其对应的二进制文件和图片类型
-        
+
         :param picList: 图片(在线/本地/文件夹)地址，可用是序列或字符串
         :param dirTimeFormat: 是否对本地地址中的时间元素格式化(使用time.strftime)
         :returns: 返回(picBlob: bytes二进制图片, picType: str图片类型)
@@ -469,6 +486,7 @@ class DT:
             return list(item)
         else:
             raise TypeError('请传入序列/字符串')
+
 
 class CT:
     '''CryptoTools'''
