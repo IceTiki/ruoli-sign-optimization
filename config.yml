@@ -81,6 +81,10 @@ users: #!!!!!别误删了这一行!!!!!
       - form:
           title: 今天你的身体状况是？
           value: 健康
+      - form:
+          title: 今天你所在的位置是?
+          value: 其他
+          extraValue: 天坛公园 #  如果存在选择题附带额外信息，请增加一个extraValue项
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
     lon: 116.404165 # 经度
     lat: 39.910966 # 纬度
