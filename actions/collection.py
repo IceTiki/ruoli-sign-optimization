@@ -213,74 +213,81 @@ class Collection:
     def fillForm(self):
         LL.log(1, '填充表单')
         if self.userInfo['getHistorySign']:
-            hti = self.getHistoryTaskInfo()
-            self.form['form'] = hti['form']
-            self.form["formWid"] = self.formWid
-            self.form["address"] = self.userInfo['address']
-            self.form["collectWid"] = self.wid
-            self.form["schoolTaskWid"] = self.schoolTaskWid
-            self.form["uaIsCpadaily"] = True
-            self.form["latitude"] = self.userInfo['lat']
-            self.form["longitude"] = self.userInfo['lon']
-            self.form['instanceWid'] = self.instanceWid
-        else:
-            task_form = []
-            # 检查用户配置长度与查询到的表单长度是否匹配
-            if len(self.task) != len(self.userInfo['forms']):
-                raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
-                    len(self.userInfo['forms']), len(self.task)))
-            for formItem, userForm in zip(self.task, self.userInfo['forms']):
-                userForm = userForm['form']
-                # 根据用户配置决定是否要填此选项
-                if userForm['isNeed'] == 1:
-                    # 判断用户是否需要检查标题
-                    if self.userInfo['checkTitle'] == 1:
-                        # 如果检查到标题不相等
-                        if formItem['title'] != userForm['title']:
-                            raise Exception(
-                                f'\r\n有配置项的标题不正确\r\n您的标题为：{userForm["title"]}\r\n系统的标题为：{formItem["title"]}')
-                    # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
-                    formItem['show'] = True
-                    formItem['formType'] = '0'  # 盲猜是任务类型、待确认
-                    formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
-                    # 开始填充表单
-                    # 文本类型
-                    if formItem['fieldType'] in ('1', '5', '6', '7'):
-                        formItem['value'] = userForm['value']
-                    # 单选类型
-                    elif formItem['fieldType'] == '2':
-                        # 定义单选框的wid
-                        itemWid = ''
-                        # 单选需要移除多余的选项
-                        for fieldItem in formItem['fieldItems'].copy():
-                            if fieldItem['content'] != userForm['value']:
-                                formItem['fieldItems'].remove(fieldItem)
-                            else:
-                                itemWid = fieldItem['itemWid']
-                        if itemWid == '':
-                            raise Exception(
-                                f'\r\n{userForm}配置项的选项不正确，该选项为单选，且未找到您配置的值'
-                            )
-                        formItem['value'] = itemWid
-                    # 多选类型
-                    elif formItem['fieldType'] == '3':
-                        # 定义单选框的wid
-                        itemWidArr = []
-                        userItems = userForm['value']
-                        # 多选也需要移除多余的选项
-                        for fieldItem in formItem['fieldItems'].copy():
-                            if fieldItem['content'] in userItems:
-                                # formItem['value'] += fieldItem['content'] + ' ' # 这句不知道有什么用
-                                itemWidArr.append(fieldItem['itemWid'])
-                            else:
-                                formItem['fieldItems'].remove(fieldItem)
-                        # 若多选一个都未选中
-                        if len(itemWidArr) == 0:
-                            raise Exception(
-                                f'\r\n{userForm}配置项的选项不正确，该选项为多选，且未找到您配置的值'
-                            )
-                        formItem['value'] = ','.join(itemWidArr)
-                    # 图片类型
+            try:
+                hti = self.getHistoryTaskInfo()
+                self.form['form'] = hti['form']
+                self.form["formWid"] = self.formWid
+                self.form["address"] = self.userInfo['address']
+                self.form["collectWid"] = self.wid
+                self.form["schoolTaskWid"] = self.schoolTaskWid
+                self.form["uaIsCpadaily"] = True
+                self.form["latitude"] = self.userInfo['lat']
+                self.form["longitude"] = self.userInfo['lon']
+                self.form['instanceWid'] = self.instanceWid
+                return
+                
+            except TaskError:
+                LL.log(2, "无法使用历史任务签到，开始字段匹配")
+        
+        task_form = []
+        # 检查用户配置长度与查询到的表单长度是否匹配
+        if len(self.task) != len(self.userInfo['forms']):
+            raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
+                len(self.userInfo['forms']), len(self.task)))
+        for formItem, userForm in zip(self.task, self.userInfo['forms']):
+            userForm = userForm['form']
+            # 根据用户配置决定是否要填此选项
+            if userForm['isNeed'] == 1:
+                # 判断用户是否需要检查标题
+                if self.userInfo['checkTitle'] == 1:
+                    # 如果检查到标题不相等
+                    if not  re.search(userForm['title'], formItem['title']):
+#                        if formItem['title'] != userForm['title']:
+                        raise Exception(
+                            f'\r\n有配置项的标题不正确\r\n您的标题为：{userForm["title"]}\r\n系统的标题为：{formItem["title"]}')
+                # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
+                formItem['show'] = True
+                formItem['formType'] = '0'  # 盲猜是任务类型、待确认
+                formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
+                # 开始填充表单
+                # 文本类型
+                if formItem['fieldType'] in ('1', '5', '6', '7'):
+                    formItem['value'] = userForm['value']
+                # 单选类型
+                elif formItem['fieldType'] == '2':
+                    # 定义单选框的wid
+                    itemWid = ''
+                    # 单选需要移除多余的选项
+                    for fieldItem in formItem['fieldItems'].copy():
+                        if not re.search(userForm['value'], fieldItem['content']):
+                        # if fieldItem['content'] != userForm['value']:
+                            formItem['fieldItems'].remove(fieldItem)
+                        else:
+                            itemWid = fieldItem['itemWid']
+                    if itemWid == '':
+                        raise Exception(
+                            f'\r\n{userForm}配置项的选项不正确，该选项为单选，且未找到您配置的值'
+                        )
+                    formItem['value'] = itemWid
+                # 多选类型
+                elif formItem['fieldType'] == '3':
+                    # 定义单选框的wid
+                    itemWidArr = []
+                    userItems = userForm['value']
+                    # 多选也需要移除多余的选项
+                    for fieldItem in formItem['fieldItems'].copy():
+                        if fieldItem['content'] in userItems:
+                            # formItem['value'] += fieldItem['content'] + ' ' # 这句不知道有什么用
+                            itemWidArr.append(fieldItem['itemWid'])
+                        else:
+                            formItem['fieldItems'].remove(fieldItem)
+                    # 若多选一个都未选中
+                    if len(itemWidArr) == 0:
+                        raise Exception(
+                            f'\r\n{userForm}配置项的选项不正确，该选项为多选，且未找到您配置的值'
+                        )
+                    formItem['value'] = ','.join(itemWidArr)
+                # 图片类型
                     elif formItem['fieldType'] == '4':
                         dirList = userForm['value']
                         # 序列/字符串转列表
@@ -308,43 +315,43 @@ class Collection:
                             imgUrlList.append(imgUrl)
                             # 保存图片
                             self.savePicture(len(picBlob), i, ossKey)
-                        formItem['value'] = ",".join(imgUrlList)
-                        # 填充其他信息
-                        formItem.setdefault('http', {
-                            'defaultOptions': {
-                                'customConfig': {
-                                    'pageNumberKey': 'pageNumber',
-                                    'pageSizeKey': 'pageSize',
-                                    'pageDataKey': 'rows',
-                                    'pageTotalKey': 'totalSize',
-                                    'dataKey': 'datas',
-                                    'codeKey': 'code',
-                                    'messageKey': 'message'
-                                }
+                    formItem['value'] = ",".join(imgUrlList)
+                    # 填充其他信息
+                    formItem.setdefault('http', {
+                        'defaultOptions': {
+                            'customConfig': {
+                                'pageNumberKey': 'pageNumber',
+                                'pageSizeKey': 'pageSize',
+                                'pageDataKey': 'rows',
+                                'pageTotalKey': 'totalSize',
+                                'dataKey': 'datas',
+                                'codeKey': 'code',
+                                'messageKey': 'message'
                             }
-                        })
-                        formItem['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/obs/getUploadPolicy'
-                        formItem['saveAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/saveAttachment'
-                        formItem['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
-                        formItem['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
+                        }
+                    })
+                    formItem['uploadPolicyUrl'] = '/wec-counselor-collector-apps/stu/obs/getUploadPolicy'
+                    formItem['saveAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/saveAttachment'
+                    formItem['previewAttachmentUrl'] = '/wec-counselor-collector-apps/stu/collector/previewAttachment'
+                    formItem['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
 
-                    else:
-                        raise Exception(
-                            f'\r\n{userForm}配置项属于未知配置项，请反馈'
-                        )
-                    task_form.append(formItem)
                 else:
-                    pass
+                    raise Exception(
+                        f'\r\n{userForm}配置项属于未知配置项，请反馈'
+                    )
+                task_form.append(formItem)
+            else:
+                pass
 
-            self.form["form"] = task_form
-            self.form["formWid"] = self.formWid
-            self.form["address"] = self.userInfo['address']
-            self.form["collectWid"] = self.wid
-            self.form["schoolTaskWid"] = self.schoolTaskWid
-            self.form["uaIsCpadaily"] = True
-            self.form["latitude"] = self.userInfo['lat']
-            self.form["longitude"] = self.userInfo['lon']
-            self.form['instanceWid'] = self.instanceWid
+        self.form["form"] = task_form
+        self.form["formWid"] = self.formWid
+        self.form["address"] = self.userInfo['address']
+        self.form["collectWid"] = self.wid
+        self.form["schoolTaskWid"] = self.schoolTaskWid
+        self.form["uaIsCpadaily"] = True
+        self.form["latitude"] = self.userInfo['lat']
+        self.form["longitude"] = self.userInfo['lon']
+        self.form['instanceWid'] = self.instanceWid
 
     def getSubmitExtension(self):
         '''生成各种额外参数'''
