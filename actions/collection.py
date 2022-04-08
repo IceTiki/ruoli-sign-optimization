@@ -27,8 +27,8 @@ class Collection:
         attachName = '图片-{:0>2d}'.format(picNumber)
         params = {'attachmentSize': picSize,
                   'ossKey': ossKey, "attachName": attachName}
-        res = self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
-                                verify=False)
+        self.session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
+                          verify=False)
 
     # 查询表单
     def queryForm(self):
@@ -227,7 +227,7 @@ class Collection:
             task_form = []
             # 检查用户配置长度与查询到的表单长度是否匹配
             if len(self.task) != len(self.userInfo['forms']):
-                raise Exception('用户只配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
+                raise Exception('用户配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
                     len(self.userInfo['forms']), len(self.task)))
             for formItem, userForm in zip(self.task, self.userInfo['forms']):
                 userForm = userForm['form']

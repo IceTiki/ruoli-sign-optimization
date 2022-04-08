@@ -479,11 +479,13 @@ class DT:
 
     @staticmethod
     def formatStrList(item):
-        '''序列或字符串 格式化为 列表'''
+        '''序列或字符串 格式化为 列表(空值转换为空列表)'''
         if type(item) == str:
             return [item]
         elif isinstance(item, Sequence):
             return list(item)
+        elif not item:
+            return []
         else:
             raise TypeError('请传入序列/字符串')
 

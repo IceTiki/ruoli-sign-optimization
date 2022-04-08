@@ -8,7 +8,7 @@ from login.Utils import Utils
 from login.casLogin import casLogin
 from login.iapLogin import iapLogin
 from login.RSALogin import RSALogin
-from liteTools import TaskError
+from liteTools import TaskError, LL
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -47,6 +47,8 @@ class TodayLoginService:
             if item['name'] == self.schoolName:
                 if item['joinType'] == 'NONE':
                     raise TaskError(self.schoolName + '未加入今日校园，请检查...')
+                elif item['joinType'] == 'NOTCLOUD':
+                    LL.log(2, "学校接入今日校园方式为NOTCLOUD")
                 flag = False
                 params = {
                     'ids': item['id']
