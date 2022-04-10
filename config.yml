@@ -7,6 +7,10 @@ locationOffsetRange: 50 # 坐标偏移范围(单位：米)(可以为0)
 maxTry: 1 # 最大尝试次数
 logDir: "log/" # 日志保存地址
 delay: [5, 10] # 多用户时，各用户之间任务执行延迟(时间范围可以使用浮点数)
+captcha: # 图片验证码识别
+  tencentSecretId: "" # 腾讯云OCR
+  tencentSecretKey: "" # 腾讯云OCR
+  captchaLen: 4 # 验证码长度
 sendMessage: # 推送函数的整体运行情况(不需要的项目不用填，可以删掉或者放着不管)
   rl_emailApiUrl: http://api.ruoli.cc/mail/sendMail # 邮箱API的地址
   rl_email: "" # email 接受通知消息的邮箱

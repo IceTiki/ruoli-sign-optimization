@@ -13,6 +13,8 @@ from tencentcloud.common.profile.client_profile import ClientProfile
 from tencentcloud.common.profile.http_profile import HttpProfile
 from tencentcloud.ocr.v20181119 import ocr_client, models
 
+from liteTools import DT
+
 
 class Utils:
     def __init__(self):
@@ -114,7 +116,9 @@ class Utils:
         imgCode = str(base64.b64encode(BytesIO(response.content).read()), encoding='utf-8')
         # print(imgCode)
         try:
-            cred = credential.Credential(Utils.getYmlConfig()['SecretId'], Utils.getYmlConfig()['SecretKey'])
+            config = DT.loadYml('config.yml')
+            captchaLen = config['captcha']['captchaLen']
+            cred = credential.Credential(config['captcha']['tencentSecretId'], config['captcha']['tencentSecretKey'])
             httpProfile = HttpProfile()
             httpProfile.endpoint = "ocr.tencentcloudapi.com"
 
@@ -132,7 +136,7 @@ class Utils:
             code = ''
             for item in codeArray:
                 code += item['DetectedText'].replace(' ', '')
-            if len(code) == 4:
+            if len(code) == captchaLen:
                 return code
             else:
                 return Utils.getCodeFromImg(res, imgUrl)

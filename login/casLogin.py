@@ -90,6 +90,11 @@ class casLogin:
         for form in formElementList:
             if re.findall("password", form, re.I):
                 # 在input元素中，查找salt和一些需要提交参数
+                if re.findall('"casLoginForm"', form, re.I):
+                    self.type = 0
+                elif re.findall('"loginFromId"', form, re.I):
+                    self.type = 1
+                
                 inputElementList = re.findall(r"<input[\s\S]*?>", form)
                 for inputElement in inputElementList:
                     # 查找salt
@@ -121,13 +126,13 @@ class casLogin:
         if salt:
             params['password'] = Utils.encryptAES(self.password, salt)
             # 识别填写验证码
-            # if self.getNeedCaptchaUrl():
-            #     if self.type == 0:
-            #         imgUrl = self.host + 'authserver/captcha.html'
-            #         params['captchaResponse'] = Utils.getCodeFromImg(self.session, imgUrl)
-            #     else:
-            #         imgUrl = self.host + 'authserver/getCaptcha.htl'
-            #         params['captcha'] = Utils.getCodeFromImg(self.session, imgUrl)
+            if self.getNeedCaptchaUrl():
+                if self.type == 0:
+                    imgUrl = self.host + 'authserver/captcha.html'
+                    params['captchaResponse'] = Utils.getCodeFromImg(self.session, imgUrl)
+                else:
+                    imgUrl = self.host + 'authserver/getCaptcha.htl'
+                    params['captcha'] = Utils.getCodeFromImg(self.session, imgUrl)
         else:
             params['password'] = self.password
 
