@@ -18,6 +18,7 @@ class SendMessage:
                          con.get('smtp_key'), con.get('smtp_sender'), con.get('smtp_receivers'))
         self.rl = RlMessage(con.get('rl_email'),
                             con.get('rl_emailApiUrl'))
+        self.iceCream = IceCream(con.get('iceCream_token'))
         self.pp = Pushplus(con.get('pushplus_parameters'),
                            con.get('pushplus_isNew'))
         self.log_str = '推送情况\n'
@@ -35,6 +36,10 @@ class SendMessage:
             self.log_str += '\n若离邮箱API|' + self.rl.sendMail(msg, title)
         except Exception as e:
             self.log_str += '\n若离邮箱API|推送失败|%s' % e
+        try:
+            self.log_str += '\iceCream|' + self.iceCream.send(msg)
+        except Exception as e:
+            self.log_str += '\iceCream|消息推送失败|%s' % e
         try:
             self.log_str += '\nPushplus|' + self.pp.sendPushplus(msg, title)
         except Exception as e:
@@ -226,3 +231,38 @@ class Smtp:
             smtpObj.login(self.user, self.key)
             smtpObj.sendmail(self.sender, self.receivers, mail.as_string())
             return("邮件发送成功")
+
+
+class IceCream:
+    """IceCream发送类"""
+
+    def __init__(self, token: str):
+        """
+        :param key: IceCream密钥
+        """
+        self.token = token
+        self.configIsCorrect = self.isCorrectConfig()
+
+    def isCorrectConfig(self):
+        """简单检查配置是否合法"""
+        if type(self.token) != str:
+            return 0
+        elif not re.match('^[0-9A-F]{32}$', self.token):
+            return 0
+        else:
+            return 1
+
+    def send(self, msg):
+        """发送消息
+        :param msg: 要发送的消息(自动转为字符串类型)
+        """
+        # msg处理
+        msg = str(msg)
+        # 简单检查配置
+        if not self.configIsCorrect:
+            return('IceCream配置错误，信息取消发送')
+        else:
+            # 开始推送
+            res = requests.post(
+                url=f'https://ice.ruoli.cc/api/send/{self.token}', data={'msg': msg})
+            return str(res)
