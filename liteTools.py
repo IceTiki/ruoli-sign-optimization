@@ -258,6 +258,10 @@ class MT:
         for i, v in enumerate(raw):
             raw[i] = time.strftime(v, time.localtime())
         return raw
+    
+    @staticmethod
+    def notionStr(s:str):
+        return ('↓'*50 + '看这里' + '↓'*50 + '\n')*5 + s + ('\n' + '↑'*50 + '看这里' + '↑'*50)*5
 
 
 class PseudoRandom:
