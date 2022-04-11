@@ -27,23 +27,23 @@ class SendMessage:
         try:
             self.log_str += '\nQMSG酱|' + self.qmsg.send(msg)
         except Exception as e:
-            self.log_str += '\nQMSG酱|推送失败|%s' % e
+            self.log_str += '\nQMSG酱|出错|%s' % e
         try:
             self.log_str += '\nSMTP|' + self.smtp.sendmail(msg, title)
         except Exception as e:
-            self.log_str += '\nSMTP|推送失败|%s' % e
+            self.log_str += '\nSMTP|出错|%s' % e
         try:
             self.log_str += '\n若离邮箱API|' + self.rl.sendMail(msg, title)
         except Exception as e:
-            self.log_str += '\n若离邮箱API|推送失败|%s' % e
+            self.log_str += '\n若离邮箱API|出错|%s' % e
         try:
-            self.log_str += '\iceCream|' + self.iceCream.send(msg)
+            self.log_str += '\nIceCream|' + self.iceCream.send(msg)
         except Exception as e:
-            self.log_str += '\iceCream|消息推送失败|%s' % e
+            self.log_str += '\nIceCream|出错|%s' % e
         try:
             self.log_str += '\nPushplus|' + self.pp.sendPushplus(msg, title)
         except Exception as e:
-            self.log_str += '\nPushplus|消息推送失败|%s' % e
+            self.log_str += '\nPushplus|出错|%s' % e
 
 
 class RlMessage:
@@ -79,7 +79,7 @@ class RlMessage:
             res = res.json()
             return res['message']
         else:
-            return '邮箱或邮件api填写无效，已取消发送邮件！'
+            return '无效配置'
 
 
 class Pushplus:
@@ -134,7 +134,7 @@ class Pushplus:
             else:
                 return "发送失败"
         else:
-            return 'pushplus的令牌填写错误，已取消发送！'
+            return '无效配置'
 
 
 class Qmsg:
@@ -174,7 +174,7 @@ class Qmsg:
             msg = msg.replace(i, k)
         # 简单检查配置
         if not self.configIsCorrect:
-            return('Qmsg配置错误，信息取消发送')
+            return('无效配置')
         else:
             # 开始推送
             sendtype = 'group/' if self.isGroup else 'send/'
@@ -221,7 +221,7 @@ class Smtp:
         msg = str(msg)
         title = str(title)
         if not self.configIsCorrect:
-            return '邮件配置出错'
+            return '无效配置'
         else:
             mail = MIMEText(msg, 'plain', 'utf-8')
             mail['Subject'] = Header(title, 'utf-8')
@@ -260,9 +260,9 @@ class IceCream:
         msg = str(msg)
         # 简单检查配置
         if not self.configIsCorrect:
-            return('IceCream配置错误，信息取消发送')
+            return('无效配置')
         else:
             # 开始推送
             res = requests.post(
                 url=f'https://ice.ruoli.cc/api/send/{self.token}', data={'msg': msg})
-            return str(res)
+            return str(res.json()['msg'])
