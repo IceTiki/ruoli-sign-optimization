@@ -177,8 +177,15 @@ class AutoSign:
             self.form['uaIsCpadaily'] = True
             self.form['signVersion'] = '1.0.0'
         else:
-            # 判断签到是否需要照片
-            if self.task['isPhoto'] == 1:
+            # 填充位置
+            self.form['position'] = self.userInfo['address']
+            self.form['longitude'] = self.userInfo['lon']
+            self.form['latitude'] = self.userInfo['lat']
+            # 填充基本参数
+            self.form['signVersion'] = '1.0.0'
+            self.form['uaIsCpadaily'] = True
+            # 检查是否需要照片
+            if self.task.get('isPhoto') == 1:
                 pic = self.userInfo['photo']
                 picBlob, picType = RT.choicePhoto(pic, dirTimeFormat=True)
                 # 上传图片
@@ -224,19 +231,18 @@ class AutoSign:
                         raise Exception(
                             f'\r\n第{ i + 1 }个配置出错了\r\n表单未找到你设置的值：{userItem["value"]}\r\n，你上次系统选的值为：{ data }')
                 self.form['extraFieldItems'] = extraFieldItemValues
-            self.form['signInstanceWid'] = self.task['signInstanceWid']
-            self.form['longitude'] = self.userInfo['lon']
-            self.form['latitude'] = self.userInfo['lat']
-            # 检查是否在签到范围内
-            self.form['isMalposition'] = 1
-            for place in self.task['signPlaceSelected']:
-                if MT.geoDistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
-                    self.form['isMalposition'] = 0
-                    break
             self.form['abnormalReason'] = self.userInfo['abnormalReason']
-            self.form['position'] = self.userInfo['address']
-            self.form['uaIsCpadaily'] = True
-            self.form['signVersion'] = '1.0.0'
+            # 通过用户是否填写qrUuid判断是否为二维码签到
+            if self.userInfo['qrUuid']:
+                self.form['qrUuid'] = self.userInfo['qrUuid']
+            else:
+                self.form['signInstanceWid'] = self.task['signInstanceWid']
+                # 检查是否在签到范围内
+                self.form['isMalposition'] = 1
+                for place in self.task['signPlaceSelected']:
+                    if MT.geoDistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
+                        self.form['isMalposition'] = 0
+                        break
         LL.log(1, "填充完毕的表单", self.form)
 
     def getSubmitExtension(self):

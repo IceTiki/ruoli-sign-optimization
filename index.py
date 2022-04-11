@@ -96,7 +96,8 @@ def loadConfig():
             'getHistorySign': False,
             'title': 0,
             'signLevel': 1,
-            'abnormalReason': "回家"
+            'abnormalReason': "回家",
+            'qrUuid': None
         }
         defaultConfig.update(user)
         user.update(defaultConfig)
