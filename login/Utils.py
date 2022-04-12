@@ -24,7 +24,7 @@ class Utils:
     @staticmethod
     def checkStatus(request, *args, **kwargs):
         if request.status_code == 418:
-            raise Exception('当前地区已被禁用，请使用其他地区的 云函数节点/服务器')
+            raise Exception('[HTTP 418]\n当前IP地址已被屏蔽\n请尝试使用其他地区的云函数节点/服务器\n或者在配置中填入可用代理(方式见文档)')
 
     # 获取当前北京时间
     @staticmethod

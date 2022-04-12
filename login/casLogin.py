@@ -16,71 +16,31 @@ class casLogin:
         self.login_url = login_url
         self.host = host
         self.session = session
-        self.type = 0
+        self.formType = ''
 
     # 判断是否需要验证码
     def getNeedCaptchaUrl(self):
-        if self.type == 0:
+        if self.formType == 'casLoginForm':
             url = self.host + 'authserver/needCaptcha.html' + '?username=' + self.username
             flag = self.session.get(url, verify=False).text
-            return 'false' != flag and 'False' != flag
+            if re.search('false', flag, re.I):
+                return False
+            else:
+                return True
         else:
-            url = self.host + 'authserver/checkNeedCaptcha.htl' + '?username=' + self.username
-            flag = self.session.get(url, verify=False).json()
+            url = self.host + 'authserver/checkNeedCaptcha.htl'
+            flag = self.session.get(
+                url, params={'username': self.username}, verify=False).json()
             return flag['isNeed']
 
     def login(self):
         html = self.session.get(self.login_url, verify=False).text
-        # ==============start旧版参数查找start==============
-        # soup = BeautifulSoup(html, 'lxml')
-        # form = soup.select('#casLoginForm')
-        # if len(form) == 0:
-        #     form = soup.select("#loginFromId")
-        #     if len(form) == 0:
-        #         raise Exception('出错啦！网页中没有找到casLoginForm')
-        #     soup = BeautifulSoup(str(form[1]), 'lxml')
-        #     self.type = 1
-        # # 填充数据
-        # params = {}
-        # soup = BeautifulSoup(str(form[0]), 'lxml')
-        # form = soup.select('input')
-        # for item in form:
-        #     if item.get('name') != None and len(item.get('name')) > 0:
-        #         if item.get('name') != 'rememberMe':
-        #             if item.get('value') == None:
-        #                 params[item.get('name')] = ''
-        #             else:
-        #                 params[item.get('name')] = item.get('value')
-        # # print("self.type=", self.type)
-        # if self.type == 0:
-        #     salt = soup.select("#pwdDefaultEncryptSalt")
-        # else:
-        #     salt = soup.select("#pwdEncryptSalt")
-        # if len(salt) != 0:
-        #     salt = salt[0].get('value')
-        # else:
-        #     pattern = r'EncryptSalt = "(\w{16})";'
-        #     salt = re.findall(pattern, html)
-        #     # print("ssalt=", salt)
-        #     if len(salt) == 1:
-        #         salt = salt[0]
-        #     else:
-        #         salt = False
-        # params['username'] = self.username
-        # # print("salt=", salt)
-        # if not salt:
-        #     params['password'] = self.password
-        # else:
-        #     params['password'] = Utils.encryptAES(self.password, salt)
-        #     if self.getNeedCaptchaUrl():
-        #         if self.type == 0:
-        #             imgUrl = self.host + 'authserver/captcha.html'
-        #             params['captchaResponse'] = Utils.getCodeFromImg(self.session, imgUrl)
-        #         else:
-        #             imgUrl = self.host + 'authserver/getCaptcha.htl'
-        #             params['captcha'] = Utils.getCodeFromImg(self.session, imgUrl)
-        # ==============end旧版参数查找end==============
-
+        if re.findall('<form[^<]*id="casLoginForm"[^>]*>', html, re.I):
+            self.formType = "casLoginForm"
+        elif re.findall('<form[^<]*id="loginFromId"[^>]*>', html, re.I):
+            self.formType = "loginFromId"
+        elif re.findall('<form[^<]*id="fm1"[^>]*>', html, re.I):
+            self.formType = "fm1"
         # 在html中寻找所有form元素(备注: form几乎不会嵌套form)
         formElementList = re.findall(r"<form[\s\S]*?</form>", html)
         # 初始化需要的参数
@@ -90,11 +50,7 @@ class casLogin:
         for form in formElementList:
             if re.findall("password", form, re.I):
                 # 在input元素中，查找salt和一些需要提交参数
-                if re.findall('"casLoginForm"', form, re.I):
-                    self.type = 0
-                elif re.findall('"loginFromId"', form, re.I):
-                    self.type = 1
-                
+
                 inputElementList = re.findall(r"<input[\s\S]*?>", form)
                 for inputElement in inputElementList:
                     # 查找salt
@@ -117,7 +73,8 @@ class casLogin:
                     params[key] = value
         if not salt:
             '''salt可能藏在script中'''
-            maySalt = re.findall(r'var pwdDefaultEncryptSalt ?= ?"(.*?)"', html)
+            maySalt = re.findall(
+                r'var pwdDefaultEncryptSalt ?= ?"(.*?)"', html)
             if maySalt:
                 salt = maySalt[0]
         # 将用户名填入即将提交的参数中
@@ -127,12 +84,14 @@ class casLogin:
             params['password'] = Utils.encryptAES(self.password, salt)
             # 识别填写验证码
             if self.getNeedCaptchaUrl():
-                if self.type == 0:
+                if self.formType == 'casLoginForm':
                     imgUrl = self.host + 'authserver/captcha.html'
-                    params['captchaResponse'] = Utils.getCodeFromImg(self.session, imgUrl)
+                    params['captchaResponse'] = Utils.getCodeFromImg(
+                        self.session, imgUrl)
                 else:
                     imgUrl = self.host + 'authserver/getCaptcha.htl'
-                    params['captcha'] = Utils.getCodeFromImg(self.session, imgUrl)
+                    params['captcha'] = Utils.getCodeFromImg(
+                        self.session, imgUrl)
         else:
             params['password'] = self.password
 
@@ -157,7 +116,7 @@ class casLogin:
             data = data.text
             print(data)
             soup = BeautifulSoup(data, 'lxml')
-            if self.type == 0:
+            if self.formType == 'casLoginForm':
                 msg = soup.select('#errorMsg')
                 if len(msg) != 0:
                     msg = msg[0].get_text()
