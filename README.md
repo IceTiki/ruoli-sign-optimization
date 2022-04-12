@@ -182,9 +182,9 @@
 
 ## 文档
 
-* [Todo](documents/Todo)
-* [使用方法](documents/使用方法)
-* [用户配置高级教程](documents/用户配置高级教程)
+* [Todo](documents/Todo.md)
+* [使用方法](documents/使用方法.md)
+* [用户配置高级教程](documents/用户配置高级教程.md)
 
 ## 同类仓库
 
