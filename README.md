@@ -112,9 +112,11 @@
 
 # ruoli-sign-optimization
 
+[![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=IceTiki&repo=ruoli-sign-optimization)](https://github.com/IceTiki/ruoli-sign-optimization)
+
 ## 简介
 
-基于[子墨仓库](https://github.com/ZimoLoveShuang/auto-submit)和[若离仓库](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到
+基于[若离仓库](https://github.com/thriving123/fuckTodayStudy)修改的今日校园自动签到
 
 > 备注: <u>配置文件不通用</u>
 
@@ -192,11 +194,11 @@
 
 [![Readme Card](https://github-readme-stats.vercel.app/api/pin/?username=ZimoLoveShuang&repo=auto-submit)](https://github.com/ZimoLoveShuang/auto-submit)
 
-若离的仓库(无法访问)是自带登录模块的自动签到的祖师爷
+**若离的仓库**(无法访问)是自带登录模块的自动签到的祖师爷
 
 > [fuckTodayStudy](https://github.com/thriving123/fuckTodayStudy)
 
-**CarltonHere的仓库**<u>(可用)</u>是现在还在维护的可用仓库，有一键部署的功能等
+**Carlton的仓库**<u>(可用)</u>是现在还在维护最多Star的仓库，有一键部署的功能等
 
 > 如果有密钥更新或者遇到奇怪的特性，我就会去参考他的仓库
 
