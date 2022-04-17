@@ -1,5 +1,7 @@
 import time
+from turtle import st
 from typing import Sequence
+from numpy import isin
 import requests
 import yaml
 import math
@@ -23,7 +25,7 @@ class TaskError(Exception):
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.7.8"  # 版本标识
+    prefix = "V-T3.8.0"  # 版本标识
     startTime = time.time()
     log_list = []
     printLevel = 0
@@ -249,20 +251,6 @@ class MT:
         distance = 2*math.asin(math.sqrt(a))*6371393  # 地球平均半径，6371393m
         return distance
 
-    @staticmethod
-    def timeListFormat(raw):
-        '''将列表中的字符串用time.strftime格式化(参数接受元组/字符串/列表)'''
-        # 类型转换
-        raw = DT.formatStrList(raw)
-        # 开始格式化
-        for i, v in enumerate(raw):
-            raw[i] = time.strftime(v, time.localtime())
-        return raw
-    
-    @staticmethod
-    def notionStr(s:str):
-        return ('↓'*50 + '看这里' + '↓'*50 + '\n')*5 + s + ('\n' + '↑'*50 + '看这里' + '↑'*50)*5
-
 
 class PseudoRandom:
     '''随机数种子临时固定类(用于with语句)'''
@@ -358,7 +346,7 @@ class RT:
             return item
 
     @staticmethod
-    def choicePhoto(picList, dirTimeFormat=False):
+    def choicePhoto(picList):
         """
         从图片(在线/本地/文件夹)文件夹中选取可用图片(优先选取在线图片)，并返回其对应的二进制文件和图片类型
 
@@ -402,9 +390,6 @@ class RT:
 
         # 根据图片地址前缀筛选出本地路径列表
         dirList = list(set(picList) - set(urlList))
-        # 本地图片列表时间占位符格式化
-        if dirTimeFormat:
-            dirList = MT.timeListFormat(dirList)
         # 将被路径指向文件加入列表
         fileList = list(filter(lambda x: os.path.isfile(x), dirList))
         # 将被路径指向文件夹中的图片加入列表
@@ -483,15 +468,26 @@ class DT:
 
     @staticmethod
     def formatStrList(item):
-        '''序列或字符串 格式化为 列表(空值转换为空列表)'''
-        if type(item) == str:
-            return [item]
+        '''字符串序列或字符串 格式化为 字符串列表。
+        :feature: 超级字符串会被格式化为字符串
+        :feature: 空值会被格式化为 空列表'''
+        if isinstance(item, str):
+            strList = [item]
+        elif isinstance(item, dict):
+            strList = [item]
+        elif type(item) == SuperString:
+            strList = [item]
         elif isinstance(item, Sequence):
-            return list(item)
+            strList = list(item)
         elif not item:
-            return []
+            strList = []
         else:
             raise TypeError('请传入序列/字符串')
+        # 格式化超级字符串
+        for i, v in enumerate(strList):
+            if isinstance(v, str) or isinstance(v, dict) or v == SuperString:
+                strList[i] = str(SuperString(v))
+        return strList
 
 
 class CT:
@@ -584,3 +580,77 @@ class HSF:
         bstr = str_.encode(charset)
         hashObj.update(bstr)
         return hashObj.hexdigest()
+
+
+class ST:
+    '''StringTools'''
+    @staticmethod
+    def timeFormating(string: str):
+        '''字符串根据time.strftime()的规则，按照当前时间进行格式化'''
+        return time.strftime(string, time.localtime())
+
+    @staticmethod
+    def randomFormating(string: str):
+        r'''对字符串中的<rd>和</rd>之间(由\a分隔的字符串)随机选取一项加入到字符串中'''
+        return re.sub(r"<rd>.*?</rd>", lambda x: random.choice(x.group()[4:-5].split('\a')), string)
+
+    @staticmethod
+    def avoidRegular(string: str):
+        '''对字符串中的正则特殊符号前加上"\\", 并且在头尾加上"^"和"$"'''
+        return '^' + re.sub(r"\.|\^|\$|\*|\+|\?|\{|\}|\[|\]|\(|\)|\||\\", lambda x: '\\'+x.group(), string) + "$"
+
+    @staticmethod
+    def notionStr(s: str):
+        '''让输入的句子非常非常显眼'''
+        return ('↓'*50 + '看这里' + '↓'*50 + '\n')*5 + s + ('\n' + '↑'*50 + '看这里' + '↑'*50)*5
+
+
+class SuperString:
+    '''超级字符串是带有flag的字符串。
+    通过flag, 可以增加字符串功能(比如自动时间格式化/随机化), 定义匹配规则(正则/全等)'''
+
+    def __init__(self, strLike):
+        '''初始化超级字符串
+        :param strLike: str|dict|SuperString
+            : 字典要求{"str+": "字符串", "flag":"flag1|flag2"}形式'''
+        # 参数初始化
+        self.str = ''
+        self.flags = []
+        self.fStr = ''
+        self.reFlag = False
+        if isinstance(strLike, str):
+            self.str = str(strLike)
+        elif isinstance(strLike, dict):
+            if not ('str+' in strLike and 'flag' in strLike):
+                raise TypeError('超级字符串缺少键"str+"或"flag"')
+            self.str = strLike['str+']
+            self.flags = strLike['flag'].split('|')
+        elif isinstance(strLike, SuperString):
+            self.str = SuperString.str
+            self.flags = SuperString.flags
+        # 生成格式化字符串
+        self.formating()
+        # 判断self.match函数是否启用正则
+        if 're' in self.flags:
+            self.reFlag = True
+
+    def formating(self):
+        '''根据flags, 格式化字符串'''
+        string = self.str
+        for flag in self.flags:
+            if flag == 'tf':
+                string = ST.timeFormating(string)
+            elif flag == 'rd':
+                string = ST.randomFormating(string)
+        self.fStr = string
+        return self
+
+    def match(self, str_):
+        '''判断输入的字符串是否与超级字符串匹配'''
+        if self.reFlag:
+            return re.search(self.fStr, str_)
+        else:
+            return self.fStr == str_
+
+    def __str__(self):
+        return self.fStr

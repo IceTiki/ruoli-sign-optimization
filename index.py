@@ -51,7 +51,7 @@ except ImportError as e:
 错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
-    from liteTools import TaskError, RT, DT, LL, NT, MT
+    from liteTools import TaskError, RT, DT, LL, NT, MT, ST
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
     from actions.sendMessage import SendMessage
@@ -71,7 +71,7 @@ def loadConfig():
         errmsg = f"""读取配置文件出错
 请尝试检查配置文件(建议下载VSCode并安装yaml插件进行检查)
 错误信息: {e}"""
-        LL.log(4, MT.notionStr(errmsg))
+        LL.log(4, ST.notionStr(errmsg))
         raise e
     # 全局配置初始化
     defaultConfig = {
@@ -222,7 +222,7 @@ def main():
                 msg = str(e)
             except Exception as e:
                 msg = f"[{e}]\n{traceback.format_exc()}"
-                LL.log(3, MT.notionStr(msg), user['username']+'签到失败'+msg)
+                LL.log(3, ST.notionStr(msg), user['username']+'签到失败'+msg)
                 if maxTry != tryTimes:
                     continue
 

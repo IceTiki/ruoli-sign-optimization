@@ -3,7 +3,7 @@ import re
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
-from liteTools import LL, DT, RT, MT, TaskError, CpdailyTools
+from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
 
 
 class sleepCheck:
@@ -42,8 +42,9 @@ class sleepCheck:
             raise TaskError('无合适的查寝任务')
         if self.userInfo.get('title'):
             # 获取匹配标题的任务
+            taskTitle = SuperString(self.userInfo['title'])
             for righttask in taskList:
-                if re.search(self.userInfo['title'], righttask['taskName']):
+                if taskTitle.match(righttask['taskName']):
                     self.taskName = righttask['taskName']
                     LL.log(1, '匹配标题的任务', righttask['taskName'])
                     self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
@@ -72,8 +73,8 @@ class sleepCheck:
         LL.log(1, '具体查寝任务', res['datas'])
         self.task = res['datas']
 
-
     # 获取历史签到任务详情
+
     def getHistoryTaskInfo(self):
         '''获取历史签到任务详情'''
         headers = self.session.headers
@@ -166,7 +167,7 @@ class sleepCheck:
             # 判断签到是否需要照片
             if self.task['isPhoto'] == 1:
                 pic = self.userInfo['photo']
-                picBlob, picType = RT.choicePhoto(pic, dirTimeFormat=True)
+                picBlob, picType = RT.choicePhoto(pic)
                 # 上传图片
                 url_getUploadPolicy = f'{self.host}wec-counselor-sign-apps/stu/obs/getUploadPolicy'
                 ossKey = CpdailyTools.uploadPicture(
@@ -187,7 +188,8 @@ class sleepCheck:
                 if MT.geoDistance(self.form['longitude'], self.form['latitude'], place['longitude'], place['latitude']) < place['radius']:
                     self.form['isMalposition'] = 0
                     break
-            self.form['abnormalReason'] = self.userInfo['abnormalReason']
+            self.form['abnormalReason'] = str(
+                SuperString(self.userInfo['abnormalReason']))
             self.form['position'] = self.userInfo['address']
             self.form['qrUuid'] = self.userInfo.get('qrUuid', "")
             self.form['uaIsCpadaily'] = True

@@ -3,7 +3,7 @@ import re
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
-from liteTools import LL, DT, RT, MT, TaskError, CpdailyTools
+from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
 
 
 class teacherSign:
@@ -54,7 +54,7 @@ class teacherSign:
         # 判断签到是否需要照片
         if self.task['isPhoto'] == 1:
             pic = self.userInfo['photo']
-            picBlob, picType = RT.choicePhoto(pic, dirTimeFormat=True)
+            picBlob, picType = RT.choicePhoto(pic)
             # 上传图片
             url_getUploadPolicy = f'{self.host}wec-counselor-teacher-sign-apps/teacher/obs/getUploadPolicy'
             ossKey = CpdailyTools.uploadPicture(
@@ -70,7 +70,8 @@ class teacherSign:
         self.form['longitude'] = self.userInfo['lon']
         self.form['latitude'] = self.userInfo['lat']
         self.form['isMalposition'] = self.task['isMalposition']
-        self.form['abnormalReason'] = self.userInfo['abnormalReason']
+        self.form['abnormalReason'] = str(
+            SuperString(self.userInfo['abnormalReason']))
         self.form['position'] = self.userInfo['address']
         self.form['qrUuid'] = ''
         self.form['uaIsCpadaily'] = True

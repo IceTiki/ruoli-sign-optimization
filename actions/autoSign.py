@@ -4,7 +4,7 @@ import re
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
-from liteTools import LL, DT, RT, MT, TaskError, CpdailyTools
+from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
 
 
 class AutoSign:
@@ -47,15 +47,16 @@ class AutoSign:
             raise TaskError('无需要签到的任务')
         if self.userInfo.get('title'):
             # 获取匹配标题的任务
+            taskTitle = SuperString(self.userInfo['title'])
             for righttask in taskList:
-                if re.search(self.userInfo['title'], righttask['taskName']):
+                if taskTitle.match(righttask['taskName']):
                     self.taskName = righttask['taskName']
                     LL.log(1, '匹配标题的任务', righttask['taskName'])
                     self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
                                      'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
                     return self.taskInfo
             # 如果没有找到匹配的任务
-            LL.log(1, '没有匹配标题的任务')
+            LL.log(1, f'没有匹配标题[{taskTitle}]的任务')
             raise TaskError('没有匹配标题的任务')
         else:  # 如果没有填title字段
             # 自动获取最后一个未签到任务
@@ -150,9 +151,8 @@ class AutoSign:
         LL.log(1, '签到任务的详情', res['datas'])
         self.task = res['datas']
 
-
-
     # 填充表单
+
     def fillForm(self):
         LL.log(1, '填充表单')
         if self.userInfo['getHistorySign']:
@@ -187,7 +187,7 @@ class AutoSign:
             # 检查是否需要照片
             if self.task.get('isPhoto') == 1:
                 pic = self.userInfo['photo']
-                picBlob, picType = RT.choicePhoto(pic, dirTimeFormat=True)
+                picBlob, picType = RT.choicePhoto(pic)
                 # 上传图片
                 url_getUploadPolicy = f'{self.host}wec-counselor-sign-apps/stu/obs/getUploadPolicy'
                 ossKey = CpdailyTools.uploadPicture(
@@ -206,32 +206,40 @@ class AutoSign:
                 userItems = self.userInfo['forms']
                 extraFieldItemValues = []
                 for i in range(len(extraFields)):
+                    '''遍历表单中每一项'''
                     userItem = userItems[i]['form']
                     extraField = extraFields[i]
+                    # 检查配置标题和表单标题
                     if self.userInfo['checkTitle'] == 1:
-                        if userItem['title'] != extraField['title']:
+                        formTitle = SuperString(userItem['title'])
+                        if not formTitle.match(extraField['title']):
                             raise Exception(
-                                f'\r\n第{i + 1}个配置出错了\r\n您的标题为：{userItem["title"]}\r\n系统的标题为：{extraField["title"]}')
+                                f'\n第{i + 1}个配置出错了\n您的标题为：{formTitle}\n系统的标题为：{extraField["title"]}')
+                    # 填写选择题
                     extraFieldItems = extraField['extraFieldItems']
-                    flag = False
                     for extraFieldItem in extraFieldItems:
+                        '''遍历表单内选项'''
                         if extraFieldItem['isSelected']:
                             data = extraFieldItem['content']
-                        if extraFieldItem['content'] == userItem['value']:
-                            flag = True
-                            extraFieldItemValue = {'extraFieldItemValue': userItem['value'],
+                        userFormValue = SuperString(userItem['value'])
+                        if userFormValue.match(extraFieldItem['content']):
+                            # 普通选项
+                            extraFieldItemValue = {'extraFieldItemValue': extraFieldItem['content'],
                                                    'extraFieldItemWid': extraFieldItem['wid']}
-                            # 其他 额外的文本
+                            # 需要额外文本的选项
                             if extraFieldItem['isOtherItems'] == 1:
-                                flag = True
-                                extraFieldItemValue = {'extraFieldItemValue': userItem['extraValue'],
+                                formExtraValue = SuperString(
+                                    userItem['extraValue'])
+                                extraFieldItemValue = {'extraFieldItemValue': str(formExtraValue),
                                                        'extraFieldItemWid': extraFieldItem['wid']}
                             extraFieldItemValues.append(extraFieldItemValue)
-                    if not flag:
+                            break
+                    else:
                         raise Exception(
-                            f'\r\n第{ i + 1 }个配置出错了\r\n表单未找到你设置的值：{userItem["value"]}\r\n，你上次系统选的值为：{ data }')
+                            f'\r\n第{ i + 1 }个配置出错了\r\n表单未匹配到你设置的值：{userFormValue}\r\n，你上次系统选的值为：{ data }')
                 self.form['extraFieldItems'] = extraFieldItemValues
-            self.form['abnormalReason'] = self.userInfo['abnormalReason']
+            self.form['abnormalReason'] = str(
+                SuperString(self.userInfo['abnormalReason']))
             # 通过用户是否填写qrUuid判断是否为二维码签到
             if self.userInfo['qrUuid']:
                 self.form['qrUuid'] = self.userInfo['qrUuid']

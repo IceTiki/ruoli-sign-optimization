@@ -4,7 +4,7 @@ import os
 from requests_toolbelt import MultipartEncoder
 
 from todayLoginService import TodayLoginService
-from liteTools import LL, DT, RT, MT, TaskError, CpdailyTools
+from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
 
 
 class Collection:
@@ -64,7 +64,8 @@ class Collection:
             for task in res['datas']['rows']:
                 if self.userInfo.get('title'):
                     # 如果任务需要匹配标题
-                    if not re.search(self.userInfo['title'], task["subject"]):
+                    taskTitle = SuperString(self.userInfo['title'])
+                    if not taskTitle.match(task["subject"]):
                         # 跳过标题不匹配的任务
                         continue
                     if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
@@ -236,9 +237,10 @@ class Collection:
                     # 判断用户是否需要检查标题
                     if self.userInfo['checkTitle'] == 1:
                         # 如果检查到标题不相等
-                        if formItem['title'] != userForm['title']:
+                        userFormTitle = SuperString(userForm['title'])
+                        if not userFormTitle.match(formItem['title']):
                             raise Exception(
-                                f'\r\n有配置项的标题不正确\r\n您的标题为：{userForm["title"]}\r\n系统的标题为：{formItem["title"]}')
+                                f'\r\n有配置项的标题不匹配\r\n您的标题为：{userFormTitle}\r\n系统的标题为：{formItem["title"]}')
                     # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
                     formItem['show'] = True
                     formItem['formType'] = '0'  # 盲猜是任务类型、待确认
@@ -246,14 +248,15 @@ class Collection:
                     # 开始填充表单
                     # 文本类型
                     if formItem['fieldType'] in ('1', '5', '6', '7'):
-                        formItem['value'] = userForm['value']
+                        formItem['value'] = str(SuperString(userForm['value']))
                     # 单选类型
                     elif formItem['fieldType'] == '2':
                         # 定义单选框的wid
                         itemWid = ''
                         # 单选需要移除多余的选项
                         for fieldItem in formItem['fieldItems'].copy():
-                            if fieldItem['content'] != userForm['value']:
+                            userFormValue = SuperString(userForm['value'])
+                            if not userFormValue.match(fieldItem['content']):
                                 formItem['fieldItems'].remove(fieldItem)
                             else:
                                 itemWid = fieldItem['itemWid']
@@ -266,12 +269,14 @@ class Collection:
                     elif formItem['fieldType'] == '3':
                         # 定义单选框的wid
                         itemWidArr = []
-                        userItems = userForm['value']
+                        userItems = [SuperString(i)for i in userForm['value']]
                         # 多选也需要移除多余的选项
                         for fieldItem in formItem['fieldItems'].copy():
-                            if fieldItem['content'] in userItems:
-                                # formItem['value'] += fieldItem['content'] + ' ' # 这句不知道有什么用
-                                itemWidArr.append(fieldItem['itemWid'])
+                            # 查看该表单项在不在用户配置的选项中
+                            for i in userItems:
+                                if i.match(fieldItem['content']):
+                                    itemWidArr.append(fieldItem['itemWid'])
+                                    break
                             else:
                                 formItem['fieldItems'].remove(fieldItem)
                         # 若多选一个都未选中
@@ -282,9 +287,8 @@ class Collection:
                         formItem['value'] = ','.join(itemWidArr)
                     # 图片类型
                     elif formItem['fieldType'] == '4':
-                        dirList = userForm['value']
                         # 序列/字符串转列表
-                        dirList = DT.formatStrList(dirList)
+                        dirList = DT.formatStrList(userForm['value'])
                         # 检查列表长度
                         dirListLen = len(dirList)
                         if dirListLen == 0:
@@ -294,8 +298,7 @@ class Collection:
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
                         for i, pic in enumerate(dirList, 1):
-                            picBlob, picType = RT.choicePhoto(
-                                pic, dirTimeFormat=True)
+                            picBlob, picType = RT.choicePhoto(pic)
                             # 上传图片
                             url_getUploadPolicy = f'{self.host}wec-counselor-collector-apps/stu/obs/getUploadPolicy'
                             ossKey = CpdailyTools.uploadPicture(
