@@ -1,7 +1,5 @@
 import time
-from turtle import st
 from typing import Sequence
-from numpy import isin
 import requests
 import yaml
 import math
