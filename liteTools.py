@@ -15,6 +15,7 @@ import json
 import imghdr
 from requests_toolbelt import MultipartEncoder
 
+import checkRepositoryVersion
 
 class TaskError(Exception):
     '''目前(配置/时间/签到情况)不宜完成签到任务'''
@@ -23,7 +24,7 @@ class TaskError(Exception):
 
 class LL:
     '''lite log'''
-    prefix = "V-T3.8.0"  # 版本标识
+    prefix = checkRepositoryVersion.checkCodeVersion()
     startTime = time.time()
     log_list = []
     printLevel = 0
