@@ -1,4 +1,5 @@
 import time
+from types import NoneType
 from typing import Sequence
 import requests
 import yaml
@@ -14,6 +15,7 @@ import re
 import json
 import imghdr
 from requests_toolbelt import MultipartEncoder
+import datetime
 
 import checkRepositoryVersion
 
@@ -629,7 +631,7 @@ class SuperString:
         elif isinstance(strLike, SuperString):
             self.str = SuperString.str
             self.flags = SuperString.flags
-        elif isinstance(strLike, int) or isinstance(strLike, float):
+        elif isinstance(strLike, (int, float, datetime.date, datetime.datetime)):
             self.str = str(strLike)
         else:
             raise TypeError(f'不支持[{type(strLike)}]转超级字符串')
