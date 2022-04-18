@@ -228,9 +228,7 @@ class AutoSign:
                                                    'extraFieldItemWid': extraFieldItem['wid']}
                             # 需要额外文本的选项
                             if extraFieldItem['isOtherItems'] == 1:
-                                formExtraValue = SuperString(
-                                    userItem['extraValue'])
-                                extraFieldItemValue = {'extraFieldItemValue': str(formExtraValue),
+                                extraFieldItemValue = {'extraFieldItemValue': str(SuperString(userItem['extraValue'])),
                                                        'extraFieldItemWid': extraFieldItem['wid']}
                             extraFieldItemValues.append(extraFieldItemValue)
                             break

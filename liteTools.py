@@ -17,6 +17,7 @@ from requests_toolbelt import MultipartEncoder
 
 import checkRepositoryVersion
 
+
 class TaskError(Exception):
     '''目前(配置/时间/签到情况)不宜完成签到任务'''
     pass
@@ -617,16 +618,21 @@ class SuperString:
         self.flags = []
         self.fStr = ''
         self.reFlag = False
+        # 根据类型处理传入的项目
         if isinstance(strLike, str):
             self.str = str(strLike)
         elif isinstance(strLike, dict):
             if not ('str+' in strLike and 'flag' in strLike):
-                raise TypeError('超级字符串缺少键"str+"或"flag"')
+                raise TypeError('不支持缺少键"str+"或"flag"的字典转超级字符串')
             self.str = strLike['str+']
             self.flags = strLike['flag'].split('|')
         elif isinstance(strLike, SuperString):
             self.str = SuperString.str
             self.flags = SuperString.flags
+        elif isinstance(strLike, int) or isinstance(strLike, float):
+            self.str = str(strLike)
+        else:
+            raise TypeError(f'不支持[{type(strLike)}]转超级字符串')
         # 生成格式化字符串
         self.formating()
         # 判断self.match函数是否启用正则
