@@ -1,5 +1,4 @@
 import time
-from types import NoneType
 from typing import Sequence
 import requests
 import yaml
