@@ -229,7 +229,7 @@ class NT:
         :return 如果代理正常返回0，代理异常返回1
         '''
         try:
-            requests.get(url='www.baidu.com', proxies=proxies, timeout=10)
+            requests.get(url='https://www.baidu.com/', proxies=proxies, timeout=10)
         except requests.RequestException as e:
             LL.log(4, f'代理[{proxies}]存在问题\n错误: [{e}]')
             return 1

@@ -56,7 +56,7 @@ class AutoSign:
                                      'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
                     return self.taskInfo
             # 如果没有找到匹配的任务
-            LL.log(1, f'没有匹配标题[{taskTitle}]的任务')
+            LL.log(1, f'没有匹配标题『{taskTitle}』的任务')
             raise TaskError('没有匹配标题的任务')
         else:  # 如果没有填title字段
             # 自动获取最后一个未签到任务
@@ -214,7 +214,7 @@ class AutoSign:
                         formTitle = SuperString(userItem['title'])
                         if not formTitle.match(extraField['title']):
                             raise Exception(
-                                f'\n第{i + 1}个配置出错了\n您的标题为：{formTitle}\n系统的标题为：{extraField["title"]}')
+                                f'\n第{i + 1}个配置出错了\n您的标题为: 『{formTitle}』\n系统的标题为: 『{extraField["title"]}』')
                     # 填写选择题
                     extraFieldItems = extraField['extraFieldItems']
                     for extraFieldItem in extraFieldItems:
@@ -234,7 +234,7 @@ class AutoSign:
                             break
                     else:
                         raise Exception(
-                            f'\r\n第{ i + 1 }个配置出错了\r\n表单未匹配到你设置的值：{userFormValue}\r\n，你上次系统选的值为：{ data }')
+                            f'\n第{ i + 1 }个配置出错了\r\n表单未匹配到你设置的值：『{userFormValue}』\n，你上次/系统选的值为：『{data}』')
                 self.form['extraFieldItems'] = extraFieldItemValues
             self.form['abnormalReason'] = str(
                 SuperString(self.userInfo['abnormalReason']))

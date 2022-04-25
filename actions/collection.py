@@ -71,7 +71,7 @@ class Collection:
                     if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
                         # 如果仅填报"未填报的任务"且相应任务已被填报，则报错
                         LL.log(2, f"收集任务({task['subject']})已经被填报")
-                        raise TaskError(f"收集任务({task['subject']})已经被填报")
+                        raise TaskError(f"收集任务『{task['subject']}』已经被填报")
                 else:
                     # 如果不需要匹配标题，则获取第一个任务
                     if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
@@ -240,14 +240,17 @@ class Collection:
                         userFormTitle = SuperString(userForm['title'])
                         if not userFormTitle.match(formItem['title']):
                             raise Exception(
-                                f'\r\n有配置项的标题不匹配\r\n您的标题为：{userFormTitle}\r\n系统的标题为：{formItem["title"]}')
+                                f'\r\n有配置项的标题不匹配\r\n您的标题为：『{userFormTitle}』\r\n系统的标题为：『{formItem["title"]}』')
                     # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
                     formItem['show'] = True
                     formItem['formType'] = '0'  # 盲猜是任务类型、待确认
                     formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
                     # 开始填充表单
                     # 文本类型
-                    if formItem['fieldType'] in ('1', '5', '6', '7'):
+                    if formItem['fieldType'] in ('1', '5', '6', '7', '11'):
+                        '''
+                        11: 手机号
+                        '''
                         formItem['value'] = str(SuperString(userForm['value']))
                     # 单选类型
                     elif formItem['fieldType'] == '2':
@@ -282,11 +285,15 @@ class Collection:
                         # 若多选一个都未选中
                         if len(itemWidArr) == 0:
                             raise Exception(
-                                f'\r\n{userForm}配置项的选项不正确，该选项为多选，且未找到您配置的值'
+                                f'『{userForm}』配置项的选项不正确，该选项为多选，且未找到您配置的值'
                             )
                         formItem['value'] = ','.join(itemWidArr)
                     # 图片类型
-                    elif formItem['fieldType'] == '4':
+                    elif formItem['fieldType'] in ('4', '16'):
+                        '''
+                        4: 上传图片
+                        16: 手写板
+                        '''
                         # 序列/字符串转列表
                         dirList = DT.formatStrList(userForm['value'])
                         # 检查列表长度
@@ -294,7 +301,7 @@ class Collection:
                         if dirListLen == 0:
                             raise TaskError(f'请在配置中填写图片路径')
                         elif dirListLen > 10:
-                            raise TaskError(f'配置中填写的图片路径[{dirListLen}个]过多')
+                            raise TaskError(f'配置中填写的图片路径({dirListLen}个)过多')
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
                         for i, pic in enumerate(dirList, 1):
@@ -333,7 +340,7 @@ class Collection:
 
                     else:
                         raise Exception(
-                            f'\r\n{userForm}配置项属于未知配置项，请反馈'
+                            f'\n出现未知表单类型，请反馈『{formItem}』'
                         )
                     task_form.append(formItem)
                 else:

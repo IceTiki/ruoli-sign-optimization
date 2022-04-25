@@ -62,7 +62,7 @@ users: #!!!!!别误删了这一行!!!!!
           value: "图片.jpg"
           isNeed: 1
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 116.404165 # 经度
+    lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
     lat: 39.910966 # 纬度
     address: "北京市东城区天安门广场中央" # 地址信息
 
@@ -91,7 +91,7 @@ users: #!!!!!别误删了这一行!!!!!
           value: 其他
           extraValue: 天坛公园 #  如果存在选择题附带额外信息，请增加一个extraValue项
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 116.404165 # 经度
+    lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
     lat: 39.910966 # 纬度
     address: "北京市东城区天安门广场中央" # 地址信息
 
@@ -108,7 +108,7 @@ users: #!!!!!别误删了这一行!!!!!
     abnormalReason: "" # abnormalReason 反馈信息
     photo: sign.jpg # 签到照片(不需要可不填)
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 116.404165 # 经度
+    lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
     lat: 39.910966 # 纬度
     address: "北京市东城区天安门广场中央" # 地址信息
 
@@ -122,7 +122,7 @@ users: #!!!!!别误删了这一行!!!!!
     abnormalReason: "" # abnormalReason 反馈信息
     photo: sign.jpg # 签到照片(不需要可不填)
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-    lon: 116.404165 # 经度
+    lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
     lat: 39.910966 # 纬度
     address: "北京市东城区天安门广场中央" # 地址信息
 
@@ -158,6 +158,6 @@ users: #!!!!!别误删了这一行!!!!!
   #         title: 8.今日是否返回北京市
   #         value: 否
   #   # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
-  #   lon: 116.404165 # 经度
+  #   lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
   #   lat: 39.910966 # 纬度
   #   address: "北京市东城区天安门广场中央" # 地址信息
