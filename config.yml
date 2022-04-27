@@ -1,0 +1,190 @@
+author: 若离|IceTiki|https://github.com/IceTiki/ruoli-sign-optimization
+# YAML有引用和锚点，可以节省配置长度(备注:锚点要放在引用的前面)(可以参考https://www.runoob.com/w3cnote/yaml-intro.html)
+# ======================================================================
+# 全局设置
+# ======================================================================
+locationOffsetRange: 50 # 坐标偏移范围(单位：米)(可以为0)
+API_trigger:  # API网关触发器访问链接
+maxTry: 1 # 最大尝试次数
+logDir: "log/" # 日志保存地址
+delay: [5, 10] # 多用户时，各用户之间任务执行延迟(时间范围可以使用浮点数)
+captcha: # 图片验证码识别
+  tencentSecretId: "" # 腾讯云OCR
+  tencentSecretKey: "" # 腾讯云OCR
+  captchaLen: 4 # 验证码长度
+sendMessage: # 推送函数的整体运行情况(不需要的项目不用填，可以删掉或者放着不管)
+  rl_emailApiUrl: http://api.ruoli.cc/mail/sendMail # 邮箱API的地址
+  rl_email: "" # email 接受通知消息的邮箱
+  iceCream_token: "" # iceCream(若离开发的qq推送)(https://ice.ruoli.cc)
+  qmsg_key: "" # qmsg推送的key
+  qmsg_qq: "" # qmsg推送的qq号
+  qmsg_isGroup: 0 # 此qq号是否为群(是的话填1，反之为0)
+  pushplus_parameters: "" # pushplus参数，填入令牌(token)即可推送。也可以填入"token=xxx&topic=xxx"形式自定义更多参数
+  pushplus_isNew: False # False使用旧版pushplus(https://pushplus.hxtrip.com)，True使用新版pushplus(https://www.pushplus.plus)
+  smtp_host: "smtp.qq.com" # SMTP服务器域名
+  smtp_user: "*****@qq.com" # SMTP服务器用户名
+  smtp_key: "" # SMTP服务器密钥
+  smtp_sender: "*****@qq.com" # 发送邮箱
+  smtp_senderName: "今日校园每日自动签到"  # 自定义发件人名称
+  smtp_receivers:
+    - "*****@qq.com" # 接收邮箱(可填多个)
+# ======================================================================
+# 用户组配置(填写自己所需的类型，并删掉不需要的。可以多用户签到。)
+# ======================================================================
+users: #!!!!!别误删了这一行!!!!!
+  - # !!!!!!!!!!配置多用户时不要遗漏这一行("- "代表数组里一项的开始)!!!!!!!!!!
+    # 信息收集模板=======
+    # 通用必填项-------
+    PlanSignWeek: "0,1,2,3,4,5,6" # 计划签到时间（星期天为0，星期一至星期六为1~6）
+    PlanSignHour: "06" # 必填。计划签到时间（单位小时，多个时间点用逗号隔开。例：08,09,10）
+    PlanSignMinute: 0 # 必填。计划签到时间（单位分钟，例：06。这里只能填一个数字）
+    # 举例：若每周一到周五，06:00、12:00、18:00、21:00各有一个签到任务，
+    # 那么则 PlanSignWeek: "1,2,3,4,5"、PlanSignHour: "06,12,18,21"、PlanSignMinute: 0。
+    type: 0 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
+    schoolName: 五道口职业技术学院 # 学校全称
+    username: "" # 学号或者工号
+    password: "" # 密码
+    # 一般需填项-------
+    signLevel: 1 # 签到等级[1:仅填报未填报的任务|2:已填报的任务也重复填报]
+    title: 0 # [str:签到任务的标题|0:取最后一个未签到的任务]
+    checkTitle: 1 # 是否检查表单各项的标题[1:检查|0:不检查]
+    forms: # 表单信息
+      - form:
+          title: 今日具体所在地
+          value: 北京市/东城区
+          isNeed: 1 # 是否需要提交此问题，必填问题一定要填1(1:提交|0:不提交)
+      - form:
+          title: 是否在校
+          value: 是
+          isNeed: 1
+      - form:
+          title: 请选择A,B,C # 多选示例
+          value:
+            - A
+            - B
+            - C
+          isNeed: 1
+      - form:
+          title: 请上传图片
+          value: "图片.jpg"
+          isNeed: 1
+    # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
+    lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
+    lat: 39.910966 # 纬度
+    address: "北京市东城区天安门广场中央" # 地址信息
+
+  - # !!!!!!!!!!配置多用户时不要遗漏这一行("- "代表数组里一项的开始)!!!!!!!!!!
+    # 签到模板=======
+    # 通用必填项-------
+    PlanSignWeek: "0,1,2,3,4,5,6" # 计划签到时间（星期天为0，星期一至星期六为1~6）
+    PlanSignHour: "06" # 必填。计划签到时间（单位小时，多个时间点用逗号隔开。例：08,09,10）
+    PlanSignMinute: 0 # 必填。计划签到时间（单位分钟，例：06。这里只能填一个数字）
+    # 举例：若每周一到周五，06:00、12:00、18:00、21:00各有一个签到任务，
+    # 那么则 PlanSignWeek: "1,2,3,4,5"、PlanSignHour: "06,12,18,21"、PlanSignMinute: 0。
+    type: 1 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
+    schoolName: 五道口职业技术学院 # 学校全称
+    username: "" # 学号或者工号
+    password: "" # 密码
+    # 一般需填项-------
+    abnormalReason: "" # abnormalReason 反馈信息
+    photo: sign.jpg # 签到照片(不需要可不填)
+    signLevel: 1 # 签到等级[0:正常签到|1:请假后依然签到|2:请假或已经打卡后依然重复签到]
+    title: 0 # [str:签到任务的标题|0:取最后一个未签到的任务]
+    checkTitle: 1 # 是否检查表单各项的标题[1:检查|0:不检查]
+    forms: # 表单信息
+      - form:
+          title: 今天你的体温是多少？
+          value: 37.2℃及以下
+      - form:
+          title: 今天你的身体状况是？
+          value: 健康
+      - form:
+          title: 今天你所在的位置是?
+          value: 其他
+          extraValue: 天坛公园 #  如果存在选择题附带额外信息，请增加一个extraValue项
+    # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
+    lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
+    lat: 39.910966 # 纬度
+    address: "北京市东城区天安门广场中央" # 地址信息
+
+  - # !!!!!!!!!!配置多用户时不要遗漏这一行("- "代表数组里一项的开始)!!!!!!!!!!
+    # 查寝模板=======
+    # 通用必填项-------
+    PlanSignWeek: "0,1,2,3,4,5,6" # 计划签到时间（星期天为0，星期一至星期六为1~6）
+    PlanSignHour: "06" # 必填。计划签到时间（单位小时，多个时间点用逗号隔开。例：08,09,10）
+    PlanSignMinute: 0 # 必填。计划签到时间（单位分钟，例：06。这里只能填一个数字）
+    # 举例：若每周一到周五，06:00、12:00、18:00、21:00各有一个签到任务，
+    # 那么则 PlanSignWeek: "1,2,3,4,5"、PlanSignHour: "06,12,18,21"、PlanSignMinute: 0。
+    type: 2 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
+    schoolName: 五道口职业技术学院 # 学校全称
+    username: "" # 学号或者工号
+    password: "" # 密码
+    # 一般需填项-------
+    signLevel: 1 # 签到等级[0:正常签到|1:请假后依然签到|2:请假或已经打卡后依然重复签到]
+    title: 0 # [str:签到任务的标题|0:取最后一个未签到的任务]
+    abnormalReason: "" # abnormalReason 反馈信息
+    photo: sign.jpg # 签到照片(不需要可不填)
+    # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
+    lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
+    lat: 39.910966 # 纬度
+    address: "北京市东城区天安门广场中央" # 地址信息
+
+  - # 政工签到模板=======
+    # 通用必填项-------
+    PlanSignWeek: "0,1,2,3,4,5,6" # 计划签到时间（星期天为0，星期一至星期六为1~6）
+    PlanSignHour: "06" # 必填。计划签到时间（单位小时，多个时间点用逗号隔开。例：08,09,10）
+    PlanSignMinute: 0 # 必填。计划签到时间（单位分钟，例：06。这里只能填一个数字）
+    # 举例：若每周一到周五，06:00、12:00、18:00、21:00各有一个签到任务，
+    # 那么则 PlanSignWeek: "1,2,3,4,5"、PlanSignHour: "06,12,18,21"、PlanSignMinute: 0。
+    type: 4 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
+    schoolName: 五道口职业技术学院 # 学校全称
+    username: "" # 学号或者工号
+    password: "" # 密码
+    # 一般需填项-------
+    abnormalReason: "" # abnormalReason 反馈信息
+    photo: sign.jpg # 签到照片(不需要可不填)
+    # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
+    lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
+    lat: 39.910966 # 纬度
+    address: "北京市东城区天安门广场中央" # 地址信息
+
+
+  # - # 教师工作日志模板=======
+  #   # 通用必填项-------
+  #   PlanSignWeek: "0,1,2,3,4,5,6" # 计划签到时间（星期天为0，星期一至星期六为1~6）
+  #   PlanSignHour: "06" # 必填。计划签到时间（单位小时，多个时间点用逗号隔开。例：08,09,10）
+  #   PlanSignMinute: 0 # 必填。计划签到时间（单位分钟，例：06。这里只能填一个数字）
+  #   # 举例：若每周一到周五，06:00、12:00、18:00、21:00各有一个签到任务，
+  #   # 那么则 PlanSignWeek: "1,2,3,4,5"、PlanSignHour: "06,12,18,21"、PlanSignMinute: 0。
+  #   type: 3 # 任务类型[信息收集:0|签到:1|查寝:2|教师工作日志:3|政工签到:4]
+  #   schoolName: 五道口职业技术学院 # 学校全称
+  #   username: "" # 学号或者工号
+  #   password: "" # 密码
+  #   # 一般需填项-------
+  #   checkTitle: 1 # 是否检查表单的标题（1:检查|0:不检查）
+  #   forms: # 表单信息
+  #     - form:
+  #         title: 2.是否在校上班或居住
+  #         value: 是
+  #     - form:
+  #         title: 3.上午体温
+  #         value: 36.2
+  #     - form:
+  #         title: 4.下午体温
+  #         value: 36.4
+  #     - form:
+  #         title: 5.晚上体温
+  #         value: 36.1
+  #     - form:
+  #         title: 6.身体状况
+  #         value: 身体健康
+  #     - form:
+  #         title: 7.是否请假
+  #         value: 否
+  #     - form:
+  #         title: 8.今日是否返回北京市
+  #         value: 否
+  #   # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
+  #   lon: 116.404165 # 经度(注意!!! 经纬度不要用手机GPS的，用百度坐标拾取得到的(坐标系不同))
+  #   lat: 39.910966 # 纬度
+  #   address: "北京市东城区天安门广场中央" # 地址信息
