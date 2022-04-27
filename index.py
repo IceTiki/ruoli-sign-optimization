@@ -226,12 +226,15 @@ def main():
             # 如果当前时间不在计划时间内，则跳过签到
             if Current_Time_Week not in user['PlanSignWeek']:
                 user['if_sign_in'] = False
-                continue
             elif Current_Time_Hour not in user['PlanSignHour']:
                 user['if_sign_in'] = False
-                continue
-            elif (abs(Current_Time_Minute - int(user['PlanSignMinute'])) > 15) :
+            else:
                 user['if_sign_in'] = False
+                for minute in user['PlanSignMinute']:
+                    if (abs(Current_Time_Minute - int(minute)) < 15):
+                        user['if_sign_in'] = True
+                        break
+            if user['if_sign_in'] == False:
                 continue
             # 检查是否已经在上一轮尝试中签到
             if type(user['state']) == str:
