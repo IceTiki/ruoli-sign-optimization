@@ -94,7 +94,7 @@ def loadConfig():
             'sendMessage': None,
             'PlanSignWeek': '0,1,2,3,4,5,6',
             'PlanSignHour': '',
-            'PlanSignMinute': '0',
+            'PlanSignMinute': [00,20,40,59],
             'if_sign_in': True,
             'state': None,
             'model': 'OPPO R11 Plus',
