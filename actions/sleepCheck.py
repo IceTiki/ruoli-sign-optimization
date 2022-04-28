@@ -39,7 +39,7 @@ class sleepCheck:
         # 查询是否没有未签到任务
         if len(taskList) < 1:
             LL.log(1, '无合适的查寝任务')
-            raise TaskError('无合适的查寝任务')
+            raise TaskError('无合适的查寝任务', 400)
         if self.userInfo.get('title'):
             # 获取匹配标题的任务
             taskTitle = SuperString(self.userInfo['title'])
@@ -52,7 +52,7 @@ class sleepCheck:
                     return self.taskInfo
             # 如果没有找到匹配的任务
             LL.log(1, '没有匹配标题的任务')
-            raise TaskError('没有匹配标题的任务')
+            raise TaskError('没有匹配标题的任务', 400)
         else:  # 如果没有填title字段
             # 自动获取最后一个未签到任务
             latestTask = taskList[0]
@@ -72,6 +72,7 @@ class sleepCheck:
         res = DT.resJsonEncode(res)
         LL.log(1, '具体查寝任务', res['datas'])
         self.task = res['datas']
+        return self.task
 
     # 获取历史签到任务详情
 
@@ -140,7 +141,7 @@ class sleepCheck:
 
         # 如果没有遍历找到结果
         LL.log(2, "没有找到匹配的历史任务")
-        raise TaskError("没有找到匹配的历史任务")
+        raise TaskError("没有找到匹配的历史任务", 301)
 
     # 填充表单
     def fillForm(self):
@@ -247,4 +248,9 @@ class sleepCheck:
         res = self.session.post(f'{self.host}wec-counselor-attendance-apps/student/attendance/submitSign', headers=headers,
                                 data=json.dumps(self.submitData), verify=False)
         res = DT.resJsonEncode(res)
+        # 检查签到情况
+        if self.getDetailTask()['signTime']:
+            self.userInfo['taskStatus'].code = 101
+        else:
+            raise TaskError('提交了表单, 但状态仍是未签到', 300)
         return '[%s]%s' % (res['message'], self.taskInfo['taskName'])

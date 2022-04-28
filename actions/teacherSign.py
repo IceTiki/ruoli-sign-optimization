@@ -28,7 +28,7 @@ class teacherSign:
                                 data=json.dumps({}), verify=False)
         res = DT.resJsonEncode(res)
         if len(res['datas']['unSignedTasks']) < 1:
-            raise TaskError('当前暂时没有未签到的任务哦！')
+            raise TaskError('当前暂时没有未签到的任务哦！', 400)
         LL.log(1, '未签到的查寝', res['datas'])
         # 获取最后的一个任务
         latestTask = res['datas']['unSignedTasks'][0]
@@ -47,6 +47,7 @@ class teacherSign:
         res = DT.resJsonEncode(res)
         LL.log(1, '具体查寝任务', res['datas'])
         self.task = res['datas']
+        return self.task
 
     # 填充表单
 
@@ -128,4 +129,9 @@ class teacherSign:
         res = self.session.post(f'{self.host}wec-counselor-teacher-sign-apps/teacher/sign/submitSign', headers=headers,
                                 data=json.dumps(self.submitData), verify=False)
         res = DT.resJsonEncode(res)
+        # 检查签到情况
+        if self.getDetailTask()['signTime']:
+            self.userInfo['taskStatus'].code = 101
+        else:
+            raise TaskError('提交了表单, 但状态仍是未签到', 300)
         return res['message']

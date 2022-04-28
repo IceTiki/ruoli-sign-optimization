@@ -21,13 +21,86 @@ import checkRepositoryVersion
 
 class TaskError(Exception):
     '''目前(配置/时间/签到情况)不宜完成签到任务'''
-    pass
+
+    def __init__(self, msg="目前(配置/时间/签到情况)不宜完成签到任务", code=301):
+        self.msg = str(msg)
+        self.code = code
+
+    def __str__(self):
+        return self.msg
+
+
+class TT:
+    '''time Tools'''
+    startTime = time.time()
+
+    @staticmethod
+    def isInTimeList(timeRanges, nowTime: float = startTime):
+        '''判断(在列表中)是否有时间限定字符串是否匹配时间
+        :params timeRages: 时间限定字符串列表。
+            :时间限定字符串是形如"1,2,3 1,2,3 1,2,3 1,2,3 1,2,3"形式的字符串。
+            :其各位置代表"周(星期几) 月 日 时 分", 周/月/日皆以1开始。
+            :可以以"2-5"形式代表时间范围。比如"3,4-6"就等于"3,4,5,6"
+        :params nowTime: 时间戳
+        :return bool: 在列表中是否有时间限定字符串匹配时间
+        '''
+        timeRanges = DT.formatStrList(timeRanges)
+        for i in timeRanges:
+            if TT.isInTime(i, nowTime):
+                return True
+            else:
+                pass
+        else:
+            return False
+
+    @staticmethod
+    def isInTime(timeRange: str, nowTime: float = startTime):
+        '''
+        判断时间限定字符串是否匹配时间
+        :params timeRage: 时间限定字符串。
+            :是形如"1,2,3 1,2,3 1,2,3 1,2,3 1,2,3"形式的字符串。
+            :其各位置代表"周(星期几) 月 日 时 分", 周/月/日皆以1开始。
+            :可以以"2-5"形式代表时间范围。比如"3,4-6"就等于"3,4,5,6"
+        :params nowTime: 时间戳
+        :return bool: 时间限定字符串是否匹配时间
+        '''
+        # 判断类型
+        if type(timeRange) != str:
+            raise TypeError(
+                f"timeRange(时间限定字符串)应该是字符串, 而不是『{type(timeRange)}』")
+        # 判断格式
+        if not re.match(r"^(?:\d+-?\d*(?:,\d+-?\d*)* ){4}(?:\d+-?\d*(?:,\d+-?\d*)*)$", timeRange):
+            raise Exception(f'『{timeRange}』不是正确格式的时间限定字符串')
+        # 将时间范围格式化
+
+        def formating(m):
+            '''匹配a-e样式的字符串替换为a,b,c,d,e样式'''
+            a = int(m.group(1))
+            b = int(m.group(2))
+            if a > b:
+                a, b = b, a
+            return ','.join([str(i) for i in range(a, b)]+[str(b)])
+        timeRange = re.sub(r"(\d*)-(\d*)", formating, timeRange)
+        # 将字符串转为二维整数数组
+        timeRange = timeRange.split(' ')
+        timeRange = [[int(j) for j in i.split(',')] for i in timeRange]
+        # 将当前时间格式化为"周 月 日 时 分"
+        nowTime = tuple(time.localtime(nowTime))
+        nowTime = (nowTime[6]+1, nowTime[1],
+                   nowTime[2], nowTime[3], nowTime[4])
+        for a, b in zip(nowTime, timeRange):
+            if a not in b:
+                return False
+            else:
+                pass
+        else:
+            return True
 
 
 class LL:
     '''lite log'''
     prefix = checkRepositoryVersion.checkCodeVersion()
-    startTime = time.time()
+    startTime = TT.startTime
     log_list = []
     printLevel = 0
     logTypeDisplay = ['debug', 'info', 'warn', 'error', 'critical']
@@ -229,7 +302,8 @@ class NT:
         :return 如果代理正常返回0，代理异常返回1
         '''
         try:
-            requests.get(url='https://www.baidu.com/', proxies=proxies, timeout=10)
+            requests.get(url='https://www.baidu.com/',
+                         proxies=proxies, timeout=20)
         except requests.RequestException as e:
             LL.log(4, f'代理[{proxies}]存在问题\n错误: [{e}]')
             return 1
@@ -447,7 +521,7 @@ class RT:
 
 
 class DT:
-    '''dict tools'''
+    '''dict/list tools'''
     @staticmethod
     def loadYml(ymlDir='config.yml'):
         with open(ymlDir, 'r', encoding="utf-8") as f:

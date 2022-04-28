@@ -59,7 +59,7 @@ class Collection:
                 # 如果没有获取到历史任务则报错
                 if totalSize == 0:
                     LL.log(2, "没有获取到信息收集任务")
-                    raise TaskError("没有获取到信息收集任务")
+                    raise TaskError("没有获取到信息收集任务", 400)
             # 按页中任务遍历
             for task in res['datas']['rows']:
                 if self.userInfo.get('title'):
@@ -71,7 +71,7 @@ class Collection:
                     if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
                         # 如果仅填报"未填报的任务"且相应任务已被填报，则报错
                         LL.log(2, f"收集任务({task['subject']})已经被填报")
-                        raise TaskError(f"收集任务『{task['subject']}』已经被填报")
+                        raise TaskError(f"收集任务『{task['subject']}』已经被填报", 100)
                 else:
                     # 如果不需要匹配标题，则获取第一个任务
                     if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
@@ -105,7 +105,7 @@ class Collection:
                 self.task = res['datas']['rows']
                 return
         LL.log(1, "没有获取到合适的信息收集任务")
-        raise TaskError("没有获取到合适的信息收集任务")
+        raise TaskError("没有获取到合适的信息收集任务", 400)
 
     # 获取历史签到任务详情
     def getHistoryTaskInfo(self):
@@ -134,7 +134,7 @@ class Collection:
                 # 如果没有获取到历史任务则报错
                 if totalSize < 0:
                     LL.log(2, "没有获取到历史任务")
-                    raise TaskError("没有获取到历史任务")
+                    raise TaskError("没有获取到历史任务", 301)
             # 按页中任务遍历
             for task in res['datas']['rows']:
                 if task['isHandled'] == 1 and task['formWid'] == self.formWid:
@@ -207,7 +207,7 @@ class Collection:
                     return self.historyTaskData
         # 如果没有获取到历史信息收集则报错
         LL.log(2, "没有找到匹配的历史任务")
-        raise TaskError("没有找到匹配的历史任务")
+        raise TaskError("没有找到匹配的历史任务", 301)
 
     # 填写表单
 
@@ -249,7 +249,9 @@ class Collection:
                     # 文本类型
                     if formItem['fieldType'] in ('1', '5', '6', '7', '11'):
                         '''
-                        11: 手机号
+                        6: 时间选择
+                        7: 地址选择
+                        11: 纯数字(比如: 手机号)
                         '''
                         formItem['value'] = str(SuperString(userForm['value']))
                     # 单选类型
@@ -299,9 +301,9 @@ class Collection:
                         # 检查列表长度
                         dirListLen = len(dirList)
                         if dirListLen == 0:
-                            raise TaskError(f'请在配置中填写图片路径')
+                            raise TaskError(f'请在配置中填写图片路径', 301)
                         elif dirListLen > 10:
-                            raise TaskError(f'配置中填写的图片路径({dirListLen}个)过多')
+                            raise TaskError(f'配置中填写的图片路径({dirListLen}个)过多', 301)
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
                         for i, pic in enumerate(dirList, 1):
@@ -413,4 +415,15 @@ class Collection:
         data = self.session.post(
             submitUrl, headers=headers, data=json.dumps(self.submitData), verify=False)
         data = DT.resJsonEncode(data)
+        # 检查签到完成
+        url = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
+        params = {"collectorWid": self.wid,
+                    "instanceWid": self.instanceWid}
+        res = self.session.post(
+            url, headers=headers, data=json.dumps(params), verify=False)
+        res = DT.resJsonEncode(res)
+        if res['datas']['collector']['isUserSubmit'] == 1:
+            self.userInfo['taskStatus'].code = 101
+        else:
+            raise TaskError('提交了表单, 但状态仍是未填报', 300)
         return '[%s]%s' % (data['message'], self.taskName)
