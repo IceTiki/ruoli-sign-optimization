@@ -8,9 +8,9 @@ from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
 
 class sleepCheck:
     # 初始化信息收集类
-    def __init__(self, todaLoginService: TodayLoginService, userInfo):
-        self.session = todaLoginService.session
-        self.host = todaLoginService.host
+    def __init__(self, userInfo, userSession, userHost):
+        self.session = userSession
+        self.host = userHost
         self.userInfo = userInfo
         self.taskInfo = None
         self.form = {}
@@ -56,6 +56,9 @@ class sleepCheck:
             raise TaskError('没有匹配标题的任务', 400)
         else:  # 如果没有填title字段
             # 自动获取最后一个未签到任务
+            taskList = []
+            for i in range(signLevel+1):
+                taskList += taskGeneralList[i]
             latestTask = taskList[0]
             self.taskName = latestTask['taskName']
             LL.log(1, '最后一个未签到的任务', latestTask['taskName'])

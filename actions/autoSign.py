@@ -9,9 +9,9 @@ from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
 
 class AutoSign:
     # 初始化签到类
-    def __init__(self, todayLoginService: TodayLoginService, userInfo):
-        self.session = todayLoginService.session
-        self.host = todayLoginService.host
+    def __init__(self, userInfo, userSession, userHost):
+        self.session = userSession
+        self.host = userHost
         self.userInfo = userInfo
         self.taskInfo = None
         self.task = None
@@ -33,7 +33,7 @@ class AutoSign:
                                 data=json.dumps({}), verify=False)
         res = DT.resJsonEncode(res)
         LL.log(1, '返回的列表数据', res['datas'])
-        
+
         # 获取到的任务总表
         taskGeneralList = (res['datas']['unSignedTasks'],  # 未签到任务
                            res['datas']['leaveTasks'],  # 不需签到任务
@@ -61,6 +61,9 @@ class AutoSign:
             raise TaskError('没有匹配标题的任务', 400)
         else:  # 如果没有填title字段
             # 自动获取最后一个未签到任务
+            taskList = []
+            for i in range(signLevel+1):
+                taskList += taskGeneralList[i]
             latestTask = taskList[0]
             self.taskName = latestTask['taskName']
             LL.log(1, '最后一个未签到的任务', latestTask['taskName'])

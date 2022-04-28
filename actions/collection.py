@@ -9,9 +9,9 @@ from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
 
 class Collection:
     # 初始化信息收集类
-    def __init__(self, todaLoginService: TodayLoginService, userInfo):
-        self.session = todaLoginService.session
-        self.host = todaLoginService.host
+    def __init__(self, userInfo, userSession, userHost):
+        self.session = userSession
+        self.host = userHost
         self.userInfo = userInfo
         self.task = None
         self.wid = None

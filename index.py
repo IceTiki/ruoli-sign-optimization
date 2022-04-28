@@ -51,7 +51,7 @@ except ImportError as e:
 错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
-    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT
+    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT, HSF
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
     from actions.sendMessage import SendMessage
@@ -83,7 +83,7 @@ class SignTaskStatus:
 
     def codeHead(self):
         return int(self.code/100)
-    
+
     def liteMsgEn(self):
         ch = self.codeHead()
         if ch == 0:
@@ -138,11 +138,13 @@ def loadConfig():
         defaultConfig.update(user)
         user.update(defaultConfig)
 
-        # 签到状态初始化
+        # 任务进度控制
         if TT.isInTimeList(user['taskTimeRange']):
             user['taskStatus'] = SignTaskStatus(0)
         else:
             user['taskStatus'] = SignTaskStatus(201, '该任务不在执行时间')
+        user['userHashId'] = HSF.strHash(
+            user.get('schoolName', '')+user.get('username', ''), 256)
 
         # 用户设备ID
         user['deviceId'] = user.get(
@@ -178,18 +180,15 @@ def loadConfig():
     return config
 
 
-def working(user):
+def working(user: dict, userSession, userHost: str):
     '''任务执行入口函数'''
-    LL.log(1, '准备登录')
-    today = TodayLoginService(user)
-    today.login()
     LL.log(1, '登录完成')
     # 登陆成功，通过type判断当前属于 信息收集、签到、查寝
     # 信息收集
     if user['type'] == 0:
         # 以下代码是信息收集的代码
         LL.log(1, '即将开始信息收集填报')
-        collection = Collection(today, user)
+        collection = Collection(user, userSession, userHost)
         collection.queryForm()
         collection.fillForm()
         msg = collection.submitForm()
@@ -197,7 +196,7 @@ def working(user):
     elif user['type'] == 1:
         # 以下代码是签到的代码
         LL.log(1, '即将开始签到')
-        sign = AutoSign(today, user)
+        sign = AutoSign(user, userSession, userHost)
         sign.getUnSignTask()
         sign.getDetailTask()
         sign.fillForm()
@@ -206,7 +205,7 @@ def working(user):
     elif user['type'] == 2:
         # 以下代码是查寝的代码
         LL.log(1, '即将开始查寝填报')
-        check = sleepCheck(today, user)
+        check = sleepCheck(user, userSession, userHost)
         check.getUnSignedTasks()
         check.getDetailTask()
         check.fillForm()
@@ -214,6 +213,7 @@ def working(user):
         return msg
     elif user['type'] == 3:
         # 以下代码是工作日志的代码
+        raise TaskError('工作日志模块已失效')
         LL.log(1, '即将开始工作日志填报')
         work = workLog(today, user)
         work.checkHasLog()
@@ -224,7 +224,7 @@ def working(user):
     elif user['type'] == 4:
         # 以下代码是政工签到的代码
         LL.log(1, '即将开始政工签到填报')
-        check = teacherSign(today, user)
+        check = teacherSign(user, userSession, userHost)
         check.getUnSignedTasks()
         check.getDetailTask()
         check.fillForm()
@@ -244,10 +244,12 @@ def main():
 
     # 开始签到
     # 自动重试
+    users = config['users']
+    userSessions = {}
     for tryTimes in range(1, maxTry+1):
         LL.log(1, '正在进行第%d轮尝试' % tryTimes)
+        userSessions.clear()
         # 遍历用户
-        users = config['users']
         for user in users:
             # 检查是否完成该任务
             if not user['taskStatus'].codeHead() == 0:
@@ -259,7 +261,27 @@ def main():
 
             # 执行签到
             try:
-                msg = working(user)
+                # 准备登录
+                LL.log(1, '准备登录')
+                userId = user['userHashId']
+                if userSessions.get(userId):
+                    userSession = userSessions[userId]['session']
+                    userHost = userSessions[userId]['host']
+                else:
+                    today = TodayLoginService(user)
+                    today.login()
+                    userSession = today.session
+                    userHost = today.host
+                # 开始执行任务
+                msg = working(user, userSession, userHost)
+                # 如果同用户还有待执行的任务，则保存session
+                for i in users:
+                    if i['taskStatus'].codeHead() == 0 and i['userHashId'] == userId:
+                        userSessions[userId]['session'] = userSession
+                        userSessions[userId]['host'] = userHost
+                        break
+                else:
+                    userSessions.pop(userId)
             except TaskError as e:
                 user['taskStatus'].code = e.code
                 msg = str(e)
@@ -276,7 +298,8 @@ def main():
             LL.log(1, msg)
             # 消息推送
             sm = SendMessage(user.get('sendMessage'))
-            sm.send(f"『[{LL.prefix}]用户签到情况\n{msg}』", f"用户签到情况|{user['taskStatus'].liteMsgEn()}")
+            sm.send(f"『[{LL.prefix}]用户签到情况\n{msg}』",
+                    f"用户签到情况|{user['taskStatus'].liteMsgEn()}")
             LL.log(1, sm.log_str)
 
     # 签到情况推送

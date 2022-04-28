@@ -8,9 +8,9 @@ from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
 
 class teacherSign:
     # 初始化政工签到类
-    def __init__(self, todaLoginService: TodayLoginService, userInfo):
-        self.session = todaLoginService.session
-        self.host = todaLoginService.host
+    def __init__(self, userInfo, userSession, userHost):
+        self.session = userSession
+        self.host = userHost
         self.userInfo = userInfo
         self.taskInfo = None
         self.form = {}
