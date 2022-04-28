@@ -2,16 +2,11 @@ import requests
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
+from email.utils import formataddr
 import re
 from urllib import parse
 import json
-from email.utils import formataddr
 
-# 去除 html 元素
-def deleter_html_element(msg):
-    msg = re.sub('(<[^>]+>)','',msg) # 去除 html 标签
-    msg = re.sub('((ht|f)tps?):\/\/[\w\-]+(\.[\w\-]+)+([\w\-\.,@?^=%&:\/~\+#]*[\w\-\@?^=%&\/~\+#])?','',msg) # 去除 URL
-    return msg
 
 # 通知类
 class SendMessage:
@@ -21,7 +16,7 @@ class SendMessage:
         self.qmsg = Qmsg(con.get('qmsg_key'), con.get(
             'qmsg_qq'), con.get('qmsg_isGroup'))
         self.smtp = Smtp(con.get('smtp_host'), con.get('smtp_user'),
-                         con.get('smtp_key'), con.get('smtp_sender'), 
+                         con.get('smtp_key'), con.get('smtp_sender'),
                          con.get('smtp_senderName'), con.get('smtp_receivers'))
         self.rl = RlMessage(con.get('rl_email'),
                             con.get('rl_emailApiUrl'))
@@ -176,7 +171,6 @@ class Qmsg:
         :param msg: 要发送的消息(自动转为字符串类型)"""
         # msg处理
         msg = str(msg)
-        msg = deleter_html_element(msg)
         # 替换数字(避开qmsg的屏蔽规则)
         for i, k in zip(list('0123456789'), list('𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')):
             msg = msg.replace(i, k)
@@ -268,7 +262,6 @@ class IceCream:
         """
         # msg处理
         msg = str(msg)
-        msg = deleter_html_element(msg)
         # 简单检查配置
         if not self.configIsCorrect:
             return('无效配置')

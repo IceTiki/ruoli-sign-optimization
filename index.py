@@ -7,9 +7,6 @@ import sys
 import codecs
 import traceback
 import re
-import datetime
-import pytz
-import time
 
 # 检查python版本
 if not (sys.version_info[0] == 3 and sys.version_info[1] >= 6):
@@ -54,7 +51,7 @@ except ImportError as e:
 错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
-    from liteTools import TaskError, RT, DT, LL, NT, MT, ST
+    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
     from actions.sendMessage import SendMessage
@@ -64,6 +61,41 @@ if True:
     from actions.autoSign import AutoSign
     from todayLoginService import TodayLoginService
 # ====================完成导入模块====================
+
+
+class SignTaskStatus:
+    '''用于标记用户完成情况
+    :code的含义
+    0: 等待执行
+    1: 出现错误(等待重试)
+    100: 任务已被完成
+    101: 该任务正常执行完成
+    200: 用户设置不执行该任务
+    201: 该任务不在执行时间
+    300: 出错
+    301: 当前情况无法完成该任务
+    400: 没有找到需要执行的任务
+    '''
+
+    def __init__(self, code, msg=''):
+        self.code = code
+        self.msg = msg
+
+    def codeHead(self):
+        return int(self.code/100)
+    
+    def liteMsgEn(self):
+        ch = self.codeHead()
+        if ch == 0:
+            return 'todo'
+        elif ch == 1:
+            return 'done'
+        elif ch == 2:
+            return 'skip'
+        elif ch == 3:
+            return 'error'
+        elif ch == 4:
+            return 'notFound'
 
 
 def loadConfig():
@@ -79,8 +111,7 @@ def loadConfig():
     # 全局配置初始化
     defaultConfig = {
         'delay': (5, 10),
-        'locationOffsetRange': 50,
-        'API_trigger': None
+        'locationOffsetRange': 50
     }
     defaultConfig.update(config)
     config.update(defaultConfig)
@@ -91,18 +122,13 @@ def loadConfig():
         # 初始化静态配置项目
         defaultConfig = {
             'remarkName': '默认备注名',
-            'sendMessage': None,
-            'planSignWeek': '0,1,2,3,4,5,6',
-            'planSignHour': '',
-            'planSignMinute': [00,20,40,59],
-            'if_sign_in': True,
-            'state': None,
             'model': 'OPPO R11 Plus',
             'appVersion': '9.0.14',
             'systemVersion': '4.4.4',
             'systemName': 'android',
             "signVersion": "first_v3",
             "calVersion": "firstv",
+            'taskTimeRange': "1-7 1-12 1-31 0-23 0-59",
             'getHistorySign': False,
             'title': 0,
             'signLevel': 1,
@@ -111,6 +137,12 @@ def loadConfig():
         }
         defaultConfig.update(user)
         user.update(defaultConfig)
+
+        # 签到状态初始化
+        if TT.isInTimeList(user['taskTimeRange']):
+            user['taskStatus'] = SignTaskStatus(0)
+        else:
+            user['taskStatus'] = SignTaskStatus(201, '该任务不在执行时间')
 
         # 用户设备ID
         user['deviceId'] = user.get(
@@ -137,7 +169,7 @@ def loadConfig():
         if user['proxy'] and NT.isDisableProxies(user['proxy']):
             user['proxy'] = {}
             LL.log(2, '用户代理已取消使用')
-        
+
         # 坐标随机偏移
         user['global_locationOffsetRange'] = config['locationOffsetRange']
         if 'lon' in user and 'lat' in user:
@@ -215,29 +247,10 @@ def main():
     for tryTimes in range(1, maxTry+1):
         LL.log(1, '正在进行第%d轮尝试' % tryTimes)
         # 遍历用户
-        for user in config['users']:
-            # 判断是否属于应该签到的时间
-            # 当前是星期几
-            Current_Time_Week = datetime.datetime.fromtimestamp(int(time.time()), pytz.timezone('Asia/Shanghai')).strftime('%w')
-            # 获取当前时间（单位：小时）
-            Current_Time_Hour = datetime.datetime.fromtimestamp(int(time.time()), pytz.timezone('Asia/Shanghai')).strftime('%H')
-            # 获取当前时间（单位：分钟）
-            Current_Time_Minute = datetime.datetime.now().timetuple().tm_min
-            # 如果当前时间不在计划时间内，则跳过签到
-            if Current_Time_Week not in user['planSignWeek']:
-                user['if_sign_in'] = False
-            elif Current_Time_Hour not in user['planSignHour']:
-                user['if_sign_in'] = False
-            else:
-                user['if_sign_in'] = False
-                for minute in user['planSignMinute']:
-                    if (abs(Current_Time_Minute - int(minute)) < 15):
-                        user['if_sign_in'] = True
-                        break
-            if user['if_sign_in'] == False:
-                continue
-            # 检查是否已经在上一轮尝试中签到
-            if type(user['state']) == str:
+        users = config['users']
+        for user in users:
+            # 检查是否完成该任务
+            if not user['taskStatus'].codeHead() == 0:
                 continue
             LL.log(1, '即将在第%d轮尝试中为[%s]签到' % (tryTimes, user['username']))
 
@@ -248,50 +261,36 @@ def main():
             try:
                 msg = working(user)
             except TaskError as e:
+                user['taskStatus'].code = e.code
                 msg = str(e)
             except Exception as e:
+                user['taskStatus'].code = 1
                 msg = f"[{e}]\n{traceback.format_exc()}"
                 LL.log(3, ST.notionStr(msg), user['username']+'签到失败'+msg)
                 if maxTry != tryTimes:
                     continue
 
             # 消息格式化
-            signtime = datetime.datetime.fromtimestamp(int(time.time()), pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')
-            msg = '[%s]\n--%s|%d\n--%s\n签到时间：%s' % (user['remarkName'], user['username'], tryTimes, msg, signtime)
-            user['state'] = '%s\n' % (msg)
-            if user['sendMessage'] is not None:
-                user['state'] += '<font color="green">该用户接收推送消息</font>'
-            else:
-                user['state'] += '<font color="red">该用户拒绝推送消息</font>'
+            msg = f"--{user['username']}|{tryTimes}\n--{msg}"
+            user['taskStatus'].msg = msg
             LL.log(1, msg)
             # 消息推送
             sm = SendMessage(user.get('sendMessage'))
-            sm.send(f"---[{LL.prefix}]签到情况---\n{msg}", '用户签到情况')
+            sm.send(f"『[{LL.prefix}]用户签到情况\n{msg}』", f"用户签到情况|{user['taskStatus'].liteMsgEn()}")
             LL.log(1, sm.log_str)
 
     # 签到情况推送
-    msg = f'---[{LL.prefix}]签到情况---\n'
-    sign_sum = 0
-    success_sum = 0
-    # 统计参与登录的和签到成功的账号数量
-    for i in config['users']:
-        if i['if_sign_in'] is True:
-            sign_sum += 1
-            if 'SUCCESS' in i['state']:
-                success_sum += 1
-    if sign_sum == 0:
-        msg += '当前时段无账号签到'
-    else:
-        msg += '本次共有 <b>%d</b> 个账号签到，其中有 <b>%d</b> 个签到成功：\n\n' % (sign_sum,success_sum)
-        for i in config['users']:
-            if i['if_sign_in'] is True:
-                msg += '%s\n\n' % (i['state'])
-        if config['API_trigger'] is not None:
-            msg += '<a href="%s">手动触发任务</a>' % (config['API_trigger'])
+    msg = f'『[{LL.prefix}]全局签到情况』\n'
+    for user in users:
+        msg += '[%s]\n%s\n' % (user['remarkName'], user['taskStatus'].msg)
     LL.log(1, msg)
+    codeList = [i['taskStatus'].codeHead() for i in users]
+    codeCount = [0]*5
+    for i in codeList:
+        codeCount[i] += 1
     sm = SendMessage(config.get('sendMessage'))
-    msgTitle = '全局签到情况 (%s / %s)' % (success_sum , sign_sum)
-    sm.send(msg+'\n'+LL.getLog(4), msgTitle)
+    sm.send(msg+'\n'+LL.getLog(4),
+            f'全局签到情况|({codeCount[1]}/{len(codeList)-codeCount[2]})')
     LL.log(1, sm.log_str)
 
 
