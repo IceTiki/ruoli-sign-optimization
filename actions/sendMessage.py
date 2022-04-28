@@ -262,7 +262,6 @@ class IceCream:
         """
         # msg处理
         msg = str(msg)
-        msg = deleter_html_element(msg)
         # 简单检查配置
         if not self.configIsCorrect:
             return('无效配置')

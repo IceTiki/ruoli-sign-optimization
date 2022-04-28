@@ -3,12 +3,12 @@ import os
 
 
 class VersionInfo:
-    codeVersion = "V-T3.8.4"
+    codeVersion = "V-T3.8.4a"
     # 代码文件列表
     codeList = ("todayLoginService.py", "actions/autoSign.py", "actions/collection.py", "actions/sleepCheck.py", "actions/workLog.py",
                 "actions/sendMessage.py", "actions/teacherSign.py", "login/Utils.py", "login/casLogin.py", "login/iapLogin.py", "login/RSALogin.py", "index.py", 'liteTools.py')
     # 代码文件哈希列表
-    codeStandardHashDict = {'todayLoginService.py': '39acd0282ce498b85d33423ac9971b061fa1e5b9b567b33eafa2af7ee0bc6800', 'actions/autoSign.py': 'cafd05e2a11c511c2db9c1d8d342221668203f4c21ef79b0294e904cbc63f680', 'actions/collection.py': '95cd60c60814ac3165c42c7d91771745ff69b8e97da3042d7564483fb88cf605', 'actions/sleepCheck.py': 'b70c59c84b908b33dd7db483807743b42feda80d68c501cfadc794138d4ae05e', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': '51928337f407b2ae0471d9380b088e0e46de4c8076828ebb42d2ee0da5d8d4ff',
+    codeStandardHashDict = {'todayLoginService.py': '39acd0282ce498b85d33423ac9971b061fa1e5b9b567b33eafa2af7ee0bc6800', 'actions/autoSign.py': 'cafd05e2a11c511c2db9c1d8d342221668203f4c21ef79b0294e904cbc63f680', 'actions/collection.py': '95cd60c60814ac3165c42c7d91771745ff69b8e97da3042d7564483fb88cf605', 'actions/sleepCheck.py': 'b70c59c84b908b33dd7db483807743b42feda80d68c501cfadc794138d4ae05e', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': '0292530e61381610d6babb18ddd68727f4f4683a82beeabb42245032f321886b',
                             'actions/teacherSign.py': '241322f04defe072357c26ae36c033ddfc3f70fe622bbdb6f245027bdd89e443', 'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': '713af9d5f2e7ad1d4e6011ab56a0bcf5b54225649a133411238fe034365cae0a', 'liteTools.py': 'e0c1ea48beacfc3b4960ac3e0a277b7d74567b38d98d1ad1764464f7c5729784'}
 
 
