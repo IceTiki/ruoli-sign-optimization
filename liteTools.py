@@ -20,7 +20,7 @@ import checkRepositoryVersion
 
 
 class TaskError(Exception):
-    '''目前(配置/时间/签到情况)不宜完成签到任务'''
+    '''目前(配置/时间/签到情况)不宜完成签到任务，出现本异常不进行重试。'''
 
     def __init__(self, msg="目前(配置/时间/签到情况)不宜完成签到任务", code=301):
         self.msg = str(msg)

@@ -290,7 +290,7 @@ def main():
         codeCount[i] += 1
     sm = SendMessage(config.get('sendMessage'))
     sm.send(msg+'\n'+LL.getLog(4),
-            f'全局签到情况|do:{len(codeList)-codeCount[2]}done:{codeCount[1]}notFound:{codeCount[4]}')
+            f'全局签到情况|({codeCount[1]}/{len(codeList)-codeCount[2]})')
     LL.log(1, sm.log_str)
 
 

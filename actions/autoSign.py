@@ -33,28 +33,29 @@ class AutoSign:
                                 data=json.dumps({}), verify=False)
         res = DT.resJsonEncode(res)
         LL.log(1, '返回的列表数据', res['datas'])
-
-        signLevel = self.userInfo.get('signLevel', 1)
-        if signLevel >= 0:
-            taskList = res['datas']['unSignedTasks']  # 未签到任务
-        if signLevel >= 1:
-            taskList += res['datas']['leaveTasks']  # 不需签到任务
-        if signLevel == 2:
-            taskList += res['datas']['signedTasks']  # 已签到任务
+        
+        # 获取到的任务总表
+        taskGeneralList = (res['datas']['unSignedTasks'],  # 未签到任务
+                           res['datas']['leaveTasks'],  # 不需签到任务
+                           res['datas']['signedTasks'])  # 已签到任务
         # 查询是否没有未签到任务
-        if len(taskList) < 1:
-            LL.log(1, '无需要签到的任务')
-            raise TaskError('无需要签到的任务', 400)
+        if len(taskGeneralList) < 1:
+            LL.log(1, '无签到任务')
+            raise TaskError('无签到任务', 400)
+        signLevel = self.userInfo.get('signLevel', 1)
         if self.userInfo.get('title'):
             # 获取匹配标题的任务
             taskTitle = SuperString(self.userInfo['title'])
-            for righttask in taskList:
-                if taskTitle.match(righttask['taskName']):
-                    self.taskName = righttask['taskName']
-                    LL.log(1, '匹配标题的任务', righttask['taskName'])
-                    self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
-                                     'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
-                    return self.taskInfo
+            for i, taskList in enumerate(taskGeneralList):
+                for righttask in taskList:
+                    if taskTitle.match(righttask['taskName']):
+                        self.taskName = righttask['taskName']
+                        if not i <= signLevel:
+                            raise TaskError(f'『{self.taskName}』无需签到', 100)
+                        LL.log(1, '匹配标题的任务', righttask['taskName'])
+                        self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
+                                         'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
+                        return self.taskInfo
             # 如果没有找到匹配的任务
             LL.log(1, f'没有匹配标题『{taskTitle}』的任务')
             raise TaskError('没有匹配标题的任务', 400)
