@@ -2,6 +2,7 @@ import requests
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
+from email.utils import formataddr
 import re
 from urllib import parse
 import json
@@ -15,7 +16,8 @@ class SendMessage:
         self.qmsg = Qmsg(con.get('qmsg_key'), con.get(
             'qmsg_qq'), con.get('qmsg_isGroup'))
         self.smtp = Smtp(con.get('smtp_host'), con.get('smtp_user'),
-                         con.get('smtp_key'), con.get('smtp_sender'), con.get('smtp_receivers'))
+                         con.get('smtp_key'), con.get('smtp_sender'),
+                         con.get('smtp_senderName'), con.get('smtp_receivers'))
         self.rl = RlMessage(con.get('rl_email'),
                             con.get('rl_emailApiUrl'))
         self.iceCream = IceCream(con.get('iceCream_token'))
@@ -186,7 +188,7 @@ class Qmsg:
 class Smtp:
     '''Smtp发送类'''
 
-    def __init__(self, host: str, user: str, key: str, sender: str, receivers: list):
+    def __init__(self, host: str, user: str, key: str, sender: str, senderName: str, receivers: list):
         """
         :param host: SMTP的域名
         :param user: 用户名
@@ -198,6 +200,7 @@ class Smtp:
         self.user = user
         self.key = key
         self.sender = sender
+        self.senderName = senderName
         self.receivers = receivers
         self.configIsCorrect = self.isCorrectConfig()
 
@@ -219,13 +222,14 @@ class Smtp:
         :param msg: 要发送的消息(自动转为字符串类型)
         :param title: 邮件标题(自动转为字符串类型)"""
         msg = str(msg)
+        msg = msg.replace("\n", "</br>")
         title = str(title)
         if not self.configIsCorrect:
             return '无效配置'
         else:
-            mail = MIMEText(msg, 'plain', 'utf-8')
+            mail = MIMEText(msg, 'html', 'utf-8')
             mail['Subject'] = Header(title, 'utf-8')
-
+            mail['From'] = formataddr((self.senderName, self.sender), "utf-8")
             smtpObj = smtplib.SMTP()
             smtpObj.connect(self.host, 25)
             smtpObj.login(self.user, self.key)
@@ -258,6 +262,7 @@ class IceCream:
         """
         # msg处理
         msg = str(msg)
+        msg = deleter_html_element(msg)
         # 简单检查配置
         if not self.configIsCorrect:
             return('无效配置')
