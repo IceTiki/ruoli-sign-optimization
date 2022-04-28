@@ -92,9 +92,9 @@ def loadConfig():
         defaultConfig = {
             'remarkName': '默认备注名',
             'sendMessage': None,
-            'PlanSignWeek': '0,1,2,3,4,5,6',
-            'PlanSignHour': '',
-            'PlanSignMinute': [00,20,40,59],
+            'planSignWeek': '0,1,2,3,4,5,6',
+            'planSignHour': '',
+            'planSignMinute': [00,20,40,59],
             'if_sign_in': True,
             'state': None,
             'model': 'OPPO R11 Plus',
@@ -224,13 +224,13 @@ def main():
             # 获取当前时间（单位：分钟）
             Current_Time_Minute = datetime.datetime.now().timetuple().tm_min
             # 如果当前时间不在计划时间内，则跳过签到
-            if Current_Time_Week not in user['PlanSignWeek']:
+            if Current_Time_Week not in user['planSignWeek']:
                 user['if_sign_in'] = False
-            elif Current_Time_Hour not in user['PlanSignHour']:
+            elif Current_Time_Hour not in user['planSignHour']:
                 user['if_sign_in'] = False
             else:
                 user['if_sign_in'] = False
-                for minute in user['PlanSignMinute']:
+                for minute in user['planSignMinute']:
                     if (abs(Current_Time_Minute - int(minute)) < 15):
                         user['if_sign_in'] = True
                         break
