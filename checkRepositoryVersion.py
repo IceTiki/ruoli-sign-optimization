@@ -3,13 +3,13 @@ import os
 
 
 class VersionInfo:
-    codeVersion = "V-T3.8.5a"
+    codeVersion = "V-T3.8.5b"
     # 代码文件列表
     codeList = ("todayLoginService.py", "actions/autoSign.py", "actions/collection.py", "actions/sleepCheck.py", "actions/workLog.py",
                 "actions/sendMessage.py", "actions/teacherSign.py", "login/Utils.py", "login/casLogin.py", "login/iapLogin.py", "login/RSALogin.py", "index.py", 'liteTools.py')
     # 代码文件哈希列表
     codeStandardHashDict = {'todayLoginService.py': '39acd0282ce498b85d33423ac9971b061fa1e5b9b567b33eafa2af7ee0bc6800', 'actions/autoSign.py': '952fcaaab65b7731cad47ddaf6841ed266eb32ced5eaf0be36cfb59e5c892f0d', 'actions/collection.py': 'ba15ab601ec4699785cfdb3a3850380e31a51fea255257464fd72b8fb2c87444', 'actions/sleepCheck.py': '714648b522c1f6eaa8b1afe0e309bd67a40f06485c8516b7ddb8fb76fbec0b78', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': '0292530e61381610d6babb18ddd68727f4f4683a82beeabb42245032f321886b',
-                            'actions/teacherSign.py': '0797ba244a663b53a155ab15db21c4cd2c0a087e97e3131598b2d7389794fdf8', 'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': 'fc9be94482ab32a5b4dc0c657e1bb772e7bb2a157a86758c3ebd1dae02705cda', 'liteTools.py': '5e19d384cc4f608e8734cb0099c0d09a183614314641972b867a509625f409e2'}
+                            'actions/teacherSign.py': '0797ba244a663b53a155ab15db21c4cd2c0a087e97e3131598b2d7389794fdf8', 'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': '03bffe731583434f5753fd78a6cc2fdcd8644ed71efebddceb88c7c17b2b1a7b', 'liteTools.py': '5e19d384cc4f608e8734cb0099c0d09a183614314641972b867a509625f409e2'}
 
 
 class HSF:

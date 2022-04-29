@@ -272,16 +272,10 @@ def main():
                     today.login()
                     userSession = today.session
                     userHost = today.host
+                userSessions[userId]['session'] = userSession
+                userSessions[userId]['host'] = userHost
                 # 开始执行任务
                 msg = working(user, userSession, userHost)
-                # 如果同用户还有待执行的任务，则保存session
-                for i in users:
-                    if i['taskStatus'].codeHead() == 0 and i['userHashId'] == userId:
-                        userSessions[userId]['session'] = userSession
-                        userSessions[userId]['host'] = userHost
-                        break
-                else:
-                    userSessions.pop(userId)
             except TaskError as e:
                 user['taskStatus'].code = e.code
                 msg = str(e)
@@ -291,7 +285,12 @@ def main():
                 LL.log(3, ST.notionStr(msg), user['username']+'签到失败'+msg)
                 if maxTry != tryTimes:
                     continue
-
+            # 登录状态内存释放: 如果同用户还有没有待执行的任务，则删除session
+            for i in users:
+                if i['taskStatus'].codeHead() == 0 and i['userHashId'] == userId:
+                    break
+            else:
+                userSessions.pop(userId, None)
             # 消息格式化
             msg = f"--{user['username']}|{tryTimes}\n--{msg}"
             user['taskStatus'].msg = msg
@@ -303,17 +302,18 @@ def main():
             LL.log(1, sm.log_str)
 
     # 签到情况推送
-    msg = f'『[{LL.prefix}]全局签到情况』\n'
-    for user in users:
-        msg += '[%s]\n%s\n' % (user['remarkName'], user['taskStatus'].msg)
-    LL.log(1, msg)
     codeList = [i['taskStatus'].codeHead() for i in users]
     codeCount = [0]*5
     for i in codeList:
         codeCount[i] += 1
+    generalSituations = f'({codeCount[1]}/{len(codeList)-codeCount[2]})'
+    msg = f'『[{LL.prefix}]全局签到情况{generalSituations}』\n'
+    for user in users:
+        msg += '[%s]\n%s\n' % (user['remarkName'], user['taskStatus'].msg)
+    LL.log(1, msg)
     sm = SendMessage(config.get('sendMessage'))
     sm.send(msg+'\n'+LL.getLog(4),
-            f'全局签到情况|({codeCount[1]}/{len(codeList)-codeCount[2]})')
+            f'全局签到情况{generalSituations}')
     LL.log(1, sm.log_str)
 
 
