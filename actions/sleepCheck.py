@@ -33,10 +33,6 @@ class sleepCheck:
         taskGeneralList = (res['datas']['unSignedTasks'],  # 未签到任务
                            res['datas']['leaveTasks'],  # 不需签到任务
                            res['datas']['signedTasks'])  # 已签到任务
-        # 查询是否没有未签到任务
-        if len(taskGeneralList) < 1:
-            LL.log(1, '无查寝任务')
-            raise TaskError('无查寝任务', 400)
         signLevel = self.userInfo.get('signLevel', 1)
         if self.userInfo.get('title'):
             # 获取匹配标题的任务
@@ -51,14 +47,19 @@ class sleepCheck:
                         self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
                                          'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
                         return self.taskInfo
-            # 如果没有找到匹配的任务
-            LL.log(1, f'没有匹配标题『{taskTitle}』的任务')
-            raise TaskError('没有匹配标题的任务', 400)
+            else:
+                # 如果没有找到匹配的任务
+                LL.log(1, f'没有匹配标题『{taskTitle}』的任务')
+                raise TaskError('没有匹配标题的任务', 400)
         else:  # 如果没有填title字段
             # 自动获取最后一个未签到任务
             taskList = []
             for i in range(signLevel+1):
                 taskList += taskGeneralList[i]
+            # 查询是否没有未签到任务
+            if len(taskList) < 1:
+                LL.log(1, '无查寝任务')
+                raise TaskError('无查寝任务', 400)
             latestTask = taskList[0]
             self.taskName = latestTask['taskName']
             LL.log(1, '最后一个未签到的任务', latestTask['taskName'])
