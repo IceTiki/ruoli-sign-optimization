@@ -272,8 +272,8 @@ def main():
                     today.login()
                     userSession = today.session
                     userHost = today.host
-                userSessions[userId]['session'] = userSession
-                userSessions[userId]['host'] = userHost
+                userSessions[userId] = {
+                    'session': userSession, 'host': userHost}
                 # 开始执行任务
                 msg = working(user, userSession, userHost)
             except TaskError as e:
@@ -302,14 +302,20 @@ def main():
             LL.log(1, sm.log_str)
 
     # 签到情况推送
+    # code统计
     codeList = [i['taskStatus'].codeHead() for i in users]
-    codeCount = [0]*5
+    codeCount = [0]*10
     for i in codeList:
         codeCount[i] += 1
     generalSituations = f'({codeCount[1]}/{len(codeList)-codeCount[2]})'
+    # 整合消息
     msg = f'『[{LL.prefix}]全局签到情况{generalSituations}』\n'
     for user in users:
-        msg += '[%s]\n%s\n' % (user['remarkName'], user['taskStatus'].msg)
+        # 忽略跳过的任务
+        if user['taskStatus'].codeHead() != 2:
+            msg += '[%s]\n%s\n' % (user['remarkName'], user['taskStatus'].msg)
+    # code统计消息
+    msg += f'{len(codeList)}: {codeCount[0]}todo, {codeCount[1]}done, {codeCount[2]}skip, {codeCount[3]}error, {codeCount[4]}notFound'
     LL.log(1, msg)
     sm = SendMessage(config.get('sendMessage'))
     sm.send(msg+'\n'+LL.getLog(4),
