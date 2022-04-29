@@ -3,7 +3,7 @@ import os
 
 
 class VersionInfo:
-    codeVersion = "V-T3.8.5"
+    codeVersion = "V-T3.8.5a"
     # 代码文件列表
     codeList = ("todayLoginService.py", "actions/autoSign.py", "actions/collection.py", "actions/sleepCheck.py", "actions/workLog.py",
                 "actions/sendMessage.py", "actions/teacherSign.py", "login/Utils.py", "login/casLogin.py", "login/iapLogin.py", "login/RSALogin.py", "index.py", 'liteTools.py')
