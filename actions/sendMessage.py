@@ -231,7 +231,7 @@ class Smtp:
             mail['Subject'] = Header(title, 'utf-8')
             mail['From'] = formataddr((self.senderName, self.sender), "utf-8")
             smtpObj = smtplib.SMTP()
-            smtpObj.connect(self.host, 25)
+            smtpObj = smtplib.SMTP_SSL(self.host, 465)
             smtpObj.login(self.user, self.key)
             smtpObj.sendmail(self.sender, self.receivers, mail.as_string())
             return("邮件发送成功")
