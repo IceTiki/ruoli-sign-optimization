@@ -230,7 +230,6 @@ class Smtp:
             mail = MIMEText(msg, 'html', 'utf-8')
             mail['Subject'] = Header(title, 'utf-8')
             mail['From'] = formataddr((self.senderName, self.sender), "utf-8")
-            smtpObj = smtplib.SMTP()
             smtpObj = smtplib.SMTP_SSL(self.host, 465)
             smtpObj.login(self.user, self.key)
             smtpObj.sendmail(self.sender, self.receivers, mail.as_string())
