@@ -247,11 +247,12 @@ class Collection:
                     formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
                     # 开始填充表单
                     # 文本类型
-                    if formItem['fieldType'] in ('1', '5', '6', '7', '11'):
+                    if formItem['fieldType'] in ('1', '5', '6', '7', '11', '12'):
                         '''
                         6: 时间选择
                         7: 地址选择
-                        11: 纯数字(比如: 手机号)
+                        11: 手机号
+                        12: 身份证
                         '''
                         formItem['value'] = str(SuperString(userForm['value']))
                     # 单选类型
@@ -303,7 +304,8 @@ class Collection:
                         if dirListLen == 0:
                             raise TaskError(f'请在配置中填写图片路径', 301)
                         elif dirListLen > 10:
-                            raise TaskError(f'配置中填写的图片路径({dirListLen}个)过多', 301)
+                            raise TaskError(
+                                f'配置中填写的图片路径({dirListLen}个)过多', 301)
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
                         for i, pic in enumerate(dirList, 1):
@@ -418,7 +420,7 @@ class Collection:
         # 检查签到完成
         url = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
         params = {"collectorWid": self.wid,
-                    "instanceWid": self.instanceWid}
+                  "instanceWid": self.instanceWid}
         res = self.session.post(
             url, headers=headers, data=json.dumps(params), verify=False)
         res = DT.resJsonEncode(res)
