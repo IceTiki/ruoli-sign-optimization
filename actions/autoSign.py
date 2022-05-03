@@ -317,5 +317,5 @@ class AutoSign:
         if self.getDetailTask()['signTime']:
             self.userInfo['taskStatus'].code = 101
         else:
-            raise TaskError('提交了表单, 但状态仍是未签到', 300)
+            raise TaskError(f'提交表单返回『{res}』且任务状态仍是未签到', 300)
         return '[%s]%s' % (res['message'], self.taskInfo['taskName'])

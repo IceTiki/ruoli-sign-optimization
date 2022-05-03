@@ -299,7 +299,7 @@ def main():
             sm = SendMessage(user.get('sendMessage'))
             sm.send(f"『[{LL.prefix}]用户签到情况\n{msg}』",
                     f"用户签到情况|{user['taskStatus'].liteMsgEn()}")
-            LL.log(1, sm.log_str)
+            LL.log(1, f"『{user['username']}』用户推送情况", sm.log_str)
 
     # 签到情况推送
     # code统计
@@ -320,7 +320,7 @@ def main():
     sm = SendMessage(config.get('sendMessage'))
     sm.send(msg+'\n'+LL.getLog(4),
             f'全局签到情况{generalSituations}')
-    LL.log(1, sm.log_str)
+    LL.log(1, '全局推送情况', sm.log_str)
 
 
 def handler(event, context):

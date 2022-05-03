@@ -89,6 +89,7 @@ class Collection:
                 res = self.session.post(
                     url, headers=headers, data=json.dumps(params), verify=False)
                 res = DT.resJsonEncode(res)
+                LL.log(1, '查询任务详情返回结果', res['datas'])
                 try:
                     self.schoolTaskWid = res['datas']['collector']['schoolTaskWid']
                 except TypeError:
@@ -101,7 +102,7 @@ class Collection:
                 res = self.session.post(
                     url, headers=headers, data=json.dumps(params), verify=False)
                 res = DT.resJsonEncode(res)
-                LL.log(1, '查询任务详情返回结果', res['datas'])
+                LL.log(1, '查询任务表单返回结果', res['datas'])
                 self.task = res['datas']['rows']
                 return
         LL.log(1, "没有获取到合适的信息收集任务")
@@ -232,8 +233,11 @@ class Collection:
                     len(self.userInfo['forms']), len(self.task)))
             for formItem, userForm in zip(self.task, self.userInfo['forms']):
                 userForm = userForm['form']
+                formItem['formType'] = '0'
+                formItem['sortNum'] = str(formItem['sort'])
                 # 根据用户配置决定是否要填此选项
                 if userForm['isNeed'] == 1:
+                    '''用户需要填此项'''
                     # 判断用户是否需要检查标题
                     if self.userInfo['checkTitle'] == 1:
                         # 如果检查到标题不相等
@@ -243,8 +247,6 @@ class Collection:
                                 f'\r\n有配置项的标题不匹配\r\n您的标题为：『{userFormTitle}』\r\n系统的标题为：『{formItem["title"]}』')
                     # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
                     formItem['show'] = True
-                    formItem['formType'] = '0'  # 盲猜是任务类型、待确认
-                    formItem['sortNum'] = str(formItem['sort'])  # 盲猜是sort排序
                     # 开始填充表单
                     # 文本类型
                     if formItem['fieldType'] in ('1', '5', '6', '7', '11', '12'):
@@ -348,7 +350,12 @@ class Collection:
                         )
                     task_form.append(formItem)
                 else:
-                    pass
+                    '''用户不需要填此项'''
+                    formItem['show'] = False
+                    formItem['value'] = ''
+                    if 'fieldItems' in formItem:
+                        formItem['fieldItems'].clear()
+                    task_form.append(formItem)
 
             self.form["form"] = task_form
             self.form["formWid"] = self.formWid
@@ -427,5 +434,5 @@ class Collection:
         if res['datas']['collector']['isUserSubmit'] == 1:
             self.userInfo['taskStatus'].code = 101
         else:
-            raise TaskError('提交了表单, 但状态仍是未填报', 300)
+            raise TaskError(f'提交表单返回『{data}』且任务状态仍是未签到', 300)
         return '[%s]%s' % (data['message'], self.taskName)
