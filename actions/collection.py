@@ -226,13 +226,33 @@ class Collection:
             self.form["longitude"] = self.userInfo['lon']
             self.form['instanceWid'] = self.instanceWid
         else:
+            # ---初始化用户表单---
             task_form = []
+            taskLen = len(self.task)
+            userFormList = self.userInfo['forms']
+            userFormList = [u['form'] for u in userFormList]
+            # 如果是用"number"控制表单填报(number是题号, 1开始), 转换为用"isNeed"控制表单填报
+            userFormSortIndex = {}
+            for u in userFormList:
+                # 检查是否每一项都有"number"项
+                if "number" in u:
+                    userFormSortIndex[u['number']] = {
+                        "title": u['title'], "value": u['value'], "isNeed": 1}
+                else:
+                    break
+            else:
+                '''如果每一项都有"number"项'''
+                userFormList = []
+                for i in range(taskLen):
+                    userFormList.append(
+                        userFormSortIndex.get(i+1, {"isNeed": 0}))
             # 检查用户配置长度与查询到的表单长度是否匹配
-            if len(self.task) != len(self.userInfo['forms']):
-                raise Exception('用户配置了%d个问题，查询到的表单有%d个问题，不匹配！' % (
-                    len(self.userInfo['forms']), len(self.task)))
-            for formItem, userForm in zip(self.task, self.userInfo['forms']):
-                userForm = userForm['form']
+            if taskLen != len(userFormList):
+                raise Exception('用户配置了%d个问题，查询到的表单有%d个问题，不匹配！' %
+                                (len(userFormList)), taskLen)
+
+            # ---开始填充表单---
+            for formItem, userForm in zip(self.task, userFormList):
                 formItem['formType'] = '0'
                 formItem['sortNum'] = str(formItem['sort'])
                 # 根据用户配置决定是否要填此选项

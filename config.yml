@@ -46,22 +46,22 @@ users: #!!!!!别误删了这一行!!!!!
       - form:
           title: 今日具体所在地
           value: 北京市/东城区
-          isNeed: 1 # 是否需要提交此问题，必填问题一定要填1(1:提交|0:不提交)
+          number: 1 # 题目编号
       - form:
           title: 是否在校
           value: 是
-          isNeed: 1
+          number: 2
       - form:
           title: 请选择A,B,C # 多选示例
           value:
             - A
             - B
             - C
-          isNeed: 1
+          number: 3
       - form:
           title: 请上传图片
           value: "图片.jpg"
-          isNeed: 1
+          number: 4
     # 经纬度查询地址（请自行选择自己的学校地址，address，lon，lat都要填查询到的）：http://api.map.baidu.com/lbsapi/getpoint/index.html
     lon: 116.404165 # 经度(特别提醒!!!手机GPS是WGS-84坐标系，普通地图是GCJ02坐标系，今日校园用的是BD09坐标系。不要耍小聪明去其他地方获取坐标)
     lat: 39.910966 # 纬度
