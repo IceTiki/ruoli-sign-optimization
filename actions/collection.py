@@ -58,7 +58,6 @@ class Collection:
                 totalSize = res['datas']['totalSize']
                 # 如果没有获取到历史任务则报错
                 if totalSize == 0:
-                    LL.log(2, "没有获取到信息收集任务")
                     raise TaskError("没有获取到信息收集任务", 400)
             # 按页中任务遍历
             for task in res['datas']['rows']:
@@ -70,7 +69,6 @@ class Collection:
                         continue
                     if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
                         # 如果仅填报"未填报的任务"且相应任务已被填报，则报错
-                        LL.log(2, f"收集任务({task['subject']})已经被填报")
                         raise TaskError(f"收集任务『{task['subject']}』已经被填报", 100)
                 else:
                     # 如果不需要匹配标题，则获取第一个任务
@@ -105,7 +103,6 @@ class Collection:
                 LL.log(1, '查询任务表单返回结果', res['datas'])
                 self.task = res['datas']['rows']
                 return
-        LL.log(1, "没有获取到合适的信息收集任务")
         raise TaskError("没有获取到合适的信息收集任务", 400)
 
     # 获取历史签到任务详情
@@ -134,8 +131,7 @@ class Collection:
                 totalSize = res['datas']['totalSize']
                 # 如果没有获取到历史任务则报错
                 if totalSize < 0:
-                    LL.log(2, "没有获取到历史任务")
-                    raise TaskError("没有获取到历史任务", 301)
+                    raise TaskError(f"『{self.taskName}』没有获取到历史任务", 301)
             # 按页中任务遍历
             for task in res['datas']['rows']:
                 if task['isHandled'] == 1 and task['formWid'] == self.formWid:
@@ -207,8 +203,7 @@ class Collection:
                     self.historyTaskData['form'] = form
                     return self.historyTaskData
         # 如果没有获取到历史信息收集则报错
-        LL.log(2, "没有找到匹配的历史任务")
-        raise TaskError("没有找到匹配的历史任务", 301)
+        raise TaskError(f"『{self.taskName}』没有找到匹配的历史任务", 301)
 
     # 填写表单
 
@@ -454,5 +449,5 @@ class Collection:
         if res['datas']['collector']['isUserSubmit'] == 1:
             self.userInfo['taskStatus'].code = 101
         else:
-            raise TaskError(f'提交表单返回『{data}』且任务状态仍是未签到', 300)
+            raise TaskError(f'『{self.taskName}』提交表单返回『{data}』且任务状态仍是未签到', 300)
         return '[%s]%s' % (data['message'], self.taskName)

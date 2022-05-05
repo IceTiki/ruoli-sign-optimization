@@ -28,7 +28,7 @@ class sleepCheck:
                                 data=json.dumps({}), verify=False)
         res = DT.resJsonEncode(res)
         LL.log(1, '返回的列表数据', res['datas'])
-        
+
         # 获取到的任务总表
         taskGeneralList = (res['datas']['unSignedTasks'],  # 未签到任务
                            res['datas']['leaveTasks'],  # 不需签到任务
@@ -49,8 +49,7 @@ class sleepCheck:
                         return self.taskInfo
             else:
                 # 如果没有找到匹配的任务
-                LL.log(1, f'没有匹配标题『{taskTitle}』的任务')
-                raise TaskError('没有匹配标题的任务', 400)
+                raise TaskError(f'没有匹配标题『{taskTitle}』的任务', 400)
         else:  # 如果没有填title字段
             # 自动获取最后一个未签到任务
             taskList = []
@@ -58,7 +57,6 @@ class sleepCheck:
                 taskList += taskGeneralList[i]
             # 查询是否没有未签到任务
             if len(taskList) < 1:
-                LL.log(1, '无查寝任务')
                 raise TaskError('无查寝任务', 400)
             latestTask = taskList[0]
             self.taskName = latestTask['taskName']
@@ -145,8 +143,7 @@ class sleepCheck:
                         return result
 
         # 如果没有遍历找到结果
-        LL.log(2, "没有找到匹配的历史任务")
-        raise TaskError("没有找到匹配的历史任务", 301)
+        raise TaskError(f"『{self.taskName}』没有找到匹配的历史任务", 301)
 
     # 填充表单
     def fillForm(self):
@@ -257,5 +254,5 @@ class sleepCheck:
         if self.getDetailTask()['signTime']:
             self.userInfo['taskStatus'].code = 101
         else:
-            raise TaskError(f'提交表单返回『{res}』且任务状态仍是未签到', 300)
-        return '[%s]%s' % (res['message'], self.taskInfo['taskName'])
+            raise TaskError(f'『{self.taskName}』提交表单返回『{res}』且任务状态仍是未签到', 300)
+        return '[%s]%s' % (res['message'], self.taskName)

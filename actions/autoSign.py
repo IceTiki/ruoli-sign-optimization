@@ -54,8 +54,7 @@ class AutoSign:
                         return self.taskInfo
             else:
                 # 如果没有找到匹配的任务
-                LL.log(1, f'没有匹配标题『{taskTitle}』的任务')
-                raise TaskError('没有匹配标题的任务', 400)
+                raise TaskError(f'没有匹配标题『{taskTitle}』的任务', 400)
         else:  # 如果没有填title字段
             # 自动获取最后一个未签到任务
             taskList = []
@@ -63,7 +62,6 @@ class AutoSign:
                 taskList += taskGeneralList[i]
             # 查询是否没有未签到任务
             if len(taskList) < 1:
-                LL.log(1, '无签到任务')
                 raise TaskError('无签到任务', 400)
             latestTask = taskList[0]
             self.taskName = latestTask['taskName']
@@ -142,8 +140,7 @@ class AutoSign:
                         return result
 
         # 如果没有遍历找到结果
-        LL.log(2, "没有找到匹配的历史任务")
-        raise TaskError("没有找到匹配的历史任务", 301)
+        raise TaskError(f"『{self.taskName}』没有找到匹配的历史任务", 301)
 
     def getDetailTask(self):
         LL.log(1, '获取具体的签到任务详情')
@@ -219,14 +216,16 @@ class AutoSign:
                     if self.userInfo['checkTitle'] == 1:
                         formTitle = SuperString(userItem['title'])
                         if not formTitle.match(extraField['title']):
-                            raise Exception(
-                                f'\n第{i + 1}个配置出错了\n您的标题为: 『{formTitle}』\n系统的标题为: 『{extraField["title"]}』')
+                            raise TaskError(
+                                f'\n『{self.taskName}』第{i + 1}个配置出错了\n您的标题为: 『{formTitle}』\n系统的标题为: 『{extraField["title"]}』')
                     # 填写选择题
                     extraFieldItems = extraField['extraFieldItems']
                     for extraFieldItem in extraFieldItems:
                         '''遍历表单内选项'''
                         if extraFieldItem['isSelected']:
                             data = extraFieldItem['content']
+                        else:
+                            data = ''
                         userFormValue = SuperString(userItem['value'])
                         if userFormValue.match(extraFieldItem['content']):
                             # 普通选项
@@ -239,8 +238,8 @@ class AutoSign:
                             extraFieldItemValues.append(extraFieldItemValue)
                             break
                     else:
-                        raise Exception(
-                            f'\n第{ i + 1 }个配置出错了\r\n表单未匹配到你设置的值：『{userFormValue}』\n，你上次/系统选的值为：『{data}』')
+                        raise TaskError(
+                            f'『{self.taskName}』第{ i + 1 }个配置出错了\n表单未匹配到你设置的值：『{userFormValue}』\n，你上次/系统选的值为：『{data}』')
                 self.form['extraFieldItems'] = extraFieldItemValues
             self.form['abnormalReason'] = str(
                 SuperString(self.userInfo['abnormalReason']))
@@ -317,5 +316,5 @@ class AutoSign:
         if self.getDetailTask()['signTime']:
             self.userInfo['taskStatus'].code = 101
         else:
-            raise TaskError(f'提交表单返回『{res}』且任务状态仍是未签到', 300)
-        return '[%s]%s' % (res['message'], self.taskInfo['taskName'])
+            raise TaskError(f'『{self.taskName}』提交表单返回『{res}』但任务状态仍是未签到', 300)
+        return '[%s]%s' % (res['message'], self.taskName)

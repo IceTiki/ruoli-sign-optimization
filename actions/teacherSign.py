@@ -29,7 +29,7 @@ class teacherSign:
         res = DT.resJsonEncode(res)
         if len(res['datas']['unSignedTasks']) < 1:
             raise TaskError('当前暂时没有未签到的任务哦！', 400)
-        LL.log(1, '未签到的查寝', res['datas'])
+        LL.log(1, '未签到的政工签到', res['datas'])
         # 获取最后的一个任务
         latestTask = res['datas']['unSignedTasks'][0]
         self.taskInfo = {
@@ -45,7 +45,7 @@ class teacherSign:
         res = self.session.post(url, headers=headers, data=json.dumps(
             self.taskInfo), verify=False)
         res = DT.resJsonEncode(res)
-        LL.log(1, '具体查寝任务', res['datas'])
+        LL.log(1, '具体政工签到任务', res['datas'])
         self.task = res['datas']
         return self.task
 
