@@ -222,7 +222,7 @@ class Smtp:
         :param msg: 要发送的消息(自动转为字符串类型)
         :param title: 邮件标题(自动转为字符串类型)"""
         msg = str(msg)
-        msg = msg.replace("\n", "</br>")
+        msg = msg.replace("\n", "<br>")
         title = str(title)
         if not self.configIsCorrect:
             return '无效配置'
