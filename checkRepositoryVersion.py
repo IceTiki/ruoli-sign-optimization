@@ -3,13 +3,13 @@ import os
 
 
 class VersionInfo:
-    codeVersion = "V-T3.8.8b"
+    codeVersion = "V-T3.8.8c"
     # 代码文件列表
     codeList = ("todayLoginService.py", "actions/autoSign.py", "actions/collection.py", "actions/sleepCheck.py", "actions/workLog.py",
                 "actions/sendMessage.py", "actions/teacherSign.py", "login/Utils.py", "login/casLogin.py", "login/iapLogin.py", "login/RSALogin.py", "index.py", 'liteTools.py')
     # 代码文件哈希列表
-    codeStandardHashDict = {'todayLoginService.py': '39acd0282ce498b85d33423ac9971b061fa1e5b9b567b33eafa2af7ee0bc6800', 'actions/autoSign.py': 'd4c8d466b73ca17871d2076b73ceb1c019f19066b0fc203e209461b4c8fa4f15', 'actions/collection.py': '1a19677fcd8fa55834b1b7e74ae7adfc6211be3e3dfdff05be20ec028a409f44', 'actions/sleepCheck.py': '658a314bb26f756285086605a98aa219999afe98db1249c5e1c490b147cec52a', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': '4675b073cbdcc05ef8235f290ab74e02dfe0517e07ac653f23888a8e9b353f71',
-                            'actions/teacherSign.py': '6f7e76556a41be709d639e078c3dee2527c15cc860181d33d030085b60f85f95', 'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': 'a9b5d3ad32efabf48a61c9b3386e5a649f82ce0edc04051fdcd89317190b7a27', 'liteTools.py': '39ec8d8893b86c167e94de477f98c4a2d996388401a709db6645eb19b522a4ef'}
+    codeStandardHashDict = {'todayLoginService.py': '39acd0282ce498b85d33423ac9971b061fa1e5b9b567b33eafa2af7ee0bc6800', 'actions/autoSign.py': '7fd80ef6fbbc102a761e1d67bb459b42f33b151b47f939083d1ef4c9549702ac', 'actions/collection.py': 'df88c068a66996ff2c266c410b8c2bfc9207684d772c140ce8282bb820a38683', 'actions/sleepCheck.py': 'e239ae660aad52de05f0bea7342399e39ab2a8b8e0ea40053330f9b5b860a63e', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': '567a6624b1ffe651d94f9f82e819f9b9b4eebe5591a5bdcead08bd67046b1e4e',
+                            'actions/teacherSign.py': '6f7e76556a41be709d639e078c3dee2527c15cc860181d33d030085b60f85f95', 'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': 'a9b5d3ad32efabf48a61c9b3386e5a649f82ce0edc04051fdcd89317190b7a27', 'liteTools.py': 'd33db668a01f1f3a9b7f2e378283b8087254f2100e14b5fe839be23f818c4afd'}
 
 
 class HSF:
