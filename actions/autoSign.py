@@ -47,7 +47,8 @@ class AutoSign:
                     if taskTitle.match(righttask['taskName']):
                         self.taskName = righttask['taskName']
                         if not i <= signLevel:
-                            raise TaskError(f'『{self.taskName}』无需签到', 100)
+                            raise TaskError(
+                                f'任务无需签到', 100, self.taskName)
                         LL.log(1, '匹配标题的任务', righttask['taskName'])
                         self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
                                          'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
@@ -140,7 +141,7 @@ class AutoSign:
                         return result
 
         # 如果没有遍历找到结果
-        raise TaskError(f"『{self.taskName}』没有找到匹配的历史任务", 301)
+        raise TaskError(f"没有找到匹配的历史任务", 301, self.taskName)
 
     def getDetailTask(self):
         LL.log(1, '获取具体的签到任务详情')
@@ -217,7 +218,7 @@ class AutoSign:
                         formTitle = SuperString(userItem['title'])
                         if not formTitle.match(extraField['title']):
                             raise TaskError(
-                                f'\n『{self.taskName}』第{i + 1}个配置出错了\n您的标题为: 『{formTitle}』\n系统的标题为: 『{extraField["title"]}』')
+                                f'第{i + 1}个配置出错了\n您的标题为:『{formTitle}』\n系统的标题为:『{extraField["title"]}』', 301, self.taskName)
                     # 填写选择题
                     extraFieldItems = extraField['extraFieldItems']
                     for extraFieldItem in extraFieldItems:
@@ -239,7 +240,7 @@ class AutoSign:
                             break
                     else:
                         raise TaskError(
-                            f'『{self.taskName}』第{ i + 1 }个配置出错了\n表单未匹配到你设置的值：『{userFormValue}』\n，你上次/系统选的值为：『{data}』')
+                            f'第{ i + 1 }个配置出错了\n表单未匹配到你设置的值：『{userFormValue}』\n，你上次/系统选的值为：『{data}』', 301, self.taskName)
                 self.form['extraFieldItems'] = extraFieldItemValues
             self.form['abnormalReason'] = str(
                 SuperString(self.userInfo['abnormalReason']))
@@ -316,5 +317,5 @@ class AutoSign:
         if self.getDetailTask()['signTime']:
             self.userInfo['taskStatus'].code = 101
         else:
-            raise TaskError(f'『{self.taskName}』提交表单返回『{res}』但任务状态仍是未签到', 300)
+            raise TaskError(f'提交表单返回『{res}』但任务状态仍是未签到', 300, self.taskName)
         return '[%s]%s' % (res['message'], self.taskName)

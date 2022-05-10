@@ -42,7 +42,7 @@ class sleepCheck:
                     if taskTitle.match(righttask['taskName']):
                         self.taskName = righttask['taskName']
                         if not i <= signLevel:
-                            raise TaskError(f'『{self.taskName}』无需签到', 100)
+                            raise TaskError(f'任务无需签到', 100, self.taskName)
                         LL.log(1, '匹配标题的任务', righttask['taskName'])
                         self.taskInfo = {'signInstanceWid': righttask['signInstanceWid'],
                                          'signWid': righttask['signWid'], 'taskName': righttask['taskName']}
@@ -143,7 +143,7 @@ class sleepCheck:
                         return result
 
         # 如果没有遍历找到结果
-        raise TaskError(f"『{self.taskName}』没有找到匹配的历史任务", 301)
+        raise TaskError(f"没有找到匹配的历史任务", 301, self.taskName)
 
     # 填充表单
     def fillForm(self):
@@ -254,5 +254,5 @@ class sleepCheck:
         if self.getDetailTask()['signTime']:
             self.userInfo['taskStatus'].code = 101
         else:
-            raise TaskError(f'『{self.taskName}』提交表单返回『{res}』且任务状态仍是未签到', 300)
+            raise TaskError(f'提交表单返回『{res}』且任务状态仍是未签到', 300, self.taskName)
         return '[%s]%s' % (res['message'], self.taskName)

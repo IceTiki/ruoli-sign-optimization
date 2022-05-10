@@ -69,7 +69,7 @@ class Collection:
                         continue
                     if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
                         # 如果仅填报"未填报的任务"且相应任务已被填报，则报错
-                        raise TaskError(f"收集任务『{task['subject']}』已经被填报", 100)
+                        raise TaskError(f"收集任务已经被填报", 100, task['subject'])
                 else:
                     # 如果不需要匹配标题，则获取第一个任务
                     if self.userInfo.get('signLevel') == 1 and task['isHandled'] == 1:
@@ -131,7 +131,7 @@ class Collection:
                 totalSize = res['datas']['totalSize']
                 # 如果没有获取到历史任务则报错
                 if totalSize < 0:
-                    raise TaskError(f"『{self.taskName}』没有获取到历史任务", 301)
+                    raise TaskError(f"没有获取到历史任务", 301, self.taskName)
             # 按页中任务遍历
             for task in res['datas']['rows']:
                 if task['isHandled'] == 1 and task['formWid'] == self.formWid:
@@ -203,7 +203,7 @@ class Collection:
                     self.historyTaskData['form'] = form
                     return self.historyTaskData
         # 如果没有获取到历史信息收集则报错
-        raise TaskError(f"『{self.taskName}』没有找到匹配的历史任务", 301)
+        raise TaskError(f"没有找到匹配的历史任务", 301, self.taskName)
 
     # 填写表单
 
@@ -243,8 +243,8 @@ class Collection:
                         userFormSortIndex.get(i+1, {"isNeed": 0}))
             # 检查用户配置长度与查询到的表单长度是否匹配
             if taskLen != len(userFormList):
-                raise Exception('用户配置了%d个问题，查询到的表单有%d个问题，不匹配！' %
-                                (len(userFormList)), taskLen)
+                raise TaskError(
+                    f'用户配置了{len(userFormList)}个问题，查询到的表单有{taskLen}个问题，不匹配！', 301, self.taskName)
 
             # ---开始填充表单---
             for formItem, userForm in zip(self.task, userFormList):
@@ -258,8 +258,8 @@ class Collection:
                         # 如果检查到标题不相等
                         userFormTitle = SuperString(userForm['title'])
                         if not userFormTitle.match(formItem['title']):
-                            raise Exception(
-                                f'\r\n有配置项的标题不匹配\r\n您的标题为：『{userFormTitle}』\r\n系统的标题为：『{formItem["title"]}』')
+                            raise TaskError(
+                                f'\n有配置项的标题不匹配\n您的标题为：『{userFormTitle}』\n系统的标题为：『{formItem["title"]}』', 301, self.taskName)
                     # 填充多出来的参数（新版增加了三个参数，暂时不知道作用）
                     formItem['show'] = True
                     # 开始填充表单
@@ -284,8 +284,8 @@ class Collection:
                             else:
                                 itemWid = fieldItem['itemWid']
                         if itemWid == '':
-                            raise Exception(
-                                f'\r\n{userForm}配置项的选项不正确，该选项为单选，且未找到您配置的值'
+                            raise TaskError(
+                                f'\n『{userForm}』配置项的选项不正确，该选项为单选，且未找到您配置的值', 301, self.taskName
                             )
                         formItem['value'] = itemWid
                     # 多选类型
@@ -304,8 +304,8 @@ class Collection:
                                 formItem['fieldItems'].remove(fieldItem)
                         # 若多选一个都未选中
                         if len(itemWidArr) == 0:
-                            raise Exception(
-                                f'『{userForm}』配置项的选项不正确，该选项为多选，且未找到您配置的值'
+                            raise TaskError(
+                                f'『{userForm}』配置项的选项不正确，该选项为多选，且未找到您配置的值', 301, self.taskName
                             )
                         formItem['value'] = ','.join(itemWidArr)
                     # 图片类型
@@ -319,10 +319,10 @@ class Collection:
                         # 检查列表长度
                         dirListLen = len(dirList)
                         if dirListLen == 0:
-                            raise TaskError(f'请在配置中填写图片路径', 301)
+                            raise TaskError(f'请在配置中填写图片路径', 301, self.taskName)
                         elif dirListLen > 10:
                             raise TaskError(
-                                f'配置中填写的图片路径({dirListLen}个)过多', 301)
+                                f'配置中填写的图片路径({dirListLen}个)过多', 301, self.taskName)
                         # 将列表中的每一项都加入到value中
                         imgUrlList = []
                         for i, pic in enumerate(dirList, 1):
@@ -360,8 +360,8 @@ class Collection:
                         formItem['downloadMediaUrl'] = '/wec-counselor-collector-apps/stu/collector/downloadMedia'
 
                     else:
-                        raise Exception(
-                            f'\n出现未知表单类型，请反馈『{formItem}』'
+                        raise TaskError(
+                            f'\n出现未知表单类型，请反馈『{formItem}』', 301, self.taskName
                         )
                     task_form.append(formItem)
                 else:
@@ -449,5 +449,5 @@ class Collection:
         if res['datas']['collector']['isUserSubmit'] == 1:
             self.userInfo['taskStatus'].code = 101
         else:
-            raise TaskError(f'『{self.taskName}』提交表单返回『{data}』且任务状态仍是未签到', 300)
+            raise TaskError(f'提交表单返回『{data}』且任务状态仍是未签到', 300, self.taskName)
         return '[%s]%s' % (data['message'], self.taskName)

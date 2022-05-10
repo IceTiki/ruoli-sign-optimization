@@ -22,12 +22,16 @@ import checkRepositoryVersion
 class TaskError(Exception):
     '''目前(配置/时间/签到情况)不宜完成签到任务，出现本异常不进行重试。'''
 
-    def __init__(self, msg="目前(配置/时间/签到情况)不宜完成签到任务", code=301):
+    def __init__(self, msg="目前(配置/时间/签到情况)不宜完成签到任务", code=301, taskName='', moreInfo=''):
         self.msg = str(msg)
         self.code = code
+        self.taskName = taskName
+        self.moreInfo = moreInfo
 
     def __str__(self):
-        return self.msg
+        msg = '『{self.taskName}』' if self.taskName else ''
+        msg += f'{self.msg}'
+        return msg
 
 
 class TT:
