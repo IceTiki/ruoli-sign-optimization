@@ -225,7 +225,7 @@ class Smtp:
         :param title: 邮件标题(自动转为字符串类型)
         :param attachment: 附件元组，形式为((blob二进制文件,fileName文件名),(blob,fileName),...)"""
         msg = str(msg)
-        msg = msg.replace("\n", "</br>")
+        msg = msg.replace("\n", "<br>")
         title = str(title)
         if not self.configIsCorrect:
             return '无效配置'
