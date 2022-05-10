@@ -7,6 +7,7 @@ import sys
 import codecs
 import traceback
 import re
+import random
 
 # 检查python版本
 if not (sys.version_info[0] == 3 and sys.version_info[1] >= 6):
@@ -111,12 +112,16 @@ def loadConfig():
     # 全局配置初始化
     defaultConfig = {
         'delay': (5, 10),
-        'locationOffsetRange': 50
+        'locationOffsetRange': 50,
+        "shuffleTask": False
     }
     defaultConfig.update(config)
     config.update(defaultConfig)
 
     # 用户配置初始化
+    if config['shuffleTask']:
+        LL.log(1, "随机打乱任务列表")
+        random.shuffle(config['users'])
     for user in config['users']:
         LL.log(1, f"正在初始化{user['username']}的配置")
         # 初始化静态配置项目
@@ -314,7 +319,9 @@ def main():
         # 忽略跳过的任务
         if user['taskStatus'].codeHead() != 2:
             msg += '[%s]\n%s\n' % (user['remarkName'], user['taskStatus'].msg)
-    # code统计消息
+    # 时间统计信息
+    msg += f'Running at {TT.startTimeFormat_1}, using {TT.executionSeconds()}s\n'
+    # 执行统计消息
     msg += f'{len(codeList)}: {codeCount[0]}todo, {codeCount[1]}done, {codeCount[2]}skip, {codeCount[3]}error, {codeCount[4]}notFound'
     LL.log(1, msg)
     sm = SendMessage(config.get('sendMessage'))

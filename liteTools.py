@@ -33,6 +33,8 @@ class TaskError(Exception):
 class TT:
     '''time Tools'''
     startTime = time.time()
+    startTimeFormat_1 = time.strftime(
+        "%Y-%m-%d %H:%M:%S", time.localtime(startTime))
 
     @staticmethod
     def isInTimeList(timeRanges, nowTime: float = startTime):
@@ -95,6 +97,10 @@ class TT:
                 pass
         else:
             return True
+
+    @staticmethod
+    def executionSeconds(round_: int = 2):
+        return round(time.time()-TT.startTime, round_)
 
 
 class LL:
