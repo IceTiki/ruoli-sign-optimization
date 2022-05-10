@@ -3,6 +3,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import formataddr
+from email.mime.multipart import MIMEMultipart
 import re
 from urllib import parse
 import json
@@ -25,13 +26,14 @@ class SendMessage:
                            con.get('pushplus_isNew'))
         self.log_str = '推送情况\n'
 
-    def send(self, msg='no msg', title='no title'):
+    def send(self, msg='no msg', title='no title', attachments=()):
         try:
             self.log_str += '\nQMSG酱|' + self.qmsg.send(msg)
         except Exception as e:
             self.log_str += '\nQMSG酱|出错|%s' % e
         try:
-            self.log_str += '\nSMTP|' + self.smtp.sendmail(msg, title)
+            self.log_str += '\nSMTP|' + \
+                self.smtp.sendmail(msg, title, attachments)
         except Exception as e:
             self.log_str += '\nSMTP|出错|%s' % e
         try:
@@ -217,19 +219,31 @@ class Smtp:
                 return 0
         return 1
 
-    def sendmail(self, msg, title='no title'):
+    def sendmail(self, msg, title='no title', attachments=()):
         """发送邮件
         :param msg: 要发送的消息(自动转为字符串类型)
-        :param title: 邮件标题(自动转为字符串类型)"""
+        :param title: 邮件标题(自动转为字符串类型)
+        :param attachment: 附件元组，形式为((blob二进制文件,fileName文件名),(blob,fileName),...)"""
         msg = str(msg)
         msg = msg.replace("\n", "</br>")
         title = str(title)
         if not self.configIsCorrect:
             return '无效配置'
         else:
-            mail = MIMEText(msg, 'html', 'utf-8')
+            mail = MIMEMultipart()
+            # 添加正文
+            mail.attach(MIMEText(msg, 'html', 'utf-8'))
+            # 添加标题
             mail['Subject'] = Header(title, 'utf-8')
+            # 添加发送者
             mail['From'] = formataddr((self.senderName, self.sender), "utf-8")
+            # 添加附件
+            for attInfo in attachments:
+                att = MIMEText(attInfo[0], 'base64', 'utf-8')
+                att["Content-Type"] = 'application/octet-stream'
+                att["Content-Disposition"] = f'attachment; filename="{attInfo[1]}"'
+                mail.attach(att)
+            # 发送邮件
             smtpObj = smtplib.SMTP_SSL(self.host, 465)
             smtpObj.login(self.user, self.key)
             smtpObj.sendmail(self.sender, self.receivers, mail.as_string())

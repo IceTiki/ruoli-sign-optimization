@@ -33,8 +33,10 @@ class TaskError(Exception):
 class TT:
     '''time Tools'''
     startTime = time.time()
-    startTimeFormat_1 = time.strftime(
-        "%Y-%m-%d %H:%M:%S", time.localtime(startTime))
+
+    @staticmethod
+    def formatStartTime(format: str = "%Y-%m-%d %H:%M:%S"):
+        return time.strftime(format, time.localtime(TT.startTime))
 
     @staticmethod
     def isInTimeList(timeRanges, nowTime: float = startTime):
@@ -156,8 +158,8 @@ class LL:
         log = LL.getLog(level)
         if not os.path.isdir(dir):
             os.makedirs(dir)
-        dir = os.path.join(dir, time.strftime(
-            "LOG#t=%Y-%m-%d--%H-%M-%S##.txt", time.localtime()))
+        dir = os.path.join(dir, TT.formatStartTime(
+            "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
         with open(dir, 'w', encoding='utf-8') as f:
             f.write(log)
 

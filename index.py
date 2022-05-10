@@ -320,13 +320,14 @@ def main():
         if user['taskStatus'].codeHead() != 2:
             msg += '[%s]\n%s\n' % (user['remarkName'], user['taskStatus'].msg)
     # 时间统计信息
-    msg += f'Running at {TT.startTimeFormat_1}, using {TT.executionSeconds()}s\n'
+    msg += f'Running at {TT.formatStartTime()}, using {TT.executionSeconds()}s\n'
     # 执行统计消息
     msg += f'{len(codeList)}: {codeCount[0]}todo, {codeCount[1]}done, {codeCount[2]}skip, {codeCount[3]}error, {codeCount[4]}notFound'
     LL.log(1, msg)
     sm = SendMessage(config.get('sendMessage'))
     sm.send(msg+'\n'+LL.getLog(4),
-            f'全局签到情况{generalSituations}')
+            f'全局签到情况{generalSituations}', [(LL.getLog().encode(encoding='utf-8'),
+                                            TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
     LL.log(1, '全局推送情况', sm.log_str)
 
 
