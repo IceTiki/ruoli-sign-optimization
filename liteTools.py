@@ -29,7 +29,7 @@ class TaskError(Exception):
         self.moreInfo = moreInfo
 
     def __str__(self):
-        msg = '『{self.taskName}』' if self.taskName else ''
+        msg = f'『{self.taskName}』' if self.taskName else ''
         msg += f'{self.msg}'
         return msg
 
