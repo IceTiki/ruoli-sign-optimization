@@ -6,7 +6,6 @@ import os
 import sys
 import codecs
 import traceback
-import re
 import random
 
 # 检查python版本
@@ -22,7 +21,9 @@ except UnicodeEncodeError:
     print("==========脚本开始初始化(utf-8输出)==========")
 absScriptDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(absScriptDir)  # 将工作路径设置为脚本位置
-os.environ['TZ'] = "Asia/Shanghai"  # 将时区设为UTC+8
+if os.name == "posix":
+    # 如果是linux系统, 增加TZ环境变量
+    os.environ['TZ'] = "Asia/Shanghai"
 sys.path.append(absScriptDir)  # 将脚本路径加入模块搜索路径
 
 # 检查第三方模块
