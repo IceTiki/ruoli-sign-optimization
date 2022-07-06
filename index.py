@@ -27,7 +27,7 @@ sys.path.append(absScriptDir)  # 将脚本路径加入模块搜索路径
 
 # 检查第三方模块
 try:
-    for i in ("requests", "requests_toolbelt", "urllib3", "bs4", "Crypto", "pyDes", "yaml", "lxml", "rsa"):
+    for i in ("requests", "requests_toolbelt", "urllib3", "bs4", "Crypto", "pyDes", "yaml", "lxml", "rsa", "pytz"):
         imp.find_module(i)
 except ImportError as e:  # 腾讯云函数在初始化过程中print运作不正常，所以将信息丢入异常中
     raise ImportError(f"""!!!!!!!!!!!!!!缺少第三方模块(依赖)!!!!!!!!!!!!!!

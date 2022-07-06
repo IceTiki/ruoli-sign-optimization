@@ -8,3 +8,4 @@ pyDes==2.0.1
 PyYAML==5.4.1
 lxml==4.6.5
 rsa==4.7.2
+pytz==2022.1

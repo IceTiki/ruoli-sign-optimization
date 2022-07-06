@@ -1,4 +1,4 @@
-import time
+import time, pytz, datetime
 from typing import Sequence
 import requests
 import yaml
@@ -14,7 +14,6 @@ import re
 import json
 import imghdr
 from requests_toolbelt import MultipartEncoder
-import datetime
 
 import checkRepositoryVersion
 
@@ -52,7 +51,7 @@ class TT:
 
     @staticmethod
     def formatStartTime(format: str = "%Y-%m-%d %H:%M:%S"):
-        return time.strftime(format, time.localtime(TT.startTime))
+        return datetime.datetime.fromtimestamp(int(TT.startTime), pytz.timezone('Asia/Shanghai')).strftime(format)
 
     @staticmethod
     def isInTimeList(timeRanges, nowTime: float = startTime):
@@ -105,7 +104,7 @@ class TT:
         timeRange = timeRange.split(' ')
         timeRange = [[int(j) for j in i.split(',')] for i in timeRange]
         # 将当前时间格式化为"周 月 日 时 分"
-        nowTime = tuple(time.localtime(nowTime))
+        nowTime = datetime.datetime.fromtimestamp(nowTime, pytz.timezone('Asia/Shanghai')).timetuple()
         nowTime = (nowTime[6]+1, nowTime[1],
                    nowTime[2], nowTime[3], nowTime[4])
         for a, b in zip(nowTime, timeRange):
