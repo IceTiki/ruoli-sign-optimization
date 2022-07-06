@@ -9,7 +9,7 @@ from Crypto.Cipher import AES
 from pyDes import des, CBC, PAD_PKCS5
 import base64
 import hashlib
-import urllib.parse
+from urllib import parse
 import re
 import json
 import imghdr
@@ -23,6 +23,18 @@ class TaskError(Exception):
     '''目前(配置/时间/签到情况)不宜完成签到任务，出现本异常不进行重试。'''
 
     def __init__(self, msg="目前(配置/时间/签到情况)不宜完成签到任务", code=301, taskName='', moreInfo=''):
+        '''
+        :code的含义
+        0: 等待执行
+        1: 出现错误(等待重试)
+        100: 任务已被完成
+        101: 该任务正常执行完成
+        200: 用户设置不执行该任务
+        201: 该任务不在执行时间
+        300: 出错
+        301: 当前情况无法完成该任务
+        400: 没有找到需要执行的任务
+        '''
         self.msg = str(msg)
         self.code = code
         self.taskName = taskName
@@ -226,7 +238,7 @@ class CpdailyTools:
         abstractKey = ["appVersion", "bodyString", "deviceId", "lat",
                        "lon", "model", "systemName", "systemVersion", "userId"]
         abstractSubmitData = {k: submitData[k] for k in abstractKey}
-        abstract = urllib.parse.urlencode(abstractSubmitData) + '&' + key
+        abstract = parse.urlencode(abstractSubmitData) + '&' + key
         abstract_md5 = HSF.strHash(abstract, 5)
         return abstract_md5
 
@@ -315,7 +327,7 @@ class NT:
         '''
         try:
             requests.get(url='https://www.baidu.com/',
-                         proxies=proxies, timeout=20)
+                         proxies=proxies, timeout=10)
         except requests.RequestException as e:
             LL.log(4, f'代理[{proxies}]存在问题\n错误: [{e}]')
             return 1
@@ -576,6 +588,14 @@ class DT:
                 strList[i] = str(SuperString(v))
         return strList
 
+    @staticmethod
+    def urlParamsToDict(url: str):
+        '''提取url请求参数, 转为字典'''
+        query = parse.urlparse(url).query
+        params = parse.parse_qs(query)
+        params = {k: v[0] for k, v in params.items()}
+        return params
+
 
 class CT:
     '''CryptoTools'''
@@ -746,3 +766,84 @@ class SuperString:
 
     def __str__(self):
         return self.fStr
+
+
+class ProxyGet():
+    def __init__(self, config):
+        self.config = config
+        self.proxy = {}
+        self.type = ""
+        # 如果没有设置(代理)
+        if not config:
+            self.proxy = {}
+            self.type = "normal"
+        # 如果是直接使用类型(代理)
+        elif type(config) == str:
+            if re.match(r"https?:\/\/", config):
+                address = config
+                self.proxy = {
+                    'http': address,
+                    'https': address
+                }
+                self.type = "normal"
+            else:
+                raise Exception("代理应以http://或https://为开头")
+        # 如果是字典
+        elif type(config) == dict:
+            # 如果是直接使用类型(代理)
+            if config.get("type") == "normal":
+                self.proxy = config.get("address", {})
+            # 如果是熊猫代理(http://www.xiongmaodaili.com/)的按量付费API
+            elif config.get("type") == "panda":
+                self.type = "panda"
+                url = config["api"]
+                # 解析url地址
+                pa = parse.urlparse(url)
+                self.api = pa.scheme + "://" + pa.netloc+pa.path
+                # 解析url参数
+                self.params = DT.urlParamsToDict(url)
+                self.params.update({
+                    "validTime": 1,
+                    "isTxt": 0,
+                    "count": 1
+                })
+                self.maxRetry = config.get("maxRetry", 1)
+            else:
+                Exception(f"不支持的配置[{config}]")
+        else:
+            raise TypeError(f"不支持[{type(config)}]类型的用户代理输入")
+
+        # 检查直接使用的代理可用性
+        if self.type == "normal" and NT.isDisableProxies(config):
+            config = {}
+            self.type = "normal"
+            LL.log(2, '用户代理已取消使用')
+
+    def getProxy(self):
+        if self.type == "normal":
+            return self.proxy
+        elif self.type == "panda":
+            LL.log(0, "正在通过熊猫代理API获取代理")
+            for times in range(1, self.maxRetry+1):
+                try:
+                    res = None
+                    res = requests.get(self.api, params=self.params).json()
+                    proxyLoc = res["obj"][0]
+                    proxyUrl = f"http://{proxyLoc['ip']}:{proxyLoc['port']}"
+                    proxy = {
+                        'http': proxyUrl,
+                        'https': proxyUrl
+                    }
+                    if NT.isDisableProxies(proxy):
+                        raise Exception(f"通过熊猫代理API获取到的代理不可用[{proxy}]")
+                    LL.log(1, f"通过熊猫代理API获取到代理[{proxy}]")
+                    return proxy
+                except Exception as e:
+                    msg = f"在尝试通过熊猫代理API获取代理时候发生错误\n错误: [{e}]\nres: [{res}]\n"
+                    LL.log(2, msg)
+                    if times == self.maxRetry:
+                        LL.log(2, "取消使用代理")
+                        return {}
+                    else:
+                        time.sleep(2)  # 熊猫代理最快一秒提取一次IP
+                        pass

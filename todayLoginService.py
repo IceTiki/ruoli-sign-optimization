@@ -8,7 +8,7 @@ from login.Utils import Utils
 from login.casLogin import casLogin
 from login.iapLogin import iapLogin
 from login.RSALogin import RSALogin
-from liteTools import TaskError, LL
+from liteTools import TaskError, LL, ProxyGet
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -17,7 +17,7 @@ class TodayLoginService:
     # 初始化本地登录类
     def __init__(self, userInfo):
         if None == userInfo['username'] or '' == userInfo['username'] or None == userInfo['password'] or '' == userInfo[
-            'password'] or None == userInfo['schoolName'] or '' == userInfo['schoolName']:
+                'password'] or None == userInfo['schoolName'] or '' == userInfo['schoolName']:
             raise TaskError('初始化类失败，请键入完整的参数（用户名，密码，学校名称）', 301)
         self.username = userInfo['username']
         self.password = userInfo['password']
@@ -30,7 +30,9 @@ class TodayLoginService:
         self.session.adapters.DEFAULT_RETRIES = 5
         self.session.headers = headers
         # 如果设置了用户的代理，那么该用户将走代理的方式进行访问
-        self.session.proxies = userInfo['proxy']
+        pg = userInfo['proxy']
+        pg: ProxyGet
+        self.session.proxies = pg.getProxy()
         # 添加hooks进行拦截判断该请求是否被418拦截
         self.session.hooks['response'].append(Utils.checkStatus)
         self.login_url = ''
@@ -45,10 +47,10 @@ class TodayLoginService:
         flag = True
         for item in schools:
             if item['name'] == self.schoolName:
-                if item['joinType'] == 'NONE': 
+                if item['joinType'] == 'NONE':
                     raise TaskError(self.schoolName + '未加入今日校园，请检查...', 301)
                 elif item['joinType'] == 'NOTCLOUD':
-                    LL.log(2, "学校接入今日校园方式为NOTCLOUD")
+                    LL.log(1, "学校接入今日校园方式为NOTCLOUD")
                 flag = False
                 params = {
                     'ids': item['id']
@@ -62,28 +64,34 @@ class TodayLoginService:
                     self.host = re.findall('\w{4,5}\:\/\/.*?\/', ampUrl)[0]
                     status_code = 0
                     while status_code != 200:
-                        newAmpUrl = self.session.get(ampUrl, allow_redirects=False, verify=False)
+                        newAmpUrl = self.session.get(
+                            ampUrl, allow_redirects=False, verify=False)
                         status_code = newAmpUrl.status_code
                         if 'Location' in newAmpUrl.headers:
                             ampUrl = newAmpUrl.headers['Location']
                     self.login_url = ampUrl
-                    self.login_host = re.findall('\w{4,5}\:\/\/.*?\/', self.login_url)[0]
+                    self.login_host = re.findall(
+                        '\w{4,5}\:\/\/.*?\/', self.login_url)[0]
                 ampUrl2 = data['ampUrl2']
                 if 'campusphere' in ampUrl2 or 'cpdaily' in ampUrl2:
                     self.host = re.findall('\w{4,5}\:\/\/.*?\/', ampUrl2)[0]
                     ampUrl2 = self.session.get(ampUrl2, verify=False).url
                     self.login_url = ampUrl2
-                    self.login_host = re.findall(r'\w{4,5}\:\/\/.*?\/', self.login_url)[0]
+                    self.login_host = re.findall(
+                        r'\w{4,5}\:\/\/.*?\/', self.login_url)[0]
                 break
 
     # 通过登陆url判断采用哪种登陆方式
     def checkLogin(self):
         if self.login_url.find('/iap') != -1:
-            self.loginEntity = iapLogin(self.username, self.password, self.login_url, self.login_host, self.session)
+            self.loginEntity = iapLogin(
+                self.username, self.password, self.login_url, self.login_host, self.session)
         elif self.login_url.find('kmu.edu.cn') != -1 or self.login_url.find('hytc.edu.cn') != -1:
-            self.loginEntity = RSALogin(self.username, self.password, self.login_url, self.login_host, self.session)
+            self.loginEntity = RSALogin(
+                self.username, self.password, self.login_url, self.login_host, self.session)
         else:
-            self.loginEntity = casLogin(self.username, self.password, self.login_url, self.login_host, self.session)
+            self.loginEntity = casLogin(
+                self.username, self.password, self.login_url, self.login_host, self.session)
         # 统一登录流程
         self.session.cookies = self.loginEntity.login()
 

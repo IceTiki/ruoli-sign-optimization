@@ -52,7 +52,7 @@ except ImportError as e:
 错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
-    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT, HSF
+    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT, HSF, ProxyGet
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
     from actions.sendMessage import SendMessage
@@ -124,6 +124,7 @@ def loadConfig():
         random.shuffle(config['users'])
     for user in config['users']:
         LL.log(1, f"正在初始化{user['username']}的配置")
+        user: dict
         # 初始化静态配置项目
         defaultConfig = {
             'remarkName': '默认备注名',
@@ -157,25 +158,7 @@ def loadConfig():
 
         # 用户代理
         user.setdefault('proxy')
-        if not user['proxy']:  # 如果用户代理设置为空，则不设置代理。
-            user['proxy'] = {}
-        elif type(user['proxy']) == str:
-            if re.match(r"https?:\/\/", user['proxy']):
-                userProxy = user['proxy']
-                user['proxy'] = {
-                    'http': userProxy,
-                    'https': userProxy
-                }
-            else:
-                raise Exception("代理应以http://或https://为开头")
-        elif type(user['proxy']) == dict:
-            pass
-        else:
-            raise TypeError(f"不支持[{type(user['proxy'])}]类型的用户代理输入")
-        # 检查代理可用性
-        if user['proxy'] and NT.isDisableProxies(user['proxy']):
-            user['proxy'] = {}
-            LL.log(2, '用户代理已取消使用')
+        user['proxy'] = ProxyGet(user['proxy'])
 
         # 坐标随机偏移
         user['global_locationOffsetRange'] = config['locationOffsetRange']
