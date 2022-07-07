@@ -1,4 +1,5 @@
 author: 若离|IceTiki|https://github.com/IceTiki/ruoli-sign-optimization
+notion: 代理设置、正则匹配、获取历史签到、二维码签到等功能请查看文档 documents/用户配置高级教程.md
 # YAML有引用和锚点，可以节省配置长度(备注:锚点要放在引用的前面)(可以参考https://www.runoob.com/w3cnote/yaml-intro.html)
 # ======================================================================
 # 全局设置
@@ -7,7 +8,7 @@ locationOffsetRange: 50 # 坐标偏移范围(单位：米)(可以为0)
 maxTry: 1 # 最大尝试次数
 logDir: "log/" # 日志保存地址
 delay: [5, 10] # 多用户时，各用户之间任务执行延迟(时间范围可以使用浮点数)
-captcha: # 图片验证码识别
+captcha: # 图片验证码识别(不需要可以不填)
   tencentSecretId: "" # 腾讯云OCR
   tencentSecretKey: "" # 腾讯云OCR
   captchaLen: 4 # 验证码长度
