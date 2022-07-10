@@ -776,7 +776,7 @@ class ProxyGet():
         # 如果没有设置(代理)
         if not config:
             self.proxy = {}
-            self.type = "normal"
+            self.type = "none"
         # 如果是直接使用类型(代理)
         elif type(config) == str:
             if re.match(r"https?:\/\/", config):
@@ -820,7 +820,7 @@ class ProxyGet():
             LL.log(2, '用户代理已取消使用')
 
     def getProxy(self):
-        if self.type == "normal":
+        if self.type == "normal" or self.type == "none":
             return self.proxy
         elif self.type == "panda":
             LL.log(0, "正在通过熊猫代理API获取代理")

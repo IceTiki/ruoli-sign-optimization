@@ -76,7 +76,7 @@ users: #!!!!!别误删了这一行!!!!!
     username: "" # 学号或者工号
     password: "" # 密码
     # 一般需填项-------
-    abnormalReason: "" # abnormalReason 反馈信息
+    abnormalReason: "" # 范围外签到原因
     photo: sign.jpg # 签到照片(不需要可不填)
     signLevel: 1 # 签到等级[0:正常签到|1:请假后依然签到|2:请假或已经打卡后依然重复签到]
     title: 0 # [str:签到任务的标题|0:取最后一个未签到的任务]
