@@ -329,9 +329,7 @@ class NT:
             requests.get(url='https://www.baidu.com/',
                          proxies=proxies, timeout=10)
         except requests.RequestException as e:
-            LL.log(4, f'代理[{proxies}]存在问题\n错误: [{e}]')
             return 1
-        LL.log(1, f'代理[{proxies}]可用')
         return 0
 
 
@@ -814,10 +812,10 @@ class ProxyGet():
             raise TypeError(f"不支持[{type(config)}]类型的用户代理输入")
 
         # 检查直接使用的代理可用性
-        if self.type == "normal" and NT.isDisableProxies(config):
-            config = {}
+        if self.type == "normal" and NT.isDisableProxies(self.proxy):
+            self.proxy = {}
             self.type = "normal"
-            LL.log(2, '用户代理已取消使用')
+            LL.log(2, f'[{self.proxy}]不可用, 已取消使用')
 
     def getProxy(self):
         if self.type == "normal" or self.type == "none":
@@ -834,12 +832,13 @@ class ProxyGet():
                         'http': proxyUrl,
                         'https': proxyUrl
                     }
+                    LL.log(1, f"通过熊猫代理API获取到代理[{proxy}]")
                     if NT.isDisableProxies(proxy):
                         raise Exception(f"通过熊猫代理API获取到的代理不可用[{proxy}]")
-                    LL.log(1, f"通过熊猫代理API获取到代理[{proxy}]")
+                    LL.log(1, f"代理[{proxy}]可用")
                     return proxy
                 except Exception as e:
-                    msg = f"在尝试通过熊猫代理API获取代理时候发生错误\n错误: [{e}]\nres: [{res}]\n"
+                    msg = f"在尝试通过熊猫代理API获取代理时候发生错误\n可能的解决方案: \n1. 如果是云函数, 请确定开启固定出口IP功能, 否则无法使用熊猫代理。\n2. 刚开始使用时, 前几天的失败率较高\n错误: [{e}]\nres: [{res}]"
                     LL.log(2, msg)
                     if times == self.maxRetry:
                         LL.log(2, "取消使用代理")
