@@ -96,7 +96,7 @@ class Collection:
                 # 获取任务表单
                 url = f'{self.host}wec-counselor-collector-apps/stu/collector/getFormFields'
                 params = {"pageSize": 9999, "pageNumber": 1,
-                          "formWid": self.formWid, "collectorWid": self.wid}
+                          "formWid": self.formWid, "collectorWid": self.wid, "instanceWid": self.instanceWid}
                 res = self.session.post(
                     url, headers=headers, data=json.dumps(params), verify=False)
                 res = DT.resJsonEncode(res)
