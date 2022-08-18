@@ -53,7 +53,7 @@ except ImportError as e:
 错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
-    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT, HSF, ProxyGet
+    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT, HSF, ProxyGet, SignTaskStatus, UserMsg
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
     from actions.sendMessage import SendMessage
@@ -63,41 +63,6 @@ if True:
     from actions.autoSign import AutoSign
     from todayLoginService import TodayLoginService
 # ====================完成导入模块====================
-
-
-class SignTaskStatus:
-    '''用于标记用户完成情况
-    :code的含义
-    0: 等待执行
-    1: 出现错误(等待重试)
-    100: 任务已被完成
-    101: 该任务正常执行完成
-    200: 用户设置不执行该任务
-    201: 该任务不在执行时间
-    300: 出错
-    301: 当前情况无法完成该任务
-    400: 没有找到需要执行的任务
-    '''
-
-    def __init__(self, code, msg=''):
-        self.code = code
-        self.msg = msg
-
-    def codeHead(self):
-        return int(self.code/100)
-
-    def liteMsgEn(self):
-        ch = self.codeHead()
-        if ch == 0:
-            return 'todo'
-        elif ch == 1:
-            return 'done'
-        elif ch == 2:
-            return 'skip'
-        elif ch == 3:
-            return 'error'
-        elif ch == 4:
-            return 'notFound'
 
 
 def loadConfig():
@@ -291,27 +256,11 @@ def main():
             LL.log(1, f"『{user['username']}』用户推送情况", sm.log_str)
 
     # 签到情况推送
-    # code统计
-    codeList = [i['taskStatus'].codeHead() for i in users]
-    codeCount = [0]*10
-    for i in codeList:
-        codeCount[i] += 1
-    generalSituations = f'({codeCount[1]}/{len(codeList)-codeCount[2]})'
-    # 整合消息
-    msg = f'『[{LL.prefix}]全局签到情况{generalSituations}』\n'
-    for user in users:
-        # 忽略跳过的任务
-        if user['taskStatus'].codeHead() != 2:
-            msg += '[%s]\n%s\n' % (user['remarkName'], user['taskStatus'].msg)
-    # 时间统计信息
-    msg += f'Running at {TT.formatStartTime()}, using {TT.executionSeconds()}s\n'
-    # 执行统计消息
-    msg += f'{len(codeList)}: {codeCount[0]}todo, {codeCount[1]}done, {codeCount[2]}skip, {codeCount[3]}error, {codeCount[4]}notFound'
-    LL.log(1, msg)
+    umsg = UserMsg(users)
+    LL.log(1, umsg.msg_g1)
     sm = SendMessage(config.get('sendMessage'))
-    sm.send(msg+'\n'+LL.getLog(4),
-            f'全局签到情况{generalSituations}', [(LL.getLog().encode(encoding='utf-8'),
-                                            TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
+    sm.send(msg=umsg.msg_g1+'\n'+LL.getLog(4), title=umsg.title_g1, attachments=[(LL.getLog().encode(encoding='utf-8'),
+                                                                                  TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
     LL.log(1, '全局推送情况', sm.log_str)
 
 
