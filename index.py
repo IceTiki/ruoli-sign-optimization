@@ -53,7 +53,7 @@ except ImportError as e:
 错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
-    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT, HSF, ProxyGet, SignTaskStatus, UserMsg, GlobalData
+    from liteTools import TaskError, RT, LL, ST, TT, UserMsg, GlobalData
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
     from actions.sendMessage import SendMessage
@@ -214,8 +214,5 @@ def main_handler(event, context):
 
 if __name__ == '__main__':
     '''本地执行入口位置'''
-    try:
-        GlobalData.entrance = "__main__"
-        main()
-    finally:
-        LL.saveLog(GlobalData.config.get('logDir'))  # 生成日志文件
+    GlobalData.entrance = "__main__"
+    main()

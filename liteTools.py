@@ -5,6 +5,7 @@ import yaml
 import math
 import random
 import os
+import sys
 from Crypto.Cipher import AES
 from pyDes import des, CBC, PAD_PKCS5
 import base64
@@ -24,18 +25,18 @@ class GlobalData:
     launchData = {}
     startTime = time.time()
     config = {}
-    tmpLogDir = "tmp_log.txt"
 
     @staticmethod
     def initInMainHead():
         GlobalData.loadConfig()
-        # 清空临时日志
-        if GlobalData.entrance == "__main__":
-            try:
-                with open(GlobalData.tmpLogDir, "w") as f:
-                    pass
-            except:
-                pass
+        # 设置print输出
+        logDir = GlobalData.config.get('logDir')
+        if type(logDir) == str and GlobalData.entrance == "__main__":
+            if not os.path.isdir(logDir):
+                os.makedirs(logDir)
+            logDir = os.path.join(logDir, TT.formatStartTime(
+                "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
+            sys.stdout = FileOut(logDir)
 
     @staticmethod
     def loadConfig():
@@ -106,6 +107,39 @@ class GlobalData:
                     user['lon'], user['lat'], config['locationOffsetRange'])
         GlobalData.config = config
         return config
+
+
+class FileOut:
+    '''代替stdout, 使print同时输出到文件和终端中'''
+    stdout = sys.stdout
+
+    def __init__(self, logDir="tmp_log.txt"):
+        '''
+        初始化
+        :params logDir: 输出文件
+        '''
+        self.log = ""  # 同时将所有输出记录到log中
+        self.logFile = open(logDir, "w+", encoding="utf-8")
+
+    def write(self, str_):
+        r'''
+        :params str: print传来的字符串
+        :print(s)等价于sys.stdout.write(s+"\n")
+        '''
+        str_ = str(str_)
+        self.log += str_
+        self.logFile.write(str_)
+        FileOut.stdout.write(str_)
+        self.flush()
+
+    def flush(self):
+        '''刷新缓冲区'''
+        self.stdout.flush()
+        self.logFile.flush()
+
+    def close(self):
+        self.logFile.close()
+        sys.stdout = FileOut.stdout
 
 
 class TaskError(Exception):
@@ -244,13 +278,6 @@ class LL:
         LL.log_list.append(logItem)
         if logType >= LL.printLevel:
             print(LL.log2FormatStr(logItem))
-        # 尝试实时记录入文件
-        if GlobalData.entrance == "__main__":
-            try:
-                with open(GlobalData.tmpLogDir, "a", encoding="utf-8") as f:
-                    f.write(LL.log2FormatStr(logItem))
-            except:
-                pass
 
     @staticmethod
     def getLog(level=0):
