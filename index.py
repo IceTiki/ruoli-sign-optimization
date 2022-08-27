@@ -53,7 +53,7 @@ except ImportError as e:
 错误信息: [{e}]""")
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
-    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT, HSF, ProxyGet, SignTaskStatus, UserMsg
+    from liteTools import TaskError, RT, DT, LL, NT, MT, ST, TT, HSF, ProxyGet, SignTaskStatus, UserMsg, GlobalData
     from login.Utils import Utils
     from actions.teacherSign import teacherSign
     from actions.sendMessage import SendMessage
@@ -63,75 +63,6 @@ if True:
     from actions.autoSign import AutoSign
     from todayLoginService import TodayLoginService
 # ====================完成导入模块====================
-
-
-def loadConfig():
-    '''配置文件载入函数'''
-    try:
-        config = DT.loadYml('config.yml')
-    except Exception as e:
-        errmsg = f"""读取配置文件出错
-请尝试检查配置文件(建议下载VSCode并安装yaml插件进行检查)
-错误信息: {e}"""
-        LL.log(4, ST.notionStr(errmsg))
-        raise e
-    # 全局配置初始化
-    defaultConfig = {
-        'delay': (5, 10),
-        'locationOffsetRange': 50,
-        "shuffleTask": False
-    }
-    defaultConfig.update(config)
-    config.update(defaultConfig)
-
-    # 用户配置初始化
-    if config['shuffleTask']:
-        LL.log(1, "随机打乱任务列表")
-        random.shuffle(config['users'])
-    for user in config['users']:
-        LL.log(1, f"正在初始化{user['username']}的配置")
-        user: dict
-        # 初始化静态配置项目
-        defaultConfig = {
-            'remarkName': '默认备注名',
-            'model': 'OPPO R11 Plus',
-            'appVersion': '9.0.14',
-            'systemVersion': '4.4.4',
-            'systemName': 'android',
-            "signVersion": "first_v3",
-            "calVersion": "firstv",
-            'taskTimeRange': "1-7 1-12 1-31 0-23 0-59",
-            'getHistorySign': False,
-            'title': 0,
-            'signLevel': 1,
-            'abnormalReason': "回家",
-            'qrUuid': None
-        }
-        defaultConfig.update(user)
-        user.update(defaultConfig)
-
-        # 任务进度控制
-        if TT.isInTimeList(user['taskTimeRange']):
-            user['taskStatus'] = SignTaskStatus(0)
-        else:
-            user['taskStatus'] = SignTaskStatus(201, '该任务不在执行时间')
-        user['userHashId'] = HSF.strHash(
-            user.get('schoolName', '')+user.get('username', ''), 256)
-
-        # 用户设备ID
-        user['deviceId'] = user.get(
-            'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
-
-        # 用户代理
-        user.setdefault('proxy')
-        user['proxy'] = ProxyGet(user['proxy'])
-
-        # 坐标随机偏移
-        user['global_locationOffsetRange'] = config['locationOffsetRange']
-        if 'lon' in user and 'lat' in user:
-            user['lon'], user['lat'] = RT.locationOffset(
-                user['lon'], user['lat'], config['locationOffsetRange'])
-    return config
 
 
 def working(user: dict, userSession, userHost: str):
@@ -191,9 +122,9 @@ def working(user: dict, userSession, userHost: str):
 def main():
     '''主函数'''
     print("==========脚本开始执行==========")
-
     # 加载配置
-    config = loadConfig()
+    GlobalData.initInMainHead()
+    config = GlobalData.config
     maxTry = config['maxTry']
 
     # 开始签到
@@ -266,11 +197,17 @@ def main():
 
 def handler(event, context):
     '''阿里云的入口函数'''
+    GlobalData.entrance = "handler"
+    GlobalData.launchData["event"] = event
+    GlobalData.launchData["context"] = context
     main()
 
 
 def main_handler(event, context):
     '''腾讯云的入口函数'''
+    GlobalData.entrance = "main_handler"
+    GlobalData.launchData["event"] = event
+    GlobalData.launchData["context"] = context
     main()
     return 'ok'
 
@@ -278,6 +215,7 @@ def main_handler(event, context):
 if __name__ == '__main__':
     '''本地执行入口位置'''
     try:
+        GlobalData.entrance = "__main__"
         main()
     finally:
-        LL.saveLog(DT.loadYml('config.yml').get('logDir'))  # 生成日志文件
+        LL.saveLog(GlobalData.config.get('logDir'))  # 生成日志文件

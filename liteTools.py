@@ -19,6 +19,95 @@ import datetime
 import checkRepositoryVersion
 
 
+class GlobalData:
+    entrance = "unknown"
+    launchData = {}
+    startTime = time.time()
+    config = {}
+    tmpLogDir = "tmp_log.txt"
+
+    @staticmethod
+    def initInMainHead():
+        GlobalData.loadConfig()
+        # 清空临时日志
+        if GlobalData.entrance == "__main__":
+            try:
+                with open(GlobalData.tmpLogDir, "w") as f:
+                    pass
+            except:
+                pass
+
+    @staticmethod
+    def loadConfig():
+        '''配置文件载入函数'''
+        try:
+            config = DT.loadYml('config.yml')
+        except Exception as e:
+            errmsg = f"""读取配置文件出错
+请尝试检查配置文件(建议下载VSCode并安装yaml插件进行检查)
+错误信息: {e}"""
+            LL.log(4, ST.notionStr(errmsg))
+            raise e
+        # 全局配置初始化
+        defaultConfig = {
+            'delay': (5, 10),
+            'locationOffsetRange': 50,
+            "shuffleTask": False
+        }
+        defaultConfig.update(config)
+        config.update(defaultConfig)
+
+        # 用户配置初始化
+        if config['shuffleTask']:
+            LL.log(1, "随机打乱任务列表")
+            random.shuffle(config['users'])
+        for user in config['users']:
+            LL.log(1, f"正在初始化{user['username']}的配置")
+            user: dict
+            # 初始化静态配置项目
+            defaultConfig = {
+                'remarkName': '默认备注名',
+                'model': 'OPPO R11 Plus',
+                'appVersion': '9.0.14',
+                'systemVersion': '4.4.4',
+                'systemName': 'android',
+                "signVersion": "first_v3",
+                "calVersion": "firstv",
+                'taskTimeRange': "1-7 1-12 1-31 0-23 0-59",
+                'getHistorySign': False,
+                'title': 0,
+                'signLevel': 1,
+                'abnormalReason': "回家",
+                'qrUuid': None
+            }
+            defaultConfig.update(user)
+            user.update(defaultConfig)
+
+            # 任务进度控制
+            if TT.isInTimeList(user['taskTimeRange']):
+                user['taskStatus'] = SignTaskStatus(0)
+            else:
+                user['taskStatus'] = SignTaskStatus(201, '该任务不在执行时间')
+            user['userHashId'] = HSF.strHash(
+                user.get('schoolName', '')+user.get('username', ''), 256)
+
+            # 用户设备ID
+            user['deviceId'] = user.get(
+                'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
+
+            # 用户代理
+            user.setdefault('proxy')
+            user['proxy'] = ProxyGet(user['proxy'])
+
+            # 坐标随机偏移
+            user['global_locationOffsetRange'] = config['locationOffsetRange']
+            if 'lon' in user and 'lat' in user:
+                user['lon'], user['lat'] = RT.locationOffset(
+                    user['lon'], user['lat'], config['locationOffsetRange'])
+        GlobalData.config = config
+        return config
+
+
 class TaskError(Exception):
     '''目前(配置/时间/签到情况)不宜完成签到任务，出现本异常不进行重试。'''
 
@@ -48,7 +137,7 @@ class TaskError(Exception):
 
 class TT:
     '''time Tools'''
-    startTime = time.time()
+    startTime = GlobalData.startTime
 
     @staticmethod
     def formatStartTime(format: str = "%Y-%m-%d %H:%M:%S"):
@@ -155,6 +244,13 @@ class LL:
         LL.log_list.append(logItem)
         if logType >= LL.printLevel:
             print(LL.log2FormatStr(logItem))
+        # 尝试实时记录入文件
+        if GlobalData.entrance == "__main__":
+            try:
+                with open(GlobalData.tmpLogDir, "a", encoding="utf-8") as f:
+                    f.write(LL.log2FormatStr(logItem))
+            except:
+                pass
 
     @staticmethod
     def getLog(level=0):
@@ -836,6 +932,7 @@ class ProxyGet:
                         'https': proxyUrl
                     }
                     LL.log(1, f"通过熊猫代理API获取到代理[{proxy}]")
+                    time.sleep(1)
                     if NT.isDisableProxies(proxy):
                         raise Exception(f"通过熊猫代理API获取到的代理不可用[{proxy}]")
                     LL.log(1, f"代理[{proxy}]可用")
