@@ -309,10 +309,12 @@ class Collection:
                             )
                         formItem['value'] = ','.join(itemWidArr)
                     # 图片类型
-                    elif formItem['fieldType'] in ('4', '16'):
+                    elif formItem['fieldType'] in ('4', '16', '24', '25'):
                         '''
                         4: 上传图片
                         16: 手写板
+                        24: 健康码截图(先上传后识别)
+                        25: 行程卡截图(先上传后识别)
                         '''
                         # 序列/字符串转列表
                         dirList = DT.formatStrList(userForm['value'])
