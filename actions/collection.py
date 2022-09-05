@@ -226,17 +226,21 @@ class Collection:
             taskLen = len(self.task)
             userFormList = self.userInfo['forms']
             userFormList = [u['form'] for u in userFormList]
+            # 检查是否每一项都有"number"项
+            useNumberFlag = False not in [
+                ("number" in u) for u in userFormList]
+            # 检查是否每一项都有"isNeed"项
+            useIsNeedFlag = False not in [
+                ("isNeed" in u) for u in userFormList]
+            if not (useNumberFlag or useIsNeedFlag):
+                raise TaskError(
+                    "配置文件填写错误: \n信息收集表单(forms)中的每一项都需要用「number」标志题号", 301)
             # 如果是用"number"控制表单填报(number是题号, 1开始), 转换为用"isNeed"控制表单填报
-            userFormSortIndex = {}
-            for u in userFormList:
-                # 检查是否每一项都有"number"项
-                if "number" in u:
+            if useNumberFlag:
+                userFormSortIndex = {}
+                for u in userFormList:
                     userFormSortIndex[u['number']] = {
                         "title": u['title'], "value": u['value'], "isNeed": 1}
-                else:
-                    break
-            else:
-                '''如果每一项都有"number"项'''
                 userFormList = []
                 for i in range(taskLen):
                     userFormList.append(

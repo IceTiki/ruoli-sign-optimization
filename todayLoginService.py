@@ -8,7 +8,7 @@ from login.Utils import Utils
 from login.casLogin import casLogin
 from login.iapLogin import iapLogin
 from login.RSALogin import RSALogin
-from liteTools import TaskError, LL, ProxyGet
+from liteTools import TaskError, LL, ProxyGet, reqSession
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -22,7 +22,7 @@ class TodayLoginService:
         self.username = userInfo['username']
         self.password = userInfo['password']
         self.schoolName = userInfo['schoolName']
-        self.session = requests.session()
+        self.session = reqSession()
         headers = {'User-Agent': random.choice(Utils.getUserAgents())}
         # 关闭多余的连接
         self.session.keep_alive = False

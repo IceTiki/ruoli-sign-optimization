@@ -25,6 +25,7 @@ class GlobalData:
     launchData = {}
     startTime = time.time()
     config = {}
+    msgOut = None
 
     @staticmethod
     def initInMainHead():
@@ -32,11 +33,17 @@ class GlobalData:
         # 设置print输出
         logDir = GlobalData.config.get('logDir')
         if type(logDir) == str and GlobalData.entrance == "__main__":
-            if not os.path.isdir(logDir):
-                os.makedirs(logDir)
-            logDir = os.path.join(logDir, TT.formatStartTime(
-                "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
-            sys.stdout = FileOut(logDir)
+            try:
+                logDir = os.path.join(logDir, TT.formatStartTime(
+                    "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
+                msgOut = FileOut(logDir)
+            except Exception() as e:
+                LL.log(2, f"文件输出启用失败, 错误信息: [{e}]")
+                msgOut = FileOut(None)
+        else:
+            msgOut = FileOut(None)
+        GlobalData.msgOut = msgOut
+        msgOut.start()
 
     @staticmethod
     def loadConfig():
@@ -109,17 +116,41 @@ class GlobalData:
         return config
 
 
-class FileOut:
-    '''代替stdout, 使print同时输出到文件和终端中'''
-    stdout = sys.stdout
+class reqSession(requests.Session):
+    '''requests.Session的子类, 增添了请求的默认超时时间'''
 
-    def __init__(self, logDir="tmp_log.txt"):
+    def request(self, *args, **kwargs):
+        kwargs.setdefault('timeout', (10, 30))
+        return super(reqSession, self).request(*args, **kwargs)
+
+
+class FileOut:
+    '''
+    代替stdout和stderr, 使print同时输出到文件和终端中。
+    start()方法可以直接用自身(self)替换stdout和stderr
+    close()方法可以还原stdout和stderr
+    '''
+    stdout = sys.stdout
+    stderr = sys.stderr
+
+    def __init__(self, logPath: str = None):
         '''
         初始化
-        :params logDir: 输出文件
+        :params logDir: 输出文件(如果路径不存在自动创建), 如果为空则不输出到文件
         '''
-        self.log = ""  # 同时将所有输出记录到log中
-        self.logFile = open(logDir, "w+", encoding="utf-8")
+        self.log = ""  # 同时将所有输出记录到log字符串中
+        if logPath:
+            logDir = os.path.dirname(os.path.abspath(logPath))
+            if not os.path.isdir(logDir):
+                os.makedirs(logDir)
+            self.logFile = open(logPath, "w+", encoding="utf-8")
+        else:
+            self.logFile = None
+
+    def start(self):
+        '''开始替换stdout和stderr'''
+        sys.stdout = self
+        sys.stderr = self
 
     def write(self, str_):
         r'''
@@ -128,18 +159,24 @@ class FileOut:
         '''
         str_ = str(str_)
         self.log += str_
-        self.logFile.write(str_)
+        if self.logFile:
+            self.logFile.write(str_)
         FileOut.stdout.write(str_)
         self.flush()
 
     def flush(self):
         '''刷新缓冲区'''
         self.stdout.flush()
-        self.logFile.flush()
+        if self.logFile:
+            self.logFile.flush()
 
     def close(self):
-        self.logFile.close()
+        '''关闭'''
+        if self.logFile:
+            self.logFile.close()
+        self.log = ""
         sys.stdout = FileOut.stdout
+        sys.stderr = FileOut.stderr
 
 
 class TaskError(Exception):
