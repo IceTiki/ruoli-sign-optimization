@@ -296,7 +296,8 @@ class Collection:
                     elif formItem['fieldType'] == '3':
                         # 定义单选框的wid
                         itemWidArr = []
-                        userItems = [SuperString(i)for i in userForm['value']]
+                        userItems = DT.formatStrList(
+                            [i for i in userForm['value']], True)
                         # 多选也需要移除多余的选项
                         for fieldItem in formItem['fieldItems'].copy():
                             # 查看该表单项在不在用户配置的选项中

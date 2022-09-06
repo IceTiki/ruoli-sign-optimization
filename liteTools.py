@@ -25,7 +25,7 @@ class GlobalData:
     launchData = {}
     startTime = time.time()
     config = {}
-    msgOut = None
+    msgOut = None  # FileOut类型变量, 用于控制系统print输出
 
     @staticmethod
     def initInMainHead():
@@ -724,7 +724,7 @@ class DT:
                 f'响应内容以json格式解析失败({e})，响应内容:\n\n{res.text}')
 
     @staticmethod
-    def formatStrList(item):
+    def formatStrList(item, returnSuperStr=False):
         '''字符串序列或字符串 格式化为 字符串列表。
         :feature: 超级字符串会被格式化为字符串
         :feature: 空值会被格式化为 空列表'''
@@ -743,7 +743,10 @@ class DT:
         # 格式化超级字符串
         for i, v in enumerate(strList):
             if isinstance(v, str) or isinstance(v, dict) or v == SuperString:
-                strList[i] = str(SuperString(v))
+                if returnSuperStr:
+                    strList[i] = SuperString(v)
+                else:
+                    strList[i] = str(SuperString(v))
         return strList
 
     @staticmethod

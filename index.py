@@ -190,7 +190,7 @@ def main():
     umsg = UserMsg(users)
     LL.log(1, umsg.msg_g1)
     sm = SendMessage(config.get('sendMessage'))
-    sm.send(msg=umsg.msg_g1+'\n'+LL.getLog(4), title=umsg.title_g1, attachments=[(LL.getLog().encode(encoding='utf-8'),
+    sm.send(msg=umsg.msg_g1+'\n'+LL.getLog(4), title=umsg.title_g1, attachments=[(GlobalData.msgOut.log.encode(encoding='utf-8'),
                                                                                   TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
     LL.log(1, '全局推送情况', sm.log_str)
 
