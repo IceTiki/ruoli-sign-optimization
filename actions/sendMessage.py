@@ -91,7 +91,7 @@ class Pushplus:
 
     def __init__(self, parameters: str, isNew):
         """
-        :param parameters: "xxx"形式的令牌 或者 "token=xxx&topic=xxx&yyy=xxx"形式参数列表
+        :params parameters: "xxx"形式的令牌 或者 "token=xxx&topic=xxx&yyy=xxx"形式参数列表
         """
         self.parameters = parameters
         if isNew:
@@ -146,9 +146,9 @@ class Qmsg:
 
     def __init__(self, key: str, qq: str, isGroup: bool = False):
         """
-        :param key: qmsg密钥
-        :param qq: 接收消息的qq(多个qq以","分隔)
-        :param isGroup: 接收者是否为群
+        :params key: qmsg密钥
+        :params qq: 接收消息的qq(多个qq以","分隔)
+        :params isGroup: 接收者是否为群
         """
         self.key = key
         self.qq = qq
@@ -170,7 +170,7 @@ class Qmsg:
 
     def send(self, msg):
         """发送消息
-        :param msg: 要发送的消息(自动转为字符串类型)"""
+        :params msg: 要发送的消息(自动转为字符串类型)"""
         # msg处理
         msg = str(msg)
         # 替换数字(避开qmsg的屏蔽规则)
@@ -192,11 +192,12 @@ class Smtp:
 
     def __init__(self, host: str, user: str, key: str, sender: str, senderName: str, receivers: list):
         """
-        :param host: SMTP的域名
-        :param user: 用户名
-        :param key: 用户的密钥
-        :param sender: 邮件发送者(邮箱)
-        :param receivers: 邮件接收者列表(邮箱)
+        :params host: SMTP域名
+        :params user: 用户账户
+        :params key: 用户密钥
+        :params sender: 邮件发送者(邮箱)
+        :params senderName: 发送者名称(可以随便填)
+        :params receivers: 邮件接收者列表(邮箱)
         """
         self.host = host
         self.user = user
@@ -221,9 +222,9 @@ class Smtp:
 
     def sendmail(self, msg, title='no title', attachments=()):
         """发送邮件
-        :param msg: 要发送的消息(自动转为字符串类型)
-        :param title: 邮件标题(自动转为字符串类型)
-        :param attachment: 附件元组，形式为((blob二进制文件,fileName文件名),(blob,fileName),...)"""
+        :params msg: 要发送的消息(自动转为字符串类型)
+        :params title: 邮件标题(自动转为字符串类型)
+        :params attachment: 附件元组，形式为((blob二进制文件,fileName文件名),(blob,fileName),...)"""
         msg = str(msg)
         msg = msg.replace("\n", "<br>")
         title = str(title)
@@ -255,7 +256,7 @@ class IceCream:
 
     def __init__(self, token: str):
         """
-        :param key: IceCream密钥
+        :params key: IceCream密钥
         """
         self.token = token
         self.configIsCorrect = self.isCorrectConfig()
@@ -271,7 +272,7 @@ class IceCream:
 
     def send(self, msg):
         """发送消息
-        :param msg: 要发送的消息(自动转为字符串类型)
+        :params msg: 要发送的消息(自动转为字符串类型)
         """
         # msg处理
         msg = str(msg)
