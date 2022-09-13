@@ -20,102 +20,6 @@ import datetime
 import checkRepositoryVersion
 
 
-class GlobalData:
-    entrance = "unknown"
-    launchData = {}
-    startTime = time.time()
-    config = {}
-    msgOut = None  # FileOut类型变量, 用于控制系统print输出
-
-    @staticmethod
-    def initInMainHead():
-        GlobalData.loadConfig()
-        # 设置print输出
-        logDir = GlobalData.config.get('logDir')
-        if type(logDir) == str and GlobalData.entrance == "__main__":
-            try:
-                logDir = os.path.join(logDir, TT.formatStartTime(
-                    "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
-                msgOut = FileOut(logDir)
-            except Exception() as e:
-                LL.log(2, f"文件输出启用失败, 错误信息: [{e}]")
-                msgOut = FileOut(None)
-        else:
-            msgOut = FileOut(None)
-        GlobalData.msgOut = msgOut
-        msgOut.start()
-
-    @staticmethod
-    def loadConfig():
-        '''配置文件载入函数'''
-        try:
-            config = DT.loadYml('config.yml')
-        except Exception as e:
-            errmsg = f"""读取配置文件出错
-请尝试检查配置文件(建议下载VSCode并安装yaml插件进行检查)
-错误信息: {e}"""
-            LL.log(4, ST.notionStr(errmsg))
-            raise e
-        # 全局配置初始化
-        defaultConfig = {
-            'delay': (5, 10),
-            'locationOffsetRange': 50,
-            "shuffleTask": False
-        }
-        defaultConfig.update(config)
-        config.update(defaultConfig)
-
-        # 用户配置初始化
-        if config['shuffleTask']:
-            LL.log(1, "随机打乱任务列表")
-            random.shuffle(config['users'])
-        for user in config['users']:
-            LL.log(1, f"正在初始化{user['username']}的配置")
-            user: dict
-            # 初始化静态配置项目
-            defaultConfig = {
-                'remarkName': '默认备注名',
-                'model': 'OPPO R11 Plus',
-                'appVersion': '9.0.14',
-                'systemVersion': '4.4.4',
-                'systemName': 'android',
-                "signVersion": "first_v3",
-                "calVersion": "firstv",
-                'taskTimeRange': "1-7 1-12 1-31 0-23 0-59",
-                'getHistorySign': False,
-                'title': 0,
-                'signLevel': 1,
-                'abnormalReason': "回家",
-                'qrUuid': None
-            }
-            defaultConfig.update(user)
-            user.update(defaultConfig)
-
-            # 任务进度控制
-            if TT.isInTimeList(user['taskTimeRange']):
-                user['taskStatus'] = SignTaskStatus(0)
-            else:
-                user['taskStatus'] = SignTaskStatus(201, '该任务不在执行时间')
-            user['userHashId'] = HSF.strHash(
-                user.get('schoolName', '')+user.get('username', ''), 256)
-
-            # 用户设备ID
-            user['deviceId'] = user.get(
-                'deviceId', RT.genDeviceID(user.get('schoolName', '')+user.get('username', '')))
-
-            # 用户代理
-            user.setdefault('proxy')
-            user['proxy'] = ProxyGet(user['proxy'])
-
-            # 坐标随机偏移
-            user['global_locationOffsetRange'] = config['locationOffsetRange']
-            if 'lon' in user and 'lat' in user:
-                user['lon'], user['lat'] = RT.locationOffset(
-                    user['lon'], user['lat'], config['locationOffsetRange'])
-        GlobalData.config = config
-        return config
-
-
 class reqSession(requests.Session):
     '''requests.Session的子类, 增添了请求的默认超时时间'''
 
@@ -149,8 +53,11 @@ class FileOut:
 
     def start(self):
         '''开始替换stdout和stderr'''
-        sys.stdout = self
-        sys.stderr = self
+        if type(sys.stdout) != FileOut and type(sys.stderr) != FileOut:
+            sys.stdout = self
+            sys.stderr = self
+        else:
+            raise Exception("sysout/syserr已被替换为FileOut")
 
     def write(self, str_):
         r'''
@@ -208,7 +115,7 @@ class TaskError(Exception):
 
 class TT:
     '''time Tools'''
-    startTime = GlobalData.startTime
+    startTime = time.time()
 
     @staticmethod
     def formatStartTime(format: str = "%Y-%m-%d %H:%M:%S"):
@@ -627,7 +534,7 @@ class RT:
             try:
                 response = requests.get(
                     url=url, headers=headers, timeout=(10, 20))
-            except requests.exceptions.ConnectionError:
+            except requests.exceptions.ConnectionError as e:
                 LL.log(1, f'在线图片[{url}]下载失败，错误原因:\n{e}\
                     \n可能造成此问题的原因有:\
                     \n1. 图片链接失效(请自行验证链接是否可用)\
@@ -872,6 +779,19 @@ class ST:
         '''让输入的句子非常非常显眼'''
         return ('↓'*50 + '看这里' + '↓'*50 + '\n')*5 + s + ('\n' + '↑'*50 + '看这里' + '↑'*50)*5
 
+    @staticmethod
+    def stringFormating(str_: str, params: dict):
+        '''
+        接受字符串和一个参数字典, 将字符串中{key}形式的部分, 利用params格式化。返回一个字符串。
+        本函数类似于str.format()与「lambda str_, params:str_.format(**params)」功能相同, 但当找不到对应的key时不会报错而是会跳过。
+        '''
+        def formating(m):
+            '''匹配a-e样式的字符串替换为a,b,c,d,e样式'''
+            key = m.group()[1:-1]
+            return str(params.get(key, f"{'{'}{key}{'}'}"))
+        str_ = re.sub(r"\{[^{}]*?\}", formating, str_)
+        return str_
+
 
 class SuperString:
     '''超级字符串是带有flag的字符串。
@@ -1013,112 +933,3 @@ class ProxyGet:
                     else:
                         time.sleep(2)  # 熊猫代理最快一秒提取一次IP
                         pass
-
-
-class SignTaskStatus:
-    '''用于标记用户完成情况
-    :code的含义
-    0: 等待执行
-    1: 出现错误(等待重试)
-    100: 任务已被完成
-    101: 该任务正常执行完成
-    200: 用户设置不执行该任务
-    201: 该任务不在执行时间
-    300: 出错
-    301: 当前情况无法完成该任务
-    400: 没有找到需要执行的任务
-    '''
-    codeList = ('todo', 'done', 'skip', 'error', 'notFound')
-
-    def __init__(self, code, msg=''):
-        self.code = code
-        self.msg = msg
-
-    def codeHead(self):
-        return int(self.code/100)
-
-    def liteMsgEn(self):
-        return SignTaskStatus.codeList[self.codeHead()]
-
-
-class UserMsg:
-    class Msg:
-        def __init__(self):
-            self.msgList = []
-
-        def append(self, m: str):
-            self.msgList.append(str(m))
-
-        @property
-        def text(self):
-            return "\n".join(self.msgList)
-
-    def __init__(self, users: list):
-        """
-        :params user: list[dict]: 用户列表
-        """
-        self.users = users
-
-    @property
-    def title_g1(self):
-        """
-        全局标题1
-        示例: 『全局签到情况(114/514)[V-T1.0.0]』
-        """
-        codeCount = self.codeCount
-        # generalSituations —— "done/(total-skip)"
-        generalSituations = f'{codeCount[1]}/{sum(codeCount)-codeCount[2]}'
-        return f"『全局签到情况({generalSituations})[{LL.prefix}]』"
-
-    @property
-    def time_g1(self):
-        """
-        时间统计1
-        示例: Running at 2022-01-01 00:00:00, using 1145.14s
-        """
-        return f'Running at {TT.formatStartTime()}, using {TT.executionSeconds()}s'
-
-    @property
-    def count_g1(self):
-        """
-        签到情况统计1
-        示例: 10: 1todo, 8done, 1skip, 0error, 0notFound
-        """
-        codeCount = self.codeCount
-        cl = SignTaskStatus.codeList
-        return f'{sum(codeCount)}: ' + ", ".join([f"{codeCount[i]}{cl[i]}" for i in range(len(cl))])
-
-    @property
-    def msg_g1(self):
-        """
-        全局签到情况1
-        示例: 
-        『全局签到情况(1/2)[V-T1.0.0]』
-        [小李]
-        --1145141919|1
-        --初始化类失败，请键入完整的参数（用户名，密码，学校名称）
-        [小王]
-        --1145141919|1
-        --[SUCCESS]须弥教令院每日打卡
-        Running at 2022-01-01 00:00:00, using 1145.14s
-        2: 0todo, 1done, 0skip, 1error, 0notFound
-        """
-        msg = UserMsg.Msg()
-        msg.append(self.title_g1)
-        for user in self.users:
-            # 忽略跳过的任务
-            if user['taskStatus'].codeHead() != 2:
-                msg.append(f"[{user['remarkName']}]")
-                msg.append(user['taskStatus'].msg)
-        msg.append(self.time_g1)
-        msg.append(self.count_g1)
-        return msg.text
-
-    @property
-    def codeCount(self):
-        """状态码统计"""
-        codeList = [i['taskStatus'].codeHead() for i in self.users]
-        codeCount = [0]*len(SignTaskStatus.codeList)
-        for i in codeList:
-            codeCount[i] += 1
-        return codeCount
