@@ -223,10 +223,6 @@ class SignTask:
     def codeHead(self):
         return int(self.code/100)
 
-    @ property
-    def msgEn(self):
-        return SignTask.statusMsg_lite[self.codeHead]
-
     @ staticmethod
     def cleanSession(uuid=None):
         '''
@@ -251,7 +247,7 @@ class MainHandler:
         self.event: dict = event
         self.context: dict = context
 
-        self.config: dict = self.loadConfig()
+        self.config: dict = self._loadConfig()
         self._setMsgOut()
         self._maxTry = self.config['maxTry']
         self.taskList = [SignTask(u, self._maxTry)
@@ -273,7 +269,7 @@ class MainHandler:
                 # 执行
                 task.execute()
                 # 清理无用session
-                self.cleanSession(task.uuid)
+                self._cleanSession(task.uuid)
             # 清理session池
             SignTask.cleanSession()
 
@@ -284,7 +280,10 @@ class MainHandler:
                                                                                         TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
         LL.log(1, '全局推送情况', sm.log_str)
 
-    def cleanSession(self, uuid: str):
+    def formatMsg(self, pattern: str = ""):
+        return ST.stringFormating(pattern, self.webhook)
+
+    def _cleanSession(self, uuid: str):
         '''
         登录状态内存释放: 如果同用户还有没有未执行的任务, 则删除session
         '''
@@ -308,7 +307,7 @@ class MainHandler:
         else:
             return
 
-    def loadConfig(self):
+    def _loadConfig(self):
         '''
         配置文件载入
         :returns config: dict
@@ -370,9 +369,6 @@ class MainHandler:
                 user['lon'], user['lat'] = RT.locationOffset(
                     user['lon'], user['lat'], config['locationOffsetRange'])
         return config
-
-    def formatMsg(self, pattern: str = ""):
-        return ST.stringFormating(pattern, self.webhook)
 
     @property
     def webhook(self):
