@@ -28,7 +28,7 @@ class SendMessage:
 
     def send(self, msg='no msg', title='no title', attachments=()):
         try:
-            self.log_str += '\nQMSG酱|' + self.qmsg.send(msg)
+            self.log_str += '\nQMSG酱|' + self.qmsg.send(f"{title}\n{msg}")
         except Exception as e:
             self.log_str += '\nQMSG酱|出错|%s' % e
         try:
@@ -41,7 +41,8 @@ class SendMessage:
         except Exception as e:
             self.log_str += '\n若离邮箱API|出错|%s' % e
         try:
-            self.log_str += '\nIceCream|' + self.iceCream.send(msg)
+            self.log_str += '\nIceCream|' + \
+                self.iceCream.send(f"{title}\n{msg}")
         except Exception as e:
             self.log_str += '\nIceCream|出错|%s' % e
         try:

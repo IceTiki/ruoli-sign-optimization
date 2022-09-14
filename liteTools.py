@@ -1,5 +1,6 @@
 import time
 from typing import Sequence
+from io import TextIOWrapper
 import requests
 import yaml
 import math
@@ -42,14 +43,38 @@ class FileOut:
         初始化
         :params logDir: 输出文件(如果路径不存在自动创建), 如果为空则不输出到文件
         '''
-        self.log = ""  # 同时将所有输出记录到log字符串中
-        if logPath:
-            logDir = os.path.dirname(os.path.abspath(logPath))
-            if not os.path.isdir(logDir):
-                os.makedirs(logDir)
-            self.logFile = open(logPath, "w+", encoding="utf-8")
+        self.log: str = ""  # 同时将所有输出记录到log字符串中
+        self.logFile: TextIOWrapper = None
+        self.setFileOut(logPath)
+
+    def setFileOut(self, path: str = None):
+        '''
+        设置日志输出文件
+        :params path: 日志输出文件路径, 如果为空则取消日志文件输出
+        '''
+        # 关闭旧文件
+        if self.logFile:
+            self.logFile.close()
+            self.logFile = None
+
+        # 更新日志文件输出
+        if path:
+            try:
+                path = os.path.abspath(path)
+                logDir = os.path.dirname(path)
+                if not os.path.isdir(logDir):
+                    os.makedirs(logDir)
+                self.logFile = open(path, "w+", encoding="utf-8")
+                self.logFile.write(self.log)
+                self.logFile.flush()
+                return
+            except Exception as e:
+                LL.log(2, f"设置日志文件输出失败, 错误信息: [{e}]")
+                self.logFile = None
+                return
         else:
             self.logFile = None
+            return
 
     def start(self):
         '''开始替换stdout和stderr'''

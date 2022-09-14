@@ -16,14 +16,14 @@ from todayLoginService import TodayLoginService
 class SignTask:
     userSessions = {}
     codeHeadCounts = 5
-    statusMsg_en = {
-        0: 'todo',
-        1: 'done',
-        2: 'skip',
-        3: 'error',
-        4: 'notFound'
+    statusMsg_lite = {
+        0: '待命',
+        1: '完成',
+        2: '跳过',
+        3: '错误',
+        4: '缺失',
     }
-    status_msg = {
+    statusMsg = {
         0: "等待执行",
         1: "出现错误(等待重试)",
         100: "任务已被完成",
@@ -43,8 +43,8 @@ class SignTask:
         self.config: dict = userConfig
         self.msg: str = ""
         self.code: int = 0
-        self.maxTry: int = int(maxTry)
-        self.attempts: int = 0  # 任务触发次数
+        self.maxTry: int = int(maxTry)  # 最大触发次数
+        self.attempts: int = 0  # 任务触发次数, 当达到最大触发次数, 可能哪怕执行失败也会触发消息推送等
         self.username = userConfig.get("username", "?username?")
 
         # 检查任务是否在执行时间
@@ -81,6 +81,9 @@ class SignTask:
         finally:
             # 收尾工作
             self._afterExecute()
+
+    def formatMsg(self, pattern: str = ""):
+        return ST.stringFormating(pattern, self.webhook)
 
     def _login(self):
         '''
@@ -169,21 +172,38 @@ class SignTask:
             return
 
         # 消息推送
-        msg = f"--{self.username}|{self.attempts}\n--{self.msg}"
-        LL.log(1, msg)
+        LL.log(1, self.defaultFormatTitle + "\n" + self.defaultFormatMsg)
         sm = self.sendMsg
-        sm.send(f"『[{LL.prefix}]用户签到情况\n{msg}』",
-                f"用户签到情况|{self.statusMsg_en}")
+        sm.send(self.defaultFormatMsg, self.defaultFormatTitle)
         LL.log(1, f"『{self.username}』用户推送情况", sm.log_str)
 
-    @property
+    @ property
     def webhook(self):
         return {
-            "username": self.username,
-            "remarkName": self.config["remarkName"]
+            "scriptVersion": LL.prefix,  # 脚本版本
+
+            "username": self.username,  # 用户账号
+            "remarkName": self.config["remarkName"],  # 用户备注名
+
+            "attempts": self.attempts,  # 执行尝试次数
+            "maxtry": self.maxTry,  # 最大尝试次数
+
+            "msg": self.msg,  # 任务执行消息
+            "statusCode": self.code,
+            "statusCodehead": self.codeHead,
+            "statusMsg": self.statusMsg[self.code],  # 状态信息(完整版)
+            "statusMsgLite": self.statusMsg_lite[self.codeHead],  # 状态信息(短版)
         }
 
     @property
+    def defaultFormatTitle(self):
+        return self.formatMsg("『用户签到情况({statusMsgLite})[{scriptVersion}]』")
+
+    @property
+    def defaultFormatMsg(self):
+        return self.formatMsg("[{remarkName}|{username}]({attempts})\n>>{msg}")
+
+    @ property
     def sendMsg(self):
         '''
         任务绑定的消息发送类
@@ -191,7 +211,23 @@ class SignTask:
         '''
         return SendMessage(self.config.get('sendMessage'))
 
-    @staticmethod
+    @ property
+    def uuid(self):
+        '''
+        根据用户名和学校给每个用户分配一个uuid。
+        用于一个用户有多个任务时, 登录状态的Sesssion复用。
+        '''
+        return HSF.strHash(self.config.get('schoolName', '') + self.config.get('username', ''), 256)
+
+    @ property
+    def codeHead(self):
+        return int(self.code/100)
+
+    @ property
+    def msgEn(self):
+        return SignTask.statusMsg_lite[self.codeHead]
+
+    @ staticmethod
     def cleanSession(uuid=None):
         '''
         清理用户Session, 如果uuid为空, 则清理全部Session; 否则清理对应uuid的Session。
@@ -201,26 +237,10 @@ class SignTask:
         else:
             SignTask.userSessions.pop(uuid, None)
 
-    @property
-    def uuid(self):
-        '''
-        根据用户名和学校给每个用户分配一个uuid。
-        用于一个用户有多个任务时, 登录状态的Sesssion复用。
-        '''
-        HSF.strHash(self.config.get('schoolName', '') +
-                    self.config.get('username', ''), 256)
-
-    @property
-    def codeHead(self):
-        return int(self.code/100)
-
-    @property
-    def msgEn(self):
-        return SignTask.statusMsg_en[self.codeHead()]
-
 
 class MainHandler:
-    msgOut: FileOut = sys.stdout
+    msgOut: FileOut = FileOut()
+    msgOut.start()
 
     def __init__(self, entranceType: str, event: dict = {}, context: dict = {}):
         '''
@@ -232,7 +252,7 @@ class MainHandler:
         self.context: dict = context
 
         self.config: dict = self.loadConfig()
-        self.msgOut = self._setMsgOut()
+        self._setMsgOut()
         self._maxTry = self.config['maxTry']
         self.taskList = [SignTask(u, self._maxTry)
                          for u in self.config['users']]
@@ -241,31 +261,32 @@ class MainHandler:
         '''
         执行签到任务
         '''
-        LL.log(1, "==========脚本开始执行==========")
-        # 开始签到
-        # 自动重试
+        LL.log(1, "任务开始执行")
         maxTry = self._maxTry
         for tryTimes in range(1, maxTry+1):
+            '''自动重试'''
             LL.log(1, '正在进行第%d轮尝试' % tryTimes)
-            SignTask.cleanSession()
-            # 遍历用户
             for task in self.taskList:
+                '''遍历执行任务'''
                 # 用户间随机延迟
                 RT.randomSleep(self.config['delay'])
                 # 执行
                 task.execute()
                 # 清理无用session
                 self.cleanSession(task.uuid)
+            # 清理session池
+            SignTask.cleanSession()
+
         # 签到情况推送
-        LL.log(1, self.msg_g1)
-        sm = SendMessage(self.config.get('sendMessage'))
-        sm.send(msg=self.msg_g1+'\n'+LL.getLog(4), title=self.title_g1, attachments=[(self.msgOut.log.encode(encoding='utf-8'),
-                                                                                      TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
+        LL.log(1, self.defaultFormatTitle + "\n" + self.defaultFormatMsg)
+        sm = self.sendMsg
+        sm.send(msg=self.defaultFormatMsg, title=self.defaultFormatTitle, attachments=[(self.msgOut.log.encode(encoding='utf-8'),
+                                                                                        TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
         LL.log(1, '全局推送情况', sm.log_str)
 
     def cleanSession(self, uuid: str):
         '''
-        登录状态内存释放: 如果同用户还有没有待执行的任务, 则删除session
+        登录状态内存释放: 如果同用户还有没有未执行的任务, 则删除session
         '''
         for i in self.taskList:
             if i.code == 0 and i.uuid == uuid:
@@ -280,17 +301,12 @@ class MainHandler:
         '''
         logDir = self.config.get('logDir')
         if type(logDir) == str and self.entrance == "__main__":
-            try:
-                logDir = os.path.join(logDir, TT.formatStartTime(
-                    "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
-                msgOut = FileOut(logDir)
-            except Exception() as e:
-                LL.log(2, f"日志文件输出启用失败, 错误信息: [{e}]")
-                msgOut = FileOut(None)
+            logDir = os.path.join(logDir, TT.formatStartTime(
+                "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
+            self.msgOut.setFileOut(logDir)
+            return
         else:
-            msgOut = FileOut(None)
-        msgOut.start()
-        return msgOut
+            return
 
     def loadConfig(self):
         '''
@@ -355,62 +371,45 @@ class MainHandler:
                     user['lon'], user['lat'], config['locationOffsetRange'])
         return config
 
-    @property
-    def title_g1(self):
-        """
-        全局标题1
-        示例: 『全局签到情况(114/514)[V-T1.0.0]』
-        """
-        codeCount = self.codeCount
-        # generalSituations —— "done/(total-skip)"
-        generalSituations = f'{codeCount[1]}/{sum(codeCount)-codeCount[2]}'
-        return f"『全局签到情况({generalSituations})[{LL.prefix}]』"
+    def formatMsg(self, pattern: str = ""):
+        return ST.stringFormating(pattern, self.webhook)
 
     @property
-    def time_g1(self):
-        """
-        时间统计1
-        示例: Running at 2022-01-01 00:00:00, using 1145.14s
-        """
-        return f'Running at {TT.formatStartTime()}, using {TT.executionSeconds()}s'
+    def webhook(self):
+        codecount = self.codeCount
+        return {
+            "taskcount_all": sum(codecount),
+            "taskcount_todo": codecount[0],
+            "taskcount_done": codecount[1],
+            "taskcount_skip": codecount[2],
+            "taskcount_error": codecount[3],
+            "taskcount_notFound": codecount[4],
+            "taskcount_executed": sum(codecount) - codecount[2],  # 没有被跳过的任务
+
+            "scriptVersion": LL.prefix,  # 脚本版本
+            "runTime": TT.formatStartTime(),
+            "usedTime": TT.executionSeconds(),
+
+            "taskWebhook": [i.webhook for i in self.taskList],
+        }
 
     @property
-    def count_g1(self):
-        """
-        签到情况统计1
-        示例: 10: 1todo, 8done, 1skip, 0error, 0notFound
-        """
-        codeCount = self.codeCount
-        cl = SignTask.statusMsg_en
-        return f'{sum(codeCount)}: ' + ", ".join([f"{codeCount[i]}{cl[i]}" for i in range(SignTask.codeHeadCounts)])
+    def defaultFormatTitle(self):
+        return self.formatMsg("『全局签到情况({taskcount_done}/{taskcount_executed})[{scriptVersion}]』")
 
     @property
-    def msg_g1(self):
-        """
-        全局签到情况1
-        示例: 
-        『全局签到情况(1/2)[V-T1.0.0]』
-        [小李]
-        --1145141919|1
-        --初始化类失败，请键入完整的参数（用户名，密码，学校名称）
-        [小王]
-        --1145141919|1
-        --[SUCCESS]须弥教令院每日打卡
-        Running at 2022-01-01 00:00:00, using 1145.14s
-        2: 0todo, 1done, 0skip, 1error, 0notFound
-        """
-        msg = ""
-        msg += self.title_g1
-        for task in self.taskList:
-            # 忽略跳过的任务
-            if task.codeHead != 2:
-                msg += ("\n" + f"[{task.config['remarkName']}]")
-                msg += ("\n" + task.msg)
-        msg += ("\n" + self.time_g1)
-        msg += ("\n" + self.count_g1)
-        return msg
+    def defaultFormatMsg(self):
+        userMsg = []
+        for i in self.taskList:
+            if i.codeHead != 2:
+                userMsg.append(i.defaultFormatMsg)
+        return self.formatMsg("\n".join([
+            "\n".join(userMsg),
+            "运行于{runTime}, 用时{usedTime}秒",
+            "{taskcount_all}任务| {taskcount_todo}待命, {taskcount_done}完成, {taskcount_skip}跳过, {taskcount_error}错误, {taskcount_notFound}缺失"
+        ]))
 
-    @property
+    @ property
     def codeCount(self):
         """状态码统计"""
         codeList = [i.codeHead for i in self.taskList]
@@ -418,3 +417,11 @@ class MainHandler:
         for i in codeList:
             codeCount[i] += 1
         return codeCount
+
+    @ property
+    def sendMsg(self):
+        '''
+        全局绑定的消息发送类
+        :returns SendMessage
+        '''
+        return SendMessage(self.config.get('sendMessage'))
