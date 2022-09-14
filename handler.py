@@ -1,7 +1,7 @@
 import random
 import traceback
 import os
-import sys
+
 
 from liteTools import FileOut, LL, TT, DT, HSF, ST, RT, ProxyGet, TaskError
 from actions.teacherSign import teacherSign
@@ -11,6 +11,24 @@ from actions.collection import Collection
 from actions.autoSign import AutoSign
 from actions.sendMessage import SendMessage
 from todayLoginService import TodayLoginService
+
+
+class Webhook:
+    '''Webhook接口, 用于触发用户自定义函数(userDefined.py)'''
+    try:
+        from userDefined import index as udIndex
+    except Exception as e:
+        LL.log(2, "用户自定义函数导入失败")
+
+    @staticmethod
+    def trigger(event, context):
+        '''触发用户自定义函数'''
+        LL.log(2, f"收到事件「{event['msg']}」, 尝试触发用户自定义函数")
+        try:
+            Webhook.udIndex(event, context)
+        except Exception as e:
+            LL.log(2, f"用户自定义函数执行出错, 错误信息[{e}]")
+        LL.log(2, "用户自定义函数执行完毕")
 
 
 class SignTask:
@@ -66,8 +84,8 @@ class SignTask:
 
         # 执行签到
         try:
-            # 登录
-            self._login()
+            # 执行前准备
+            self._beforeExecute()
             # 执行签到任务
             self._execute()
         except TaskError as e:
@@ -111,6 +129,17 @@ class SignTask:
         self.session = uSession
         self.host = uHost
         return
+
+    def _beforeExecute(self):
+        '''
+        执行前准备工作
+        '''
+        # 用户自定义函数触发
+        Webhook.trigger({"msg": f"『{self.username}』个人任务即将执行",
+                        "from": "task start"}, self.webhook)
+
+        # 登录
+        self._login()
 
     def _execute(self):
         '''任务执行函数'''
@@ -167,15 +196,17 @@ class SignTask:
         '''
         执行后收尾工作
         '''
-        # 如果执行出错需要重试, 则跳过收尾工作
-        if self.codeHead == 0 and self.maxTry != self.attempts:
-            return
-
-        # 消息推送
         LL.log(1, self.defaultFormatTitle + "\n" + self.defaultFormatMsg)
-        sm = self.sendMsg
-        sm.send(self.defaultFormatMsg, self.defaultFormatTitle)
-        LL.log(1, f"『{self.username}』用户推送情况", sm.log_str)
+
+        # 消息推送(当本任务最后一次执行时)
+        if self.codeHead != 0 or self.maxTry == self.attempts:
+            sm = self.sendMsg
+            sm.send(self.defaultFormatMsg, self.defaultFormatTitle)
+            LL.log(1, f"『{self.username}』用户推送情况", sm.log_str)
+
+        # 用户自定义函数触发
+        Webhook.trigger({"msg": f"『{self.username}』个人任务执行完成",
+                        "from": "task end"}, self.webhook)
 
     @ property
     def webhook(self):
@@ -235,9 +266,6 @@ class SignTask:
 
 
 class MainHandler:
-    msgOut: FileOut = FileOut()
-    msgOut.start()
-
     def __init__(self, entranceType: str, event: dict = {}, context: dict = {}):
         '''
         初始化
@@ -247,7 +275,7 @@ class MainHandler:
         self.event: dict = event
         self.context: dict = context
 
-        self.config: dict = self._loadConfig()
+        self.config: dict = self.loadConfig()
         self._setMsgOut()
         self._maxTry = self.config['maxTry']
         self.taskList = [SignTask(u, self._maxTry)
@@ -257,6 +285,9 @@ class MainHandler:
         '''
         执行签到任务
         '''
+        # 用户自定义函数触发
+        Webhook.trigger({"msg": f"任务序列即将执行",
+                        "from": "global start"}, self.webhook)
         LL.log(1, "任务开始执行")
         maxTry = self._maxTry
         for tryTimes in range(1, maxTry+1):
@@ -276,9 +307,13 @@ class MainHandler:
         # 签到情况推送
         LL.log(1, self.defaultFormatTitle + "\n" + self.defaultFormatMsg)
         sm = self.sendMsg
-        sm.send(msg=self.defaultFormatMsg, title=self.defaultFormatTitle, attachments=[(self.msgOut.log.encode(encoding='utf-8'),
+        sm.send(msg=self.defaultFormatMsg, title=self.defaultFormatTitle, attachments=[(LL.msgOut.log.encode(encoding='utf-8'),
                                                                                         TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
         LL.log(1, '全局推送情况', sm.log_str)
+        # 用户自定义函数触发
+        Webhook.trigger({"msg": f"任务序列即将执行",
+                        "from": "global end"}, self.webhook)
+        LL.log(1, "==========函数执行完毕==========")
 
     def formatMsg(self, pattern: str = ""):
         return ST.stringFormating(pattern, self.webhook)
@@ -302,12 +337,12 @@ class MainHandler:
         if type(logDir) == str and self.entrance == "__main__":
             logDir = os.path.join(logDir, TT.formatStartTime(
                 "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
-            self.msgOut.setFileOut(logDir)
+            LL.msgOut.setFileOut(logDir)
             return
         else:
             return
 
-    def _loadConfig(self):
+    def loadConfig(self):
         '''
         配置文件载入
         :returns config: dict

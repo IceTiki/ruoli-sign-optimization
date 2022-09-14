@@ -39,7 +39,6 @@ except OSError as e:
     raise OSError(f"""!!!!!!!!!!!!!!Crypto模块版本错误!!!!!!!!!!!!!!
 请不要将linux系统(比如云函数)和windows系统的依赖混用
 错误信息: [{e}]""")
-
 # ==========检查代码完整性==========
 try:
     for i in ("todayLoginService", "actions/autoSign", "actions/collection", "actions/sleepCheck", "actions/workLog", "actions/sendMessage", "actions/teacherSign", "login/Utils", "login/casLogin", "login/iapLogin", "login/RSALogin", "liteTools", "handler"):
@@ -52,6 +51,14 @@ except ImportError as e:
 # 导入脚本的其他部分(不使用结构时, 格式化代码会将import挪至最上)
 if True:
     from handler import MainHandler
+    from liteTools import LL
+    import checkRepositoryVersion
+# 检查代码文件是否被修改
+diff = checkRepositoryVersion.checkCodeDifference()
+if diff:
+    LL.log(1, "以下代码文件相比发布版本有变动: \n" + "\n".join(diff))
+else:
+    LL.log(1, "一切代码文件保持初始状态")
 # ====================完成导入模块====================
 
 

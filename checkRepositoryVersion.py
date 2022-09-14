@@ -3,13 +3,10 @@ import os
 
 
 class VersionInfo:
-    codeVersion = "V-T3.9.2c"
-    # 代码文件列表
-    codeList = ("todayLoginService.py", "actions/autoSign.py", "actions/collection.py", "actions/sleepCheck.py", "actions/workLog.py",
-                "actions/sendMessage.py", "actions/teacherSign.py", "login/Utils.py", "login/casLogin.py", "login/iapLogin.py", "login/RSALogin.py", "index.py", 'liteTools.py', 'handler.py')
+    codeVersion = "V-T3.10.0a"
     # 代码文件哈希列表
-    codeStandardHashDict = {'todayLoginService.py': '9ea1028525927b881f3c69fd95007e348074b34493c1537b94c8ef007380fac1', 'actions/autoSign.py': '7fd80ef6fbbc102a761e1d67bb459b42f33b151b47f939083d1ef4c9549702ac', 'actions/collection.py': 'd0117675819a45dd4e2254b3648eecb8ea1f058c244526f04bb81ae6ad874f81', 'actions/sleepCheck.py': 'e239ae660aad52de05f0bea7342399e39ab2a8b8e0ea40053330f9b5b860a63e', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': 'e4fb8a1d717cbd54ddf4d539fb2d37e119151e64e306d5b1df30ec1def127ce7', 'actions/teacherSign.py': '6f7e76556a41be709d639e078c3dee2527c15cc860181d33d030085b60f85f95',
-                            'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': 'c47acea61c3675e24ed5fda36a4e5a2f0f807307078a1318221b354d7358d910', 'liteTools.py': 'bc10ea8bc9043b31104e97815a0e8fb531b8885fbd51d53dda7697850c2807ae', 'handler.py': '62bbd4edf85855e65f5eff8fd6146abe2b86ef8c36cfe829debeaa32982d0f64'}
+    codeStandardHashDict = {'todayLoginService.py': '9ea1028525927b881f3c69fd95007e348074b34493c1537b94c8ef007380fac1', 'actions/autoSign.py': '7fd80ef6fbbc102a761e1d67bb459b42f33b151b47f939083d1ef4c9549702ac', 'actions/collection.py': 'd0117675819a45dd4e2254b3648eecb8ea1f058c244526f04bb81ae6ad874f81', 'actions/sleepCheck.py': 'e239ae660aad52de05f0bea7342399e39ab2a8b8e0ea40053330f9b5b860a63e', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': 'bc33d0714513200c9b073cbd0e23b46fc033255d7d55860e705a847523493646', 'actions/teacherSign.py': '6f7e76556a41be709d639e078c3dee2527c15cc860181d33d030085b60f85f95',
+                            'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': '898835f8582604c785a3b63f6b2e9a1d6c97ebf56da233992581d17357806051', 'liteTools.py': 'b4f6d8ec2a917426130161f9327bedf4034039b65751c7169f203632ea757ed5', 'handler.py': 'af8b97a929e68ebb9dfd11d9d32433d40fb891f657f7a6e8d9b46ba245ad9e11', 'userDefined.py': 'e9b1f8e3c8a31fbeed9f67ee8860dfb86b5ae1b156dc514b2062a3dabd2fe893'}
 
 
 class HSF:
@@ -88,21 +85,41 @@ class HSF:
         return hashObj.hexdigest()
 
 
-def checkCodeVersion(outputCodeHash=False):
+def checkCodeDifference():
+    '''检查与预设哈希列表不相符的代码文件'''
+    difference = []
+    for k, v in VersionInfo.codeStandardHashDict.items():
+        try:
+            sha = HSF.fileHash(k, 256)
+        except Exception as e:
+            sha = e
+        if sha != v:
+            difference.append(k)
+    return difference
+
+
+def getCodeVersion(printOutput=False):
     '''检查代码文件哈希是否与预设的哈希一致'''
-    codeHash = {}
-    # 计算代码文件哈希
-    for i in VersionInfo.codeList:
-        codeHash[i] = HSF.fileHash(i, 256)
-    if codeHash == VersionInfo.codeStandardHashDict:
-        VersionNumber = VersionInfo.codeVersion
+    difference = checkCodeDifference()
+    if len(difference) == 0:
+        '''未修改'''
+        versionNumber = VersionInfo.codeVersion
+    elif difference == ["userDefined.py"]:
+        '''修改用户自定义函数'''
+        versionNumber = VersionInfo.codeVersion+'-u'
     else:
-        VersionNumber = VersionInfo.codeVersion+'-?'
-    if outputCodeHash:
-        print(VersionNumber)
-        print(codeHash)
-    return VersionNumber
+        '''有其他未知修改'''
+        versionNumber = VersionInfo.codeVersion+'-?'
+
+    if printOutput:
+        codeHash = {i: HSF.fileHash(i, 256)
+                    for i in VersionInfo.codeStandardHashDict.keys()}
+        print("==========VersionNumber==========\n" + str(versionNumber))
+        print("==========Difference==========\n" + "\n".join(difference))
+        print("==========CodeHash==========\n" + str(codeHash))
+        print("=========================")
+    return versionNumber
 
 
 if __name__ == '__main__':
-    checkCodeVersion(True)
+    getCodeVersion(True)

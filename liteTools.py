@@ -215,11 +215,13 @@ class TT:
 
 class LL:
     '''lite log'''
-    prefix = checkRepositoryVersion.checkCodeVersion()
+    prefix = checkRepositoryVersion.getCodeVersion()
     startTime = TT.startTime
     log_list = []
     printLevel = 0
     logTypeDisplay = ['debug', 'info', 'warn', 'error', 'critical']
+    msgOut: FileOut = FileOut()
+    msgOut.start()
 
     @staticmethod
     def formatLog(logType: str, args):
