@@ -49,8 +49,9 @@ class TodayLoginService:
             if item['name'] == self.schoolName:
                 if item['joinType'] == 'NONE':
                     raise TaskError(self.schoolName + '未加入今日校园，请检查...', 301)
-                elif item['joinType'] == 'NOTCLOUD':
-                    LL.log(1, "学校接入今日校园方式为NOTCLOUD")
+                else:
+                    LL.log(
+                        1, f"「{self.schoolName}」接入今日校园方式为「{item['joinType']}」")
                 flag = False
                 params = {
                     'ids': item['id']
@@ -83,6 +84,7 @@ class TodayLoginService:
 
     # 通过登陆url判断采用哪种登陆方式
     def checkLogin(self):
+        LL.log(1, f"学校的教务系统登录地址为「{self.login_url}」")
         if self.login_url.find('/iap') != -1:
             self.loginEntity = iapLogin(
                 self.username, self.password, self.login_url, self.login_host, self.session)

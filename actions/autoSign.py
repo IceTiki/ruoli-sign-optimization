@@ -1,18 +1,20 @@
 import json
 import re
 
-from requests_toolbelt import MultipartEncoder
-
-from todayLoginService import TodayLoginService
-from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
+from liteTools import LL, DT, RT, MT, SuperString, TaskError, CpdailyTools
 
 
 class AutoSign:
     # 初始化签到类
-    def __init__(self, userInfo, userSession, userHost):
-        self.session = userSession
-        self.host = userHost
-        self.userInfo = userInfo
+    def __init__(self, signTask_):
+        '''
+        :params signTask_: handler.SignTask类
+        '''
+        self.signTask_ = signTask_
+        self.userInfo = signTask_.config
+        self.session = signTask_.session
+        self.host = signTask_.host
+
         self.taskInfo = None
         self.task = None
         self.form = {}
@@ -315,7 +317,7 @@ class AutoSign:
         LL.log(1, '提交后返回的信息', res['message'])
         # 检查签到情况
         if self.getDetailTask()['signTime']:
-            self.userInfo['taskStatus'].code = 101
+            self.signTask_.code = 101
         else:
             raise TaskError(f'提交表单返回『{res}』但任务状态仍是未签到', 300, self.taskName)
         return '[%s]%s' % (res['message'], self.taskName)

@@ -1,18 +1,20 @@
 import json
 import re
-import os
-from requests_toolbelt import MultipartEncoder
 
-from todayLoginService import TodayLoginService
-from liteTools import LL, DT, RT, MT, ST, SuperString, TaskError, CpdailyTools
+from liteTools import LL, DT, RT, SuperString, TaskError, CpdailyTools
 
 
 class Collection:
     # 初始化信息收集类
-    def __init__(self, userInfo, userSession, userHost):
-        self.session = userSession
-        self.host = userHost
-        self.userInfo = userInfo
+    def __init__(self, signTask_):
+        '''
+        :params signTask_: handler.SignTask类
+        '''
+        self.signTask_ = signTask_
+        self.userInfo = signTask_.config
+        self.session = signTask_.session
+        self.host = signTask_.host
+
         self.task = None
         self.wid = None
         self.formWid = None
@@ -454,7 +456,7 @@ class Collection:
             url, headers=headers, data=json.dumps(params), verify=False)
         res = DT.resJsonEncode(res)
         if res['datas']['collector']['isUserSubmit'] == 1:
-            self.userInfo['taskStatus'].code = 101
+            self.signTask_.code = 101
         else:
             raise TaskError(f'提交表单返回『{data}』且任务状态仍是未签到', 300, self.taskName)
         return '[%s]%s' % (data['message'], self.taskName)

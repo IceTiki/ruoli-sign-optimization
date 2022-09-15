@@ -76,10 +76,10 @@ class SignTask:
         '''
         任务执行函数(含异常处理、重试次数等)
         '''
-        self.attempts += 1
         # 检查是否已经完成该任务
         if not self.codeHead == 0:
             return
+        self.attempts += 1
         LL.log(1, '即将在第%d轮尝试中为[%s]签到' % (self.attempts, self.username))
 
         # 执行签到
@@ -143,33 +143,33 @@ class SignTask:
 
     def _execute(self):
         '''任务执行函数'''
-        user = self.config
+        type_ = self.config.get('type', None)
         # 通过type判断当前属于 信息收集、签到、查寝
         # 信息收集
-        if user['type'] == 0:
+        if type_ == 0:
             # 以下代码是信息收集的代码
             LL.log(1, '即将开始信息收集填报')
-            collection = Collection(user, self.session, self.host)
+            collection = Collection(self)
             collection.queryForm()
             collection.fillForm()
             msg = collection.submitForm()
-        elif user['type'] == 1:
+        elif type_ == 1:
             # 以下代码是签到的代码
             LL.log(1, '即将开始签到')
-            sign = AutoSign(user, self.session, self.host)
+            sign = AutoSign(self)
             sign.getUnSignTask()
             sign.getDetailTask()
             sign.fillForm()
             msg = sign.submitForm()
-        elif user['type'] == 2:
+        elif type_ == 2:
             # 以下代码是查寝的代码
             LL.log(1, '即将开始查寝填报')
-            check = sleepCheck(user, self.session, self.host)
+            check = sleepCheck(self)
             check.getUnSignedTasks()
             check.getDetailTask()
             check.fillForm()
             msg = check.submitForm()
-        elif user['type'] == 3:
+        elif type_ == 3:
             # 以下代码是工作日志的代码
             raise TaskError('工作日志模块已失效')
             LL.log(1, '即将开始工作日志填报')
@@ -178,10 +178,10 @@ class SignTask:
             work.getFormsByWids()
             work.fillForms()
             msg = work.submitForms()
-        elif user['type'] == 4:
+        elif type_ == 4:
             # 以下代码是政工签到的代码
             LL.log(1, '即将开始政工签到填报')
-            check = teacherSign(user, self.session, self.host)
+            check = teacherSign(self)
             check.getUnSignedTasks()
             check.getDetailTask()
             check.fillForm()
