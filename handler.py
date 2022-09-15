@@ -38,7 +38,7 @@ class SignTask:
         0: '待命',
         1: '完成',
         2: '跳过',
-        3: '错误',
+        3: '出错',
         4: '缺失',
     }
     statusMsg = {
@@ -135,8 +135,11 @@ class SignTask:
         执行前准备工作
         '''
         # 用户自定义函数触发
-        Webhook.trigger({"msg": f"『{self.username}』个人任务即将执行",
-                        "from": "task start"}, self.webhook)
+        event = {
+            "msg": f"『{self.username}』个人任务即将执行",  # 触发消息
+            "from": "task start"  # 触发位置
+        }
+        Webhook.trigger(event, self.webhook)
 
         # 登录
         self._login()
@@ -205,8 +208,11 @@ class SignTask:
             LL.log(1, f"『{self.username}』用户推送情况", sm.log_str)
 
         # 用户自定义函数触发
-        Webhook.trigger({"msg": f"『{self.username}』个人任务执行完成",
-                        "from": "task end"}, self.webhook)
+        event = {
+            "msg": f"『{self.username}』个人任务执行完成",  # 触发消息
+            "from": "task end"  # 触发位置
+        }
+        Webhook.trigger(event, self.webhook)
 
     @ property
     def webhook(self):
@@ -286,8 +292,11 @@ class MainHandler:
         执行签到任务
         '''
         # 用户自定义函数触发
-        Webhook.trigger({"msg": f"任务序列即将执行",
-                        "from": "global start"}, self.webhook)
+        event = {
+            "msg": f"任务序列即将执行",  # 触发消息
+            "from": "global start"  # 触发位置
+        }
+        Webhook.trigger(event, self.webhook)
         LL.log(1, "任务开始执行")
         maxTry = self._maxTry
         for tryTimes in range(1, maxTry+1):
@@ -311,8 +320,11 @@ class MainHandler:
                                                                                         TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))])
         LL.log(1, '全局推送情况', sm.log_str)
         # 用户自定义函数触发
-        Webhook.trigger({"msg": f"任务序列即将执行",
-                        "from": "global end"}, self.webhook)
+        event = {
+            "msg": f"任务序列执行完毕",  # 触发消息
+            "from": "global end"  # 触发位置
+        }
+        Webhook.trigger(event, self.webhook)
         LL.log(1, "==========函数执行完毕==========")
 
     def formatMsg(self, pattern: str = ""):
@@ -409,18 +421,20 @@ class MainHandler:
     def webhook(self):
         codecount = self.codeCount
         return {
-            "taskcount_all": sum(codecount),
-            "taskcount_todo": codecount[0],
-            "taskcount_done": codecount[1],
-            "taskcount_skip": codecount[2],
-            "taskcount_error": codecount[3],
-            "taskcount_notFound": codecount[4],
-            "taskcount_executed": sum(codecount) - codecount[2],  # 没有被跳过的任务
+            "taskcount_all": sum(codecount),  # 全部任务数
+            "taskcount_todo": codecount[0],  # 待命任务数
+            "taskcount_done": codecount[1],  # 完成任务数
+            "taskcount_skip": codecount[2],  # 跳过任务数
+            "taskcount_error": codecount[3],  # 出错任务数
+            "taskcount_notFound": codecount[4],  # 缺失任务数(没有找到相关任务)
+            # 被执行任务数(没有被跳过的任务)
+            "taskcount_executed": sum(codecount) - codecount[2],
 
             "scriptVersion": LL.prefix,  # 脚本版本
-            "runTime": TT.formatStartTime(),
-            "usedTime": TT.executionSeconds(),
+            "runTime": TT.formatStartTime(),  # 脚本启动时间(%Y-%m-%d %H:%M:%S格式)
+            "usedTime": TT.executionSeconds(),  # 运行消耗时间(浮点数, 单位:秒)
 
+            # 一个列表, 包含所有任务的webhook参数
             "taskWebhook": [i.webhook for i in self.taskList],
         }
 

@@ -3,10 +3,10 @@ import os
 
 
 class VersionInfo:
-    codeVersion = "V-T3.10.0b"
+    codeVersion = "V-T3.10.0c"
     # 代码文件哈希列表
     codeStandardHashDict = {'todayLoginService.py': '84948a1a3fd1a0b69d780a7c1feb508075fafa55a3f1a30ad09cbab11caf5a71', 'actions/autoSign.py': '423bed733db6bc6f119b7ffef7fe313f002fed2fd2172c3e4eabe6601b94f975', 'actions/collection.py': '2177a14a75026fa454ab1a328e922901c2588dde2f7f803dc2955d3009eec09c', 'actions/sleepCheck.py': '59b5e28894a3ad3fcc160e3198d0b63cd9a1842f59b6df3ebec22d6d5bac12d8', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': 'bc33d0714513200c9b073cbd0e23b46fc033255d7d55860e705a847523493646', 'actions/teacherSign.py': 'b40f756c049d537290ba864c9909fe92a3918ff1584e2d4d47cbd5236b3705d1',
-                            'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': '54ee7bddb32de87684a7f3d70ef316c7c2171e0a5e322fdfbdfc20327da63747', 'liteTools.py': 'b4f6d8ec2a917426130161f9327bedf4034039b65751c7169f203632ea757ed5', 'handler.py': '0e7a45248beef6828582de6d26e9c731b1d6ecdab6d03729bf09690d53d25b32', 'userDefined.py': 'e9b1f8e3c8a31fbeed9f67ee8860dfb86b5ae1b156dc514b2062a3dabd2fe893'}
+                            'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': '54ee7bddb32de87684a7f3d70ef316c7c2171e0a5e322fdfbdfc20327da63747', 'liteTools.py': 'b4f6d8ec2a917426130161f9327bedf4034039b65751c7169f203632ea757ed5', 'handler.py': '920ad81176235b432f1a0d53146d4b1cea726925a74622fd6e5ed98a64075ab9', 'userDefined.py': 'e9b1f8e3c8a31fbeed9f67ee8860dfb86b5ae1b156dc514b2062a3dabd2fe893'}
 
 
 class HSF:
