@@ -3,7 +3,7 @@ import traceback
 import os
 
 
-from liteTools import FileOut, LL, TT, DT, HSF, ST, RT, ProxyGet, TaskError
+from liteTools import UserDefined, LL, TT, DT, HSF, ST, RT, ProxyGet, TaskError
 from actions.teacherSign import teacherSign
 from actions.workLog import workLog
 from actions.sleepCheck import sleepCheck
@@ -11,24 +11,6 @@ from actions.collection import Collection
 from actions.autoSign import AutoSign
 from actions.sendMessage import SendMessage
 from todayLoginService import TodayLoginService
-
-
-class Webhook:
-    '''Webhook接口, 用于触发用户自定义函数(userDefined.py)'''
-    try:
-        from userDefined import index as udIndex
-    except Exception as e:
-        LL.log(2, "用户自定义函数导入失败")
-
-    @staticmethod
-    def trigger(event, context):
-        '''触发用户自定义函数'''
-        LL.log(2, f"收到事件「{event['msg']}」, 尝试触发用户自定义函数")
-        try:
-            Webhook.udIndex(event, context)
-        except Exception as e:
-            LL.log(2, f"用户自定义函数执行出错, 错误信息[{e}]")
-        LL.log(2, "用户自定义函数执行完毕")
 
 
 class SignTask:
@@ -140,9 +122,10 @@ class SignTask:
         # 用户自定义函数触发
         event = {
             "msg": f"『{self.username}』个人任务即将执行",  # 触发消息
-            "from": "task start"  # 触发位置
+            "from": "task start",  # 触发位置
+            "code": 200,
         }
-        Webhook.trigger(event, self.webhook)
+        UserDefined.trigger(event, self.webhook)
 
         # 登录
         self._login()
@@ -213,9 +196,10 @@ class SignTask:
         # 用户自定义函数触发
         event = {
             "msg": f"『{self.username}』个人任务执行完成",  # 触发消息
-            "from": "task end"  # 触发位置
+            "from": "task end",  # 触发位置
+            "code": 201,
         }
-        Webhook.trigger(event, self.webhook)
+        UserDefined.trigger(event, self.webhook)
 
     @ property
     def webhook(self):
@@ -297,9 +281,10 @@ class MainHandler:
         # 用户自定义函数触发
         event = {
             "msg": f"任务序列即将执行",  # 触发消息
-            "from": "global start"  # 触发位置
+            "from": "global start",  # 触发位置
+            "code": 100,
         }
-        Webhook.trigger(event, self.webhook)
+        UserDefined.trigger(event, self.webhook)
         LL.log(1, "任务开始执行")
         maxTry = self._maxTry
         for tryTimes in range(1, maxTry+1):
@@ -323,9 +308,10 @@ class MainHandler:
         # 用户自定义函数触发
         event = {
             "msg": f"任务序列执行完毕",  # 触发消息
-            "from": "global end"  # 触发位置
+            "from": "global end",  # 触发位置
+            "code": 101,
         }
-        Webhook.trigger(event, self.webhook)
+        UserDefined.trigger(event, self.webhook)
         LL.log(1, "==========函数执行完毕==========")
 
     def formatMsg(self, pattern: str = ""):

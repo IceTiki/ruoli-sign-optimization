@@ -36,7 +36,7 @@ class workLog:
         res = self.session.post(url, data=json.dumps(params), verify=False)
         if res.status_code == 404:
             raise Exception('您没有任何工作日志任务，请检查自己的任务类型！')
-        res = DT.resJsonEncode(res)
+        res = res.json()
         self.collectWid = res['datas']['rows'][0]['wid']
         url = f'{self.host}wec-counselor-worklog-apps/worklog/list'
         params = {
@@ -46,7 +46,7 @@ class workLog:
         }
         res = self.session.post(
             url, data=json.dumps(params), verify=False)
-        res = DT.resJsonEncode(res)
+        res = res.json()
         for item in res['datas']['rows']:
             if item['status'] == 0:
                 self.formWids.append(item['wid'])
@@ -63,7 +63,7 @@ class workLog:
             }
             res = self.session.post(
                 url, data=json.dumps(params), verify=False)
-            res = DT.resJsonEncode(res)
+            res = res.json()
             self.forms.append(res['datas']['form'])
 
     # 填充表单
@@ -143,7 +143,7 @@ class workLog:
         }
         res = self.session.post(url, data=json.dumps(
             params), headers=headers, verify=False)
-        res = DT.resJsonEncode(res)
+        res = res.json()
         if res['message'] == 'SUCCESS':
             url = f'{self.host}wec-counselor-worklog-apps/worklog/detail'
             params = {
@@ -151,7 +151,7 @@ class workLog:
             }
             res = self.session.post(
                 url, data=json.dumps(params), verify=False)
-            res = DT.resJsonEncode(res)
+            res = res.json()
             form = res['datas']['form']
             return form
         else:
@@ -170,7 +170,7 @@ class workLog:
             }
             res = self.session.post(f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params),
                                     verify=False)
-            res = DT.resJsonEncode(res)
+            res = res.json()
             result.append(res['message'])
         return str(result)
 
@@ -182,7 +182,7 @@ class workLog:
         }
         res = self.session.post(f'{self.host}wec-counselor-worklog-apps/worklog/template/detail',
                                 data=json.dumps(params), verify=False)
-        res = DT.resJsonEncode(res)
+        res = res.json()
         formTemplate = res['datas']['content']
         for formItem in formTemplate:
             formItem.pop('fieldItems')
@@ -194,7 +194,7 @@ class workLog:
         }
         res = self.session.post(
             f'{self.host}wec-counselor-worklog-apps/worklog/update', data=json.dumps(params))
-        res = DT.resJsonEncode(res)
+        res = res.json()
         if res['message'] == 'SUCCESS':
             self.formWids.append(res['datas']['wid'])
         else:

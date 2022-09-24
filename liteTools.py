@@ -21,12 +21,29 @@ import datetime
 import checkRepositoryVersion
 
 
+class reqResponse(requests.Response):
+    '''requests.reqResponse的子类'''
+
+    def __init__(self, res: requests.Response):
+        self.__dict__.update(res.__dict__)
+
+    def json(self, *args, **kwargs):
+        '''当解析失败的时候, 会print出响应内容'''
+        try:
+            return super(reqResponse, self).json(*args, **kwargs)
+        except Exception as e:
+            raise Exception(
+                f'响应内容以json格式解析失败({e})，响应内容:\n\n{self.text}')
+
+
 class reqSession(requests.Session):
-    '''requests.Session的子类, 增添了请求的默认超时时间'''
+    '''requests.Session的子类'''
 
     def request(self, *args, **kwargs):
+        '''增添了请求的默认超时时间, 将返回值转换为reqResponse'''
         kwargs.setdefault('timeout', (10, 30))
-        return super(reqSession, self).request(*args, **kwargs)
+        res = super(reqSession, self).request(*args, **kwargs)
+        return reqResponse(res)
 
 
 class FileOut:
@@ -351,7 +368,7 @@ class CpdailyTools:
             "output": "json", "address": address, "ak": baiduMap_ak}
         res = requests.get(
             url, headers=headers, params=params, verify=False)
-        res = DT.resJsonEncode(res)
+        res = res.json()
         lon = res['result']['location']['lng']
         lat = res['result']['location']['lat']
         return (lon, lat)
@@ -370,7 +387,7 @@ class CpdailyTools:
         params = {
             "output": "json", "location": "%f,%f" % (lon, lat), "ak": baiduMap_ak}
         res = requests.get(url, headers=headers, params=params, verify=False)
-        res = DT.resJsonEncode(res)
+        res = res.json()
         address = res['result']['formatted_address']
         return address
 
@@ -379,7 +396,7 @@ class CpdailyTools:
         '''上传图片到阿里云oss'''
         res = session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
                            verify=False)
-        datas = DT.resJsonEncode(res).get('datas')
+        datas = res.json().get('datas')
         fileName = datas.get('fileName')
         policy = datas.get('policy')
         accessKeyId = datas.get('accessid')
@@ -409,6 +426,7 @@ class CpdailyTools:
                            verify=False)
         photoUrl = res.json().get('datas')
         return photoUrl
+
 
 
 class NT:
@@ -647,15 +665,6 @@ class DT:
     def writeYml(item, ymlDir='config.yml'):
         with open(ymlDir, 'w', encoding='utf-8') as f:
             yaml.dump(item, f, allow_unicode=True)
-
-    @staticmethod
-    def resJsonEncode(res):
-        '''响应内容的json解析函数(换而言之，就是res.json()的小优化版本)'''
-        try:
-            return res.json()
-        except Exception as e:
-            raise Exception(
-                f'响应内容以json格式解析失败({e})，响应内容:\n\n{res.text}')
 
     @staticmethod
     def formatStrList(item, returnSuperStr=False):
@@ -960,3 +969,39 @@ class ProxyGet:
                     else:
                         time.sleep(2)  # 熊猫代理最快一秒提取一次IP
                         pass
+
+
+class UserDefined:
+    '''UserDefined接口, 用于触发用户自定义函数(userDefined.py)'''
+    try:
+        from userDefined import index as udIndex
+    except Exception as e:
+        LL.log(2, "用户自定义函数导入失败")
+
+    # trigger()的event参数模板
+    {
+        "msg": "",  # 触发消息
+        "from": "",  # 触发位置
+        "code": 101,  # 事件代码
+    }
+
+    # event里的code含义
+    {
+        100: "全局任务开始",
+        101: "全局任务结束",
+        200: "局部任务开始",
+        201: "局部任务结束",
+    }
+
+    @classmethod
+    def trigger(cla, event: dict, context: dict):
+        '''触发用户自定义函数'''
+        LL.log(
+            2, f"收到事件「{event.get('msg')}({event.get('code')})」, 尝试触发用户自定义函数")
+        try:
+            cla.udIndex(event, context)
+        except Exception as e:
+            LL.log(2, f"用户自定义函数执行出错, 错误信息[{e}]")
+            return False
+        LL.log(2, "用户自定义函数执行完毕")
+        return True

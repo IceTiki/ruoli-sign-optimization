@@ -52,7 +52,7 @@ class Collection:
             # 获取**任务列表**数据
             res = self.session.post(url, headers=headers,
                                     data=json.dumps(pageReq), verify=False)
-            res = DT.resJsonEncode(res)
+            res = res.json()
             LL.log(1, f"获取到的第{pageNumber}页任务列表", res)
             # 在**首页**获取历史信息收集**总数**
             if pageNumber == 1:
@@ -88,7 +88,7 @@ class Collection:
                           "instanceWid": self.instanceWid}
                 res = self.session.post(
                     url, headers=headers, data=json.dumps(params), verify=False)
-                res = DT.resJsonEncode(res)
+                res = res.json()
                 LL.log(1, '查询任务详情返回结果', res['datas'])
                 try:
                     self.schoolTaskWid = res['datas']['collector']['schoolTaskWid']
@@ -101,7 +101,7 @@ class Collection:
                           "formWid": self.formWid, "collectorWid": self.wid, "instanceWid": self.instanceWid}
                 res = self.session.post(
                     url, headers=headers, data=json.dumps(params), verify=False)
-                res = DT.resJsonEncode(res)
+                res = res.json()
                 LL.log(1, '查询任务表单返回结果', res['datas'])
                 self.task = res['datas']['rows']
                 return
@@ -125,7 +125,7 @@ class Collection:
             # 获取**任务列表**数据
             res = self.session.post(url, headers=headers,
                                     data=json.dumps(pageReq), verify=False)
-            res = DT.resJsonEncode(res)
+            res = res.json()
             LL.log(1, f"获取到第{pageNumber}页历史信息收集数据", res)
             # 在**首页**获取历史信息收集**总数**
             if pageNumber == 1:
@@ -154,7 +154,7 @@ class Collection:
                                "collectorWid": historyWid, "instanceWid": historyInstanceWid}
                     res = self.session.post(url, headers=headers, data=json.dumps(formReq),
                                             verify=False)
-                    res = DT.resJsonEncode(res)
+                    res = res.json()
                     # 模拟请求
                     url = f'{self.host}wec-counselor-collector-apps/stu/collector/queryNotice'
                     self.session.post(url, headers=headers,
@@ -454,7 +454,7 @@ class Collection:
                   "instanceWid": self.instanceWid}
         res = self.session.post(
             url, headers=headers, data=json.dumps(params), verify=False)
-        res = DT.resJsonEncode(res)
+        res = res.json()
         if res['datas']['collector']['isUserSubmit'] == 1:
             self.signTask_.code = 101
         else:
