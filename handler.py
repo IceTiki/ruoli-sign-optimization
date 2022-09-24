@@ -134,6 +134,9 @@ class SignTask:
         '''
         执行前准备工作
         '''
+        # 随机延迟
+        RT.randomSleep(self.config['delay'])
+
         # 用户自定义函数触发
         event = {
             "msg": f"『{self.username}』个人任务即将执行",  # 触发消息
@@ -304,8 +307,6 @@ class MainHandler:
             LL.log(1, '正在进行第%d轮尝试' % tryTimes)
             for task in self.taskList:
                 '''遍历执行任务'''
-                # 用户间随机延迟
-                RT.randomSleep(self.config['delay'])
                 # 执行
                 task.execute()
                 # 清理无用session
@@ -397,7 +398,8 @@ class MainHandler:
                 'title': 0,
                 'signLevel': 1,
                 'abnormalReason': "回家",
-                'qrUuid': None
+                'qrUuid': None,
+                'delay': config['delay']
             }
             defaultConfig.update(user)
             user.update(defaultConfig)

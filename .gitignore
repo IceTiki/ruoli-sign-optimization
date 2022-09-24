@@ -3,3 +3,4 @@ __pycache__
 log/
 */__pycache__
 tmp_log.txt
+private/
