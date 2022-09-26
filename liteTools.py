@@ -427,6 +427,73 @@ class CpdailyTools:
         photoUrl = res.json().get('datas')
         return photoUrl
 
+    @staticmethod
+    def handleCaptcha(host: str, session: reqSession, deviceId: str):
+        '''
+        图形验证码处理
+        :returns dict:用于更新表单(self.form)的字典(如果不需要验证码返回{}, 如果需要返回)
+        '''
+        headers = session.headers.copy()
+        # ====================检查验证码====================
+        have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
+        data = {'deviceId': deviceId}
+        headers.update({
+            'CpdailyStandAlone': '0',
+            'extension': '1',
+            'Content-Type': 'application/json; charset=utf-8',
+        })
+        res = session.post(
+            url=have_cap, data=json.dumps(data), headers=headers)
+        res = res.json()
+        haveCap_data = res['datas']
+        LL.log(1, "检查是否需要填写验证码", haveCap_data)
+        if not haveCap_data['validation']:
+            '''如果不需要填写验证码, 则直接返回'''
+            return {}
+
+        # ====================获取验证码====================
+        headers.update({
+            'Content-Type': 'multipart/form-data; boundary=----WebKitFormBoundaryBlRdUZvbYBzP5FaF',
+            'deviceId': deviceId,
+        })
+        url = f"{host}captcha-open-api/v1/captcha/create/scenesImage"
+        data = [
+            ("accountKey", haveCap_data['accountKey']),
+            ("sceneCode", haveCap_data['sceneCode']),
+            ("tenantId", haveCap_data['tenantId']),
+            ("userId", haveCap_data['userId'])
+        ]
+
+        res = session.post(url=url, data=MultipartEncoder(
+            data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"), headers=headers)
+        capCode = res.json()
+        LL.log(1, "获取验证码", capCode)
+
+        # ====================识别验证码====================
+
+        event = {
+            "msg": f"请求图片验证码识别",  # 触发消息
+            "from": "liteTools.handleCaptcha",  # 触发位置
+            "code": 300,
+        }
+        answerkey = UserDefined.trigger(
+            event, context={"capcode": capCode}, exceptError=False)
+
+        # ====================提交验证码====================
+        url = f"{host}captcha-open-api/v1/captcha/validate/scenesImage"
+        data = [
+            ("accountKey", haveCap_data['accountKey']),
+            ("sceneCode", haveCap_data['sceneCode']),
+            ("tenantId", haveCap_data['tenantId']),
+            ("userId", haveCap_data['userId']),
+            ("scenesImageCode", capCode["result"]['code'])
+        ]
+        data.extend([('scenesImageCodes', i) for i in answerkey])
+        res = session.post(url=url, data=MultipartEncoder(
+            data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"), headers=headers)
+        res = res.json()
+        LL.log(1, "提交验证码", res)
+        return {"ticket": res['result']}
 
 
 class NT:
@@ -991,17 +1058,28 @@ class UserDefined:
         101: "全局任务结束",
         200: "局部任务开始",
         201: "局部任务结束",
+        300: "图形验证码识别",
     }
 
     @classmethod
-    def trigger(cla, event: dict, context: dict):
-        '''触发用户自定义函数'''
+    def trigger(cla, event: dict, context: dict, exceptError: True):
+        '''
+        触发用户自定义函数
+        :param event: 事件
+        :param context: 参数
+        :exceptError: 是否捕获并忽略异常
+        '''
         LL.log(
-            2, f"收到事件「{event.get('msg')}({event.get('code')})」, 尝试触发用户自定义函数")
-        try:
-            cla.udIndex(event, context)
-        except Exception as e:
-            LL.log(2, f"用户自定义函数执行出错, 错误信息[{e}]")
-            return False
-        LL.log(2, "用户自定义函数执行完毕")
-        return True
+            1, f"收到事件「{event.get('msg')}({event.get('code')})」, 尝试触发用户自定义函数")
+        # 开始执行
+        if exceptError:
+            try:
+                result = cla.udIndex(event, context)
+            except Exception as e:
+                LL.log(2, f"用户自定义函数执行出错, 错误信息[{e}]")
+                return None
+        else:
+            result = cla.udIndex(event, context)
+        # 执行完毕
+        LL.log(2, "用户自定义函数执行完毕, 返回值: ", result)
+        return result

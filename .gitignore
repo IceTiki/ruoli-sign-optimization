@@ -1,6 +1,8 @@
 .idea
-__pycache__
-log/
 */__pycache__
-tmp_log.txt
+__pycache__/
+
+log/
 private/
+ruoli-sign-optimization.zip
+ruoli-sign-optimization.7z

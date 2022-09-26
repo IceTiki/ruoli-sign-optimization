@@ -203,6 +203,11 @@ class sleepCheck:
 
     def getSubmitExtension(self):
         '''生成各种额外参数'''
+
+        # 验证码识别
+        self.form.update(CpdailyTools.handleCaptcha(
+            self.host, self.session, self.userInfo['deviceId']))
+
         extension = {
             "lon": self.userInfo['lon'],
             "lat": self.userInfo['lat'],

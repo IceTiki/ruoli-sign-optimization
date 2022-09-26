@@ -393,6 +393,11 @@ class Collection:
 
     def getSubmitExtension(self):
         '''生成各种额外参数'''
+
+        # 验证码识别
+        self.form.update(CpdailyTools.handleCaptcha(
+            self.host, self.session, self.userInfo['deviceId']))
+
         extension = {
             "lon": self.form['longitude'],
             "lat": self.form['latitude'],
@@ -447,7 +452,7 @@ class Collection:
                'headers', headers, 'params', self.submitData)
         data = self.session.post(
             submitUrl, headers=headers, data=json.dumps(self.submitData), verify=False)
-        data = DT.resJsonEncode(data)
+        data = data.json()
         # 检查签到完成
         url = f'{self.host}wec-counselor-collector-apps/stu/collector/detailCollector'
         params = {"collectorWid": self.wid,

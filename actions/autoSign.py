@@ -261,6 +261,11 @@ class AutoSign:
 
     def getSubmitExtension(self):
         '''生成各种额外参数'''
+
+        # 验证码识别
+        self.form.update(CpdailyTools.handleCaptcha(
+            self.host, self.session, self.userInfo['deviceId']))
+
         extension = {
             "lon": self.form['longitude'],
             "lat": self.form['latitude'],
