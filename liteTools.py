@@ -375,7 +375,7 @@ class CpdailyTools:
 
     @staticmethod
     def baiduReverseGeocoding(lon: float, lat: float):
-        '''地址转坐标'''
+        '''坐标转地址'''
         # 获取百度地图API的密钥
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'}
@@ -428,72 +428,79 @@ class CpdailyTools:
         return photoUrl
 
     @staticmethod
-    def handleCaptcha(host: str, session: reqSession, deviceId: str):
+    def handleCaptcha(host: str, session: reqSession, deviceId: str, maxRetry=2):
         '''
         图形验证码处理
         :returns dict:用于更新表单(self.form)的字典(如果不需要验证码返回{}, 如果需要返回)
         '''
-        headers = session.headers.copy()
-        # ====================检查验证码====================
-        have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
-        data = {'deviceId': deviceId}
-        headers.update({
-            'CpdailyStandAlone': '0',
-            'extension': '1',
-            'Content-Type': 'application/json; charset=utf-8',
-        })
-        res = session.post(
-            url=have_cap, data=json.dumps(data), headers=headers)
-        res = res.json()
-        haveCap_data = res['datas']
-        LL.log(1, "检查是否需要填写验证码", haveCap_data)
-        if not haveCap_data['validation']:
-            '''如果不需要填写验证码, 则直接返回'''
-            return {}
+        for _ in range(maxRetry):
+            headers = session.headers.copy()
+            # ====================检查验证码====================
+            have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
+            data = {'deviceId': deviceId}
+            headers.update({
+                'CpdailyStandAlone': '0',
+                'extension': '1',
+                'Content-Type': 'application/json; charset=utf-8',
+            })
+            res = session.post(
+                url=have_cap, data=json.dumps(data), headers=headers)
+            res = res.json()
+            haveCap_data = res['datas']
+            LL.log(1, "检查是否需要填写验证码", haveCap_data)
+            if not haveCap_data['validation']:
+                '''如果不需要填写验证码, 则直接返回'''
+                return {}
 
-        # ====================获取验证码====================
-        headers.update({
-            'Content-Type': 'multipart/form-data; boundary=----WebKitFormBoundaryBlRdUZvbYBzP5FaF',
-            'deviceId': deviceId,
-        })
-        url = f"{host}captcha-open-api/v1/captcha/create/scenesImage"
-        data = [
-            ("accountKey", haveCap_data['accountKey']),
-            ("sceneCode", haveCap_data['sceneCode']),
-            ("tenantId", haveCap_data['tenantId']),
-            ("userId", haveCap_data['userId'])
-        ]
+            # ====================获取验证码====================
+            headers.update({
+                'Content-Type': 'multipart/form-data; boundary=----WebKitFormBoundaryBlRdUZvbYBzP5FaF',
+                'deviceId': deviceId,
+            })
+            url = f"{host}captcha-open-api/v1/captcha/create/scenesImage"
+            data = [
+                ("accountKey", haveCap_data['accountKey']),
+                ("sceneCode", haveCap_data['sceneCode']),
+                ("tenantId", haveCap_data['tenantId']),
+                ("userId", haveCap_data['userId'])
+            ]
 
-        res = session.post(url=url, data=MultipartEncoder(
-            data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"), headers=headers)
-        capCode = res.json()
-        LL.log(1, "获取验证码", capCode)
+            res = session.post(url=url, data=MultipartEncoder(
+                data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"), headers=headers)
+            capCode = res.json()
+            LL.log(1, "获取验证码", capCode)
 
-        # ====================识别验证码====================
+            # ====================识别验证码====================
 
-        event = {
-            "msg": f"请求图片验证码识别",  # 触发消息
-            "from": "liteTools.handleCaptcha",  # 触发位置
-            "code": 300,
-        }
-        answerkey = UserDefined.trigger(
-            event, context={"capcode": capCode}, exceptError=False)
+            event = {
+                "msg": f"请求图片验证码识别",  # 触发消息
+                "from": "liteTools.handleCaptcha",  # 触发位置
+                "code": 300,
+            }
+            answerkey = UserDefined.trigger(
+                event, context={"capcode": capCode}, exceptError=False)
 
-        # ====================提交验证码====================
-        url = f"{host}captcha-open-api/v1/captcha/validate/scenesImage"
-        data = [
-            ("accountKey", haveCap_data['accountKey']),
-            ("sceneCode", haveCap_data['sceneCode']),
-            ("tenantId", haveCap_data['tenantId']),
-            ("userId", haveCap_data['userId']),
-            ("scenesImageCode", capCode["result"]['code'])
-        ]
-        data.extend([('scenesImageCodes', i) for i in answerkey])
-        res = session.post(url=url, data=MultipartEncoder(
-            data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"), headers=headers)
-        res = res.json()
-        LL.log(1, "提交验证码", res)
-        return {"ticket": res['result']}
+            # ====================提交验证码====================
+            url = f"{host}captcha-open-api/v1/captcha/validate/scenesImage"
+            data = [
+                ("accountKey", haveCap_data['accountKey']),
+                ("sceneCode", haveCap_data['sceneCode']),
+                ("tenantId", haveCap_data['tenantId']),
+                ("userId", haveCap_data['userId']),
+                ("scenesImageCode", capCode["result"]['code'])
+            ]
+            data.extend([('scenesImageCodes', i) for i in answerkey])
+            res = session.post(url=url, data=MultipartEncoder(
+                data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"), headers=headers)
+            res = res.json()
+            LL.log(1, "提交验证码", res)
+            if not res['result']:
+                LL.log(1, "验证码识别出错")
+                RT.randomSleep(timeRange=(16, 20))  # 验证码获取间隔时间为15秒
+                continue
+            return {"ticket": res['result']}
+        else:
+            raise Exception(f"验证码处理失败")
 
 
 class NT:
@@ -1062,7 +1069,7 @@ class UserDefined:
     }
 
     @classmethod
-    def trigger(cla, event: dict, context: dict, exceptError: True):
+    def trigger(cla, event: dict, context: dict, exceptError: bool = True):
         '''
         触发用户自定义函数
         :param event: 事件
