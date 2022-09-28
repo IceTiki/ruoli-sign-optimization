@@ -429,13 +429,13 @@ class CpdailyTools:
         return photoUrl
 
     @staticmethod
-    def handleCaptcha(host: str, session: reqSession, deviceId: str, maxRetry=3):
+    def handleCaptcha(host: str, session: reqSession, deviceId: str, maxTry=3):
         '''
         图形验证码处理
         :returns dict:用于更新表单(self.form)的字典(如果不需要验证码返回{}, 如果需要返回)
         '''
-        errorMsg = ""
-        for _ in range(maxRetry):
+        error = None  # 如果发生异常进行重试, 则保留错误信息
+        for _ in range(maxTry):
             headers = session.headers.copy()
             # ====================检查验证码====================
             have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
@@ -481,11 +481,16 @@ class CpdailyTools:
             }
             handleCaptchaResult = UserDefined.trigger(
                 event, context={"capcode": capCode})
-            if handleCaptchaResult["exceptError"]:
+
+            hc_err = handleCaptchaResult["exceptError"]
+            if hc_err:
                 '''如果报错'''
-                errorMsg = str(handleCaptchaResult["exceptError"])
+                error = hc_err
+                LL.log(3, f"验证码识别出错: {hc_err}")
+                RT.randomSleep(timeRange=(16, 20))  # 验证码获取间隔时间为15秒
                 continue
             else:
+                '''如果执行正常'''
                 answerkey = handleCaptchaResult["result"]
 
             # ====================提交验证码====================
@@ -503,12 +508,13 @@ class CpdailyTools:
             res = res.json()
             LL.log(1, "提交验证码", res)
             if not res['result']:
-                LL.log(1, "验证码识别出错")
+                LL.log(3, "验证码提交出错")
                 RT.randomSleep(timeRange=(16, 20))  # 验证码获取间隔时间为15秒
                 continue
             return {"ticket": res['result']}
         else:
-            raise Exception(f"验证码处理失败, 错误信息: \n『{errorMsg}』")
+            '''重试次数达到上限'''
+            raise Exception(f"验证码处理失败, 错误信息: \n『{error}』")
 
 
 class NT:
