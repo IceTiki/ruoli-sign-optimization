@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "ruoli-sign-optimization"
+version = "3.10.0"
+description = "蒻莉APP优化版"
+authors = ["IceTiki"]
+readme = "README.md"
+packages = [{include = "ruoli_sign_optimization"}]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+requests = "2.25.1"
+requests-toolbelt = "0.9.1"
+tencentcloud-sdk-python = "3.0.65"
+urllib3 = "1.26.5"
+beautifulsoup4 = "4.9.3"
+pycryptodome = "3.10.1"
+pyDes = "2.0.1"
+PyYAML = "5.4.1"
+lxml = "4.6.5"
+rsa = "4.7.2"
+
+
+
+[tool.pdm]
+[tool.pdm.build]
+includes = ["ruoli_sign_optimization"]
+[build-system]
+requires = ["pdm-pep517>=1.0.0"]
+build-backend = "pdm.pep517.api"
+
+[project]
+name = "ruoli-sign-optimization"
+version = "3.10.0"
+description = "蒻莉APP优化版"
+authors = [
+    {name = "IceTiki"},
+]
+dependencies = ["requests==2.25.1", "requests-toolbelt==0.9.1", "tencentcloud-sdk-python==3.0.65", "urllib3==1.26.5", "beautifulsoup4==4.9.3", "pycryptodome==3.10.1", "pyDes==2.0.1", "PyYAML==5.4.1", "lxml==4.6.5", "rsa==4.7.2"]
+requires-python = ">=3.6,<4.0"
+license = {text = "Apache-2.0 license"}
+readme = "README.md"
+
+[project.urls]
