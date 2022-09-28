@@ -1,20 +1,20 @@
 import hashlib
 import os
+import re
 
 
-class _VersionInfo:
+class VersionInfo:
     # 代码文件哈希列表
-    codeStandardHashDict = {'todayLoginService.py': '84948a1a3fd1a0b69d780a7c1feb508075fafa55a3f1a30ad09cbab11caf5a71', 'actions/autoSign.py': '423bed733db6bc6f119b7ffef7fe313f002fed2fd2172c3e4eabe6601b94f975', 'actions/collection.py': '2177a14a75026fa454ab1a328e922901c2588dde2f7f803dc2955d3009eec09c', 'actions/sleepCheck.py': '59b5e28894a3ad3fcc160e3198d0b63cd9a1842f59b6df3ebec22d6d5bac12d8', 'actions/workLog.py': '935afc4ed491cddf47d76e2b75c9ffaf9d91e8d19ec156e97870a367a621e39e', 'actions/sendMessage.py': 'bc33d0714513200c9b073cbd0e23b46fc033255d7d55860e705a847523493646', 'actions/teacherSign.py': 'b40f756c049d537290ba864c9909fe92a3918ff1584e2d4d47cbd5236b3705d1',
-                            'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': '54ee7bddb32de87684a7f3d70ef316c7c2171e0a5e322fdfbdfc20327da63747', 'liteTools.py': 'b4f6d8ec2a917426130161f9327bedf4034039b65751c7169f203632ea757ed5', 'handler.py': '920ad81176235b432f1a0d53146d4b1cea726925a74622fd6e5ed98a64075ab9', 'userDefined.py': 'e9b1f8e3c8a31fbeed9f67ee8860dfb86b5ae1b156dc514b2062a3dabd2fe893'}
-    def __init__(self):
-        with open("pyproject.toml",'r',encoding='utf-8') as f:
-            for item_ in f:
-                if "version" in item_:
-                    _,version = item_.split(" = ")
-                    version = version.replace('"',"").replace("\n","")
-                    self.codeVersion = f"V-T{version}c"
-                    break
-VersionInfo = _VersionInfo()
+    codeStandardHashDict = {'todayLoginService.py': '84948a1a3fd1a0b69d780a7c1feb508075fafa55a3f1a30ad09cbab11caf5a71', 'actions/autoSign.py': 'ad95f48be96203231f2d0a11c546929e66f6d630aa2fffcfa991269f2479d287', 'actions/collection.py': '039d2ded6ade568daa94a18429289d43139d2d1cfa557bc0715c1f76b19819b9', 'actions/sleepCheck.py': '0d0e89046a916a2f798f6138d889af151f444c34e4cc558088fb9a3a89cca35a', 'actions/workLog.py': '829b721adc4005fc55fc56b37f4c93baf70f0518987d566b04fba3d351c0e01a', 'actions/sendMessage.py': 'bc33d0714513200c9b073cbd0e23b46fc033255d7d55860e705a847523493646', 'actions/teacherSign.py': 'c3e760f06c30f09f94550a4c4906796e45dc485be7c55d5018d88532063a3aa1',
+                            'login/Utils.py': 'd5da76b333cf204515a4b6e76903fd7ddd7f7039e7fd135ba0b40475f5aa16f3', 'login/casLogin.py': '4c164cda7592382061bacfcace2168e34bfb7ae4b024a53387a72a6b8ef0f0b4', 'login/iapLogin.py': 'ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40', 'login/RSALogin.py': '9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12', 'index.py': '54ee7bddb32de87684a7f3d70ef316c7c2171e0a5e322fdfbdfc20327da63747', 'liteTools.py': 'caaff52cca9f24734c5d1dedd389ea9513a825c0eeb985e79c7c887fcef41bac', 'handler.py': '3301f725394df2ced61aa3298339b38dd0d3eefd35bf42b1351ace91407d1e5b', 'userDefined.py': 'ab5fd0e392c5bd3dc6d8afe97f5107f85081a530fa20f9d8e44d44eb479b045a'}
+    codeVersion = "VT-unknown(where did (pyproject.toml) go?)"
+    try:
+        with open("pyproject.toml", 'r', encoding='utf-8') as f:
+            version = re.findall(r"version ?= ?\"(.*)\"", f.read())[0]
+            codeVersion = f"V-T{version}"
+    except:
+        pass
+    # codeVersion = "内测版本(仅供仓库贡献者使用, 禁止外传)"  # 临时加的一句话
 
 
 class HSF:

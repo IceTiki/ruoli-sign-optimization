@@ -435,7 +435,8 @@ class CpdailyTools:
         :returns dict:用于更新表单(self.form)的字典(如果不需要验证码返回{}, 如果需要返回)
         '''
         error = None  # 如果发生异常进行重试, 则保留错误信息
-        for _ in range(maxTry):
+        for try_ in range(maxTry):
+            LL.log(1, f"正在进行第{try_+1}次验证码识别尝试")
             headers = session.headers.copy()
             # ====================检查验证码====================
             have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
@@ -1061,10 +1062,7 @@ class ProxyGet:
 
 class UserDefined:
     '''UserDefined接口, 用于触发用户自定义函数(userDefined.py)'''
-    try:
-        from userDefined import index as udIndex
-    except Exception as e:
-        LL.log(2, "用户自定义函数导入失败")
+    _userIndex = None
 
     # trigger()的event参数模板
     {
@@ -1089,20 +1087,33 @@ class UserDefined:
         :param event: 事件
         :param context: 参数
         :returns :返回一个字典
+            {
+                "result": ...,  # 返回结果
+                "exceptError": ...,  # 捕获的异常
+            }
         '''
         LL.log(
             1, f"收到事件「{event.get('msg')}({event.get('code')})」, 尝试触发用户自定义函数", "event", event, "context", context)
-        result = None
-        exceptError = None
-        # =====开始执行=====
+        # ==========返回值模板==========
+        result = {
+            "result": None,  # 返回结果
+            "exceptError": None,  # 捕获的异常
+        }
+        # ==========检查用户模块==========
+        if not cla._userIndex:
+            try:
+                from userDefined import index
+                cla._userIndex = index
+            except Exception as e:
+                LL.log(2, "用户自定义函数导入失败")
+                result["exceptError"] = e
+                return result
+        # ==========开始执行==========
         try:
-            result = cla.udIndex(event, context)
+            result["result"] = cla._userIndex(event, context)
+            LL.log(1, "用户自定义函数执行完毕, 返回值: ", result)
+            return result
         except Exception as e:
             LL.log(3, f"用户自定义函数执行出错, 错误信息『「{e}」\n{traceback.format_exc()}』")
-            exceptError = e
-        # =====执行完毕=====
-        LL.log(1, "用户自定义函数执行完毕, 返回值: ", result)
-        return {
-            "result": result,  # 返回结果
-            "exceptError": exceptError  # 捕获的异常
-        }
+            result["exceptError"] = e
+            return result
