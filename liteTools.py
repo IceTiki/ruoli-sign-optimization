@@ -1,4 +1,5 @@
 import time
+import traceback
 from typing import Sequence
 from io import TextIOWrapper
 import requests
@@ -428,11 +429,12 @@ class CpdailyTools:
         return photoUrl
 
     @staticmethod
-    def handleCaptcha(host: str, session: reqSession, deviceId: str, maxRetry=2):
+    def handleCaptcha(host: str, session: reqSession, deviceId: str, maxRetry=3):
         '''
         图形验证码处理
         :returns dict:用于更新表单(self.form)的字典(如果不需要验证码返回{}, 如果需要返回)
         '''
+        errorMsg = ""
         for _ in range(maxRetry):
             headers = session.headers.copy()
             # ====================检查验证码====================
@@ -477,8 +479,14 @@ class CpdailyTools:
                 "from": "liteTools.handleCaptcha",  # 触发位置
                 "code": 300,
             }
-            answerkey = UserDefined.trigger(
-                event, context={"capcode": capCode}, exceptError=False)
+            handleCaptchaResult = UserDefined.trigger(
+                event, context={"capcode": capCode})
+            if handleCaptchaResult["exceptError"]:
+                '''如果报错'''
+                errorMsg = str(handleCaptchaResult["exceptError"])
+                continue
+            else:
+                answerkey = handleCaptchaResult["result"]
 
             # ====================提交验证码====================
             url = f"{host}captcha-open-api/v1/captcha/validate/scenesImage"
@@ -500,7 +508,7 @@ class CpdailyTools:
                 continue
             return {"ticket": res['result']}
         else:
-            raise Exception(f"验证码处理失败")
+            raise Exception(f"验证码处理失败, 错误信息: \n『{errorMsg}』")
 
 
 class NT:
@@ -1069,24 +1077,26 @@ class UserDefined:
     }
 
     @classmethod
-    def trigger(cla, event: dict, context: dict, exceptError: bool = True):
+    def trigger(cla, event: dict, context: dict):
         '''
         触发用户自定义函数
         :param event: 事件
         :param context: 参数
-        :exceptError: 是否捕获并忽略异常
+        :returns :返回一个字典
         '''
         LL.log(
-            1, f"收到事件「{event.get('msg')}({event.get('code')})」, 尝试触发用户自定义函数")
-        # 开始执行
-        if exceptError:
-            try:
-                result = cla.udIndex(event, context)
-            except Exception as e:
-                LL.log(2, f"用户自定义函数执行出错, 错误信息[{e}]")
-                return None
-        else:
+            1, f"收到事件「{event.get('msg')}({event.get('code')})」, 尝试触发用户自定义函数", "event", event, "context", context)
+        result = None
+        exceptError = None
+        # =====开始执行=====
+        try:
             result = cla.udIndex(event, context)
-        # 执行完毕
-        LL.log(2, "用户自定义函数执行完毕, 返回值: ", result)
-        return result
+        except Exception as e:
+            LL.log(3, f"用户自定义函数执行出错, 错误信息『「{e}」\n{traceback.format_exc()}』")
+            exceptError = e
+        # =====执行完毕=====
+        LL.log(1, "用户自定义函数执行完毕, 返回值: ", result)
+        return {
+            "result": result,  # 返回结果
+            "exceptError": exceptError  # 捕获的异常
+        }
