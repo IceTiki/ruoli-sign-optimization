@@ -435,26 +435,26 @@ class CpdailyTools:
         :returns dict:用于更新表单(self.form)的字典(如果不需要验证码返回{}, 如果需要返回)
         '''
         error = None  # 如果发生异常进行重试, 则保留错误信息
+        headers = session.headers.copy()
+        # ====================检查是否需要验证码====================
+        have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
+        data = {'deviceId': deviceId}
+        headers.update({
+            'CpdailyStandAlone': '0',
+            'extension': '1',
+            'Content-Type': 'application/json; charset=utf-8',
+        })
+        res = session.post(
+            url=have_cap, data=json.dumps(data), headers=headers)
+        res = res.json()
+        haveCap_data = res['datas']
+        LL.log(1, "检查是否需要填写验证码", haveCap_data)
+        if not haveCap_data['validation']:
+            '''如果不需要填写验证码, 则直接返回'''
+            return {}
+
         for try_ in range(maxTry):
             LL.log(1, f"正在进行第{try_+1}次验证码识别尝试")
-            headers = session.headers.copy()
-            # ====================检查验证码====================
-            have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
-            data = {'deviceId': deviceId}
-            headers.update({
-                'CpdailyStandAlone': '0',
-                'extension': '1',
-                'Content-Type': 'application/json; charset=utf-8',
-            })
-            res = session.post(
-                url=have_cap, data=json.dumps(data), headers=headers)
-            res = res.json()
-            haveCap_data = res['datas']
-            LL.log(1, "检查是否需要填写验证码", haveCap_data)
-            if not haveCap_data['validation']:
-                '''如果不需要填写验证码, 则直接返回'''
-                return {}
-
             # ====================获取验证码====================
             headers.update({
                 'Content-Type': 'multipart/form-data; boundary=----WebKitFormBoundaryBlRdUZvbYBzP5FaF',
@@ -488,7 +488,7 @@ class CpdailyTools:
                 '''如果报错'''
                 error = hc_err
                 LL.log(3, f"验证码识别出错: {hc_err}")
-                RT.randomSleep(timeRange=(16, 20))  # 验证码获取间隔时间为15秒
+                RT.randomSleep(timeRange=(5, 6))  # 刷新验证码
                 continue
             else:
                 '''如果执行正常'''
@@ -524,7 +524,7 @@ class NT:
     def isDisableProxies(proxies: dict):
         '''
         检查代理是否可用
-        :return 如果代理正常返回0，代理异常返回1
+        :return 如果代理正常返回0, 代理异常返回1
         '''
         try:
             requests.get(url='https://www.baidu.com/',
