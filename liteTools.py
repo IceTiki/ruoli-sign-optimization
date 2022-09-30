@@ -881,6 +881,25 @@ class HSF:
         hashObj.update(bstr)
         return hashObj.hexdigest()
 
+    @staticmethod
+    def bytesHash(bytes_: bytes, hash_type):
+        """计算字节串哈希
+        :param bytes_: 字节串
+        :param hash_type: 哈希算法类型
+            1       sha-1
+            224     sha-224
+            256      sha-256
+            384     sha-384
+            512     sha-512
+            5       md5
+            3.256   sha3-256
+            3.384   sha3-384
+            3.512   sha3-512
+        """
+        hashObj = HSF.geneHashObj(hash_type)
+        hashObj.update(bytes_)
+        return hashObj.hexdigest()
+
 
 class ST:
     '''StringTools'''
