@@ -117,7 +117,7 @@ class Pushplus:
         for seg in str(msg).split("\n"):
             if seg:
                 if seg.startswith(">>"):
-                    seg = seg.replace(">>", "> ") + "\n"
+                    seg = f"> {seg[2:]}\n"
                 msgs.append(seg)
         msg = '\n'.join(msgs)
 
@@ -164,14 +164,14 @@ class Serverchan:
     def sendServerchan(self, msg, title):
         if self.sendkey is None:
             return '无效配置'
-        
+
         msgs = []
         for seg in str(msg).split("\n"):
             if seg:
                 if seg.startswith(">>"):
-                    seg = seg.replace(">>", ">") + "\n"
+                    seg = f"> {seg[2:]}\n"
                 msgs.append(seg)
-            
+
 
         params = {
             'title': str(title),
