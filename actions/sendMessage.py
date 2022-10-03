@@ -22,8 +22,8 @@ class SendMessage:
         self.rl = RlMessage(con.get('rl_email'),
                             con.get('rl_emailApiUrl'))
         self.iceCream = IceCream(con.get('iceCream_token'))
-        self.pp = Pushplus(con.get('pushplus_parameters'),
-                           con.get('pushplus_isNew'))
+        self.pp = Pushplus(con.get('pushplus_parameters'))
+        self.sc = Serverchan(con.get('severchan_sendkey'))
         self.log_str = '推送情况\n'
 
     def send(self, msg='no msg', title='no title', attachments=()):
@@ -49,6 +49,10 @@ class SendMessage:
             self.log_str += '\nPushplus|' + self.pp.sendPushplus(msg, title)
         except Exception as e:
             self.log_str += '\nPushplus|出错|%s' % e
+        try:
+            self.log_str += '\nServerchan|' + self.sc.sendServerchan(msg, title)
+        except Exception as e:
+            self.log_str += '\nServerchan|出错|%s' % e
 
 
 class RlMessage:
@@ -90,15 +94,12 @@ class RlMessage:
 class Pushplus:
     '''Pushplus推送类'''
 
-    def __init__(self, parameters: str, isNew):
+    def __init__(self, parameters: str):
         """
         :params parameters: "xxx"形式的令牌 或者 "token=xxx&topic=xxx&yyy=xxx"形式参数列表
         """
         self.parameters = parameters
-        if isNew:
-            self.api = "https://www.pushplus.plus/send"
-        else:
-            self.api = "https://pushplus.hxtrip.com/send"
+        self.api = "https://www.pushplus.plus/send"
         self.configIsCorrect = self.isCorrectConfig()
 
     def isCorrectConfig(self):
@@ -110,9 +111,15 @@ class Pushplus:
         return 1
 
     def sendPushplus(self, msg, title):
-        msg = str(msg)
-        msg = msg.replace("\n", "</br>")
         title = str(title)
+        
+        msgs = []
+        for seg in str(msg).split("\n"):
+            if seg:
+                if seg.startswith(">>"):
+                    seg = seg.replace(">>", "> ") + "\n"
+                msgs.append(seg)
+        msg = '\n'.join(msgs)
 
         if self.configIsCorrect:
             # 解析参数
@@ -140,6 +147,40 @@ class Pushplus:
                 return "发送失败"
         else:
             return '无效配置'
+
+
+class Serverchan:
+    '''ServerChan推送类'''
+
+    def __init__(self, sendkey: str):
+        """
+        :params sendkey: serverchan的SendKey,例如: SCT77****************S
+        """
+        try:
+            self.sendkey = sendkey if sendkey.startswith("SCT") else None
+        except Exception:
+            self.sendkey = None
+
+    def sendServerchan(self, msg, title):
+        if self.sendkey is None:
+            return '无效配置'
+        
+        msgs = []
+        for seg in str(msg).split("\n"):
+            if seg:
+                if seg.startswith(">>"):
+                    seg = seg.replace(">>", ">") + "\n"
+                msgs.append(seg)
+            
+
+        params = {
+            'title': str(title),
+            'desp': '\n'.join(msgs)
+        }
+        # 准备发送
+        res = requests.post(
+            f"https://sctapi.ftqq.com/{self.sendkey}.send", params=params)
+        return "发送成功" if res.status_code == 200 else "发送失败"
 
 
 class Qmsg:
