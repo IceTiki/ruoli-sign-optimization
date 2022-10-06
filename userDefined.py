@@ -25,13 +25,13 @@ class ExecuteEvent:
         # ===============在线识别===============
         if mode == 0:
             from liteTools import reqSession, LL, DT
-            apple = DT.loadYml("config.yml").get(apple, "")
+            # 检测解谜是否完成
+            apple = DT.loadYml("config.yml").get("apple", "")
             if not apple:
                 raise Exception("""图片验证码识别错误: 
 无法进行处理图形验证码, 请手签(就是用今日校园app自己手动签到的意思)
 错误信息: 
-配置文件: "我的"
-Der Apfel hinter dem Ohr des falschen Helden?""")
+config.yml: where's my apple? """)
             # 开始验证码识别
             LL.log(1, "即将进行验证码识别")
             res = reqSession().post(apple, json=capCode)
