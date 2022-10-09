@@ -346,6 +346,17 @@ class MainHandler:
         配置文件载入
         :returns config: dict
         '''
+        # 检查config.yml是否存在
+        if not os.path.isfile('config.yml'):
+            if os.path.isfile("config.yml.sample"):
+                raise Exception(
+                    "读取配置文件出错, 请将「config.yml.sample」重命名为「config.yml」")
+            elif os.path.isfile("sample_config.yml"):
+                raise Exception(
+                    "读取配置文件出错, 请将「sample_config.yml」重命名为「config.yml」")
+            else:
+                raise Exception("读取配置文件出错, 未找到「config.yml」")
+        # 读取config.yml
         try:
             config = DT.loadYml('config.yml')
         except Exception as e:
