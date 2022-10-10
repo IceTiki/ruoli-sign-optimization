@@ -429,7 +429,7 @@ class CpdailyTools:
         return photoUrl
 
     @staticmethod
-    def handleCaptcha(host: str, session: reqSession, deviceId: str, maxTry=3):
+    def handleCaptcha(host: str, session: reqSession, deviceId: str, maxTry=3, signType: str = "attendance"):
         '''
         图形验证码处理
         :returns dict:用于更新表单(self.form)的字典(如果不需要验证码返回{}, 如果需要返回)
@@ -437,7 +437,14 @@ class CpdailyTools:
         error = None  # 如果发生异常进行重试, 则保留错误信息
         headers = session.headers.copy()
         # ====================检查是否需要验证码====================
-        have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
+        if signType == "attendance":
+            have_cap = f"{host}wec-counselor-attendance-apps/student/attendance/checkValidation"
+        elif signType == "sign":
+            have_cap = f"{host}wec-counselor-sign-apps/stu/sign/checkValidation"
+        elif signType == "collector":
+            have_cap = f"{host}wec-counselor-collector-apps/stu/collector/checkValidation"
+        else:
+            raise Exception("未知signType")
         data = {'deviceId': deviceId}
         headers.update({
             'CpdailyStandAlone': '0',

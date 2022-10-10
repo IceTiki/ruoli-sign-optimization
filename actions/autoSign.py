@@ -264,7 +264,7 @@ class AutoSign:
 
         # 验证码识别
         self.form.update(CpdailyTools.handleCaptcha(
-            self.host, self.session, self.userInfo['deviceId']))
+            self.host, self.session, self.userInfo['deviceId'], signType="sign"))
 
         extension = {
             "lon": self.form['longitude'],
