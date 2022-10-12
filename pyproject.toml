@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ruoli-sign-optimization"
-version = "3.11.0c"
+version = "3.11.0e"
 description = "蒻莉APP优化版"
 authors = ["IceTiki"]
 readme = "README.md"
@@ -30,7 +30,7 @@ build-backend = "pdm.pep517.api"
 
 [project]
 name = "ruoli-sign-optimization"
-version = "3.11.0c"
+version = "3.11.0e"
 description = "蒻莉APP优化版"
 authors = [
     {name = "IceTiki"},
