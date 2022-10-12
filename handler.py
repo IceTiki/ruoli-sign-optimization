@@ -2,7 +2,6 @@ import random
 import traceback
 import os
 
-
 from liteTools import UserDefined, LL, TT, DT, HSF, ST, RT, ProxyGet, TaskError
 from actions.teacherSign import teacherSign
 from actions.workLog import workLog
@@ -11,6 +10,8 @@ from actions.collection import Collection
 from actions.autoSign import AutoSign
 from actions.sendMessage import SendMessage
 from todayLoginService import TodayLoginService
+
+from arguments import cpdaily_args
 
 
 class SignTask:
@@ -332,14 +333,19 @@ class MainHandler:
         设置日志输出
         :returns msgOut: FileOut
         '''
-        logDir = self.config.get('logDir')
-        if type(logDir) == str and self.entrance == "__main__":
-            logDir = os.path.join(logDir, TT.formatStartTime(
-                "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
-            LL.msgOut.setFileOut(logDir)
-            return
+        if cpdaily_args.args.qinglong:
+            # 若使用了青龙面板（即添加了 "--qinglong" 参数，则强制不输出日志到文件，因为青龙面板会将输出截取为日志）
+            logDir = ""
+            print("当前使用青龙面板，请从日志管理页面获取日志")
         else:
-            return
+            logDir = self.config.get('logDir')
+            if type(logDir) == str and self.entrance == "__main__":
+                logDir = os.path.join(logDir, TT.formatStartTime(
+                    "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
+                LL.msgOut.setFileOut(logDir)
+                return
+            else:
+                return
 
     def loadConfig(self):
         '''
@@ -348,7 +354,10 @@ class MainHandler:
         '''
         # 检查config.yml是否存在
         if not os.path.isfile('config.yml'):
-            if os.path.isfile("config.yml.sample"):
+            if cpdaily_args.args.configfile:
+                print(
+                    "读取配置文件出错, 但找到外部参数，将从参数指定的路径中读取配置文件")
+            elif os.path.isfile("config.yml.sample"):
                 raise Exception(
                     "读取配置文件出错, 请将「config.yml.sample」重命名为「config.yml」")
             elif os.path.isfile("sample_config.yml"):
@@ -358,7 +367,10 @@ class MainHandler:
                 raise Exception("读取配置文件出错, 未找到「config.yml」")
         # 读取config.yml
         try:
-            config = DT.loadYml('config.yml')
+            if cpdaily_args.args.configfile:
+                config = DT.loadYml(cpdaily_args.args.configfile)
+            else:
+                config = DT.loadYml('config.yml')
         except Exception as e:
             errmsg = f"""读取配置文件出错
 请尝试检查配置文件(建议下载VSCode并安装yaml插件进行检查)
