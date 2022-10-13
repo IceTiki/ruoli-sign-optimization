@@ -6,11 +6,8 @@
 dir_shell=$QL_DIR/shell
 . "$dir_shell"/share.sh
 
-cpdaily_repo="ruoli-sign-optimization"
-
-if [ ! -d "$(pwd)/logs" ]; then
-  mkdir "$(pwd)"/logs
-fi
+cpdaily_repo="LiarOnce_ruoli-sign-optimization"
+config_file="$(pwd)/config.yml"
 
 echo "repo目录：$dir_repo"
 cpdaily_repo_dir="$(find "$dir_repo" -type d -iname "$cpdaily_repo" | head -1)"
@@ -18,6 +15,4 @@ cpdaily_repo_dir="$(find "$dir_repo" -type d -iname "$cpdaily_repo" | head -1)"
 echo "脚本目录：$cpdaily_repo_dir\n"
 
 cd "$cpdaily_repo_dir" || exit
-export RUOLI_CPDAILY_QINGLONG=true
-python3 index.py -c "$(pwd)"/config_qinglong.yml -l "$(pwd)"/logs
-
+python3 index.py -c "$config_file" --qinglong
