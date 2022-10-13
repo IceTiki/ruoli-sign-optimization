@@ -6,7 +6,7 @@
 dir_shell=$QL_DIR/shell
 . "$dir_shell"/share.sh
 
-cpdaily_repo="LiarOnce_ruoli-sign-optimization"
+cpdaily_repo="IceTiki_ruoli-sign-optimization"
 config_file="$(pwd)/config.yml"
 
 echo "repo目录：$dir_repo"
