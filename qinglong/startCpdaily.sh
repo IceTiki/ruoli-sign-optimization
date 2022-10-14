@@ -15,4 +15,4 @@ cpdaily_repo_dir="$(find "$dir_repo" -type d -iname "$cpdaily_repo" | head -1)"
 echo "脚本目录：$cpdaily_repo_dir\n"
 
 cd "$cpdaily_repo_dir" || exit
-python3 index.py -c "$config_file" --qinglong
+python3 index.py -c "$config_file" -e qinglong
