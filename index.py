@@ -6,6 +6,7 @@ import os
 import sys
 import codecs
 import argparse
+import textwrap
 
 # ==========检查python版本==========
 if not (sys.version_info[0] == 3 and sys.version_info[1] >= 6):
@@ -28,12 +29,12 @@ sys.path.append(absScriptDir)  # 将脚本路径加入模块搜索路径
 
 # 初始化参数
 class cpdaily_args:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-c", "--configfile", required=False, help="配置文件路径（可选）")
-    parser.add_argument("-e", "--environment",required=False, help="针对特殊运行环境使用，目前可选值为："
-                                                                   "qinglong: 此参数代表环境为使用青龙面板，"
-                                                                    "加入此参数将不会输出日志到文件，"
-                                                                    "日志请从青龙面板的“日志管理”页面查看")
+    parser.add_argument("-e", "--environment", required=False, help=textwrap.dedent("""\
+针对特殊运行环境使用，目前可选值为：
+local：本地环境，如需使用外部配置文件需要加入该参数
+qinglong: 此参数代表环境为使用青龙面板，加入此参数将不会输出日志到文件，日志请从青龙面板的“日志管理”页面查看"""))
     args = vars(parser.parse_args())
 
 
@@ -93,7 +94,7 @@ def main_handler(event, context):
 
 if __name__ == '__main__':
     '''本地执行入口位置'''
-    if cpdaily_args.args["configfile"]:
+    if cpdaily_args.args["environment"]:
         MainHandler("__main__", {}, cpdaily_args.args).execute()
     else:
         MainHandler("__main__").execute()
