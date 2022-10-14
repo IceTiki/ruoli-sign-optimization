@@ -11,8 +11,6 @@ from actions.autoSign import AutoSign
 from actions.sendMessage import SendMessage
 from todayLoginService import TodayLoginService
 
-from arguments import cpdaily_args
-
 
 class SignTask:
     userSessions = {}
@@ -333,7 +331,7 @@ class MainHandler:
         设置日志输出
         :returns msgOut: FileOut
         '''
-        if cpdaily_args.args.qinglong:
+        if self.context["qinglong"]:
             # 若使用了青龙面板（即添加了 "--qinglong" 参数，则强制不输出日志到文件，因为青龙面板会将输出截取为日志）
             logDir = ""
             print("当前使用青龙面板，请从日志管理页面获取日志")
@@ -354,7 +352,7 @@ class MainHandler:
         '''
         # 检查config.yml是否存在
         if not os.path.isfile('config.yml'):
-            if cpdaily_args.args.configfile:
+            if "configfile" in self.context:
                 print(
                     "读取配置文件出错, 但找到外部参数，将从参数指定的路径中读取配置文件")
             elif os.path.isfile("config.yml.sample"):
@@ -367,8 +365,8 @@ class MainHandler:
                 raise Exception("读取配置文件出错, 未找到「config.yml」")
         # 读取config.yml
         try:
-            if cpdaily_args.args.configfile:
-                config = DT.loadYml(cpdaily_args.args.configfile)
+            if "configfile" in self.context:
+                config = DT.loadYml(self.context["configfile"])
             else:
                 config = DT.loadYml('config.yml')
         except Exception as e:
