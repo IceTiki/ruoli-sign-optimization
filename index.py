@@ -30,9 +30,10 @@ sys.path.append(absScriptDir)  # 将脚本路径加入模块搜索路径
 class cpdaily_args:
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--configfile", required=False, help="配置文件路径（可选）")
-    parser.add_argument("--qinglong", required=False, action="store_true", help="此参数代表环境为使用青龙面板，"
-                                                                                "加入此参数将不会输出日志到文件，"
-                                                                                "日志请从青龙面板的“日志管理”页面查看")
+    parser.add_argument("-e", "--environment",required=False, help="针对特殊运行环境使用，目前可选值为："
+                                                                   "qinglong: 此参数代表环境为使用青龙面板，"
+                                                                    "加入此参数将不会输出日志到文件，"
+                                                                    "日志请从青龙面板的“日志管理”页面查看")
     args = vars(parser.parse_args())
 
 

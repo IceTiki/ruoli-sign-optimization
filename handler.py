@@ -331,8 +331,8 @@ class MainHandler:
         设置日志输出
         :returns msgOut: FileOut
         '''
-        if self.context["qinglong"]:
-            # 若使用了青龙面板（即添加了 "--qinglong" 参数，则强制不输出日志到文件，因为青龙面板会将输出截取为日志）
+        if self.context["environment"] == "qinglong":
+            # 若使用了青龙面板（即添加了 "-e qinglong" 参数，则强制不输出日志到文件，因为青龙面板会将输出截取为日志）
             logDir = ""
             print("当前使用青龙面板，请从日志管理页面获取日志")
         else:
