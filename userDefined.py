@@ -19,7 +19,7 @@ class ExecuteEvent:
     def handleCapcha(self):
         '''验证码识别'''
         import os
-        mode = 1 if os.path.isdir("userdefined_capt") else 0
+        mode = 1 if os.path.isdir("_userdefined_capt") else 0
         capCode = self.context["capcode"]
 
         # ===============在线识别===============
@@ -44,7 +44,7 @@ config.yml: where's my apple? """)
             return res["data"]["succCode"]
         # ===============本地识别===============
         elif mode == 1:
-            from userdefined_capt import captchaHandler
+            from _userdefined_capt import captchaHandler
             return captchaHandler(capCode)["right"]
         # ===============报错===============
         else:

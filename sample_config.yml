@@ -7,7 +7,7 @@ notion: 代理设置、正则匹配、获取历史签到、二维码签到等功
 apple: "" # 你发现了这里有一个苹果, 但不要告诉别人(起码不要发到群里面)。如果太多人找到了苹果, 你就没有苹果了。就如那句名言『Suchen Sie es in der ersten Wurst(苹果只留予你)』
 locationOffsetRange: 50 # 签到坐标随机偏移范围(单位：米)(可以为0)
 maxTry: 1 # 最大尝试次数
-logDir: "log/" # 日志保存地址
+logDir: "_log/" # 日志保存地址
 delay: [5, 10] # 多用户时，各用户之间任务执行延迟(时间范围可以使用浮点数)
 captcha: # 图片验证码识别(不需要可以不填)
   tencentSecretId: "" # 腾讯云OCR

@@ -3,6 +3,9 @@
 __pycache__/
 venv
 
+_log/
+_private/
+_userdefined*/
 log/
 private/
 userdefined*/
