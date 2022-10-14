@@ -266,7 +266,19 @@ class MainHandler:
         self.entrance: str = entranceType
         self.event: dict = event
         self.context: dict = context
-
+        # ==========参数初始化==========
+        self.geneLogFile = True
+        self.configDir = "config.yml"
+        if event.get("args", {}).get("environment", None) == "qinglong":
+            # 如果运行环境是『青龙面板』
+            self.geneLogFile = False
+            LL.log(1, "当前环境为青龙面板, 脚本不自行生成日志文件, 请从日志管理页面获取日志")
+            self.configDir = event.get("args", {}).get("configfile", None)
+            LL.log(1, f"当前环境为青龙面板, 根据命令参数确定配置文件位置「{self.configDir}」")
+        elif self.entrance in ("handler", "main_handler"):
+            # 如果运行入口是『云函数』(不可写入文件)
+            self.geneLogFile = False
+        # ==========参数初始化==========
         self.config: dict = self.loadConfig()
         self._setMsgOut()
         self._maxTry = self.config['maxTry']
@@ -331,19 +343,15 @@ class MainHandler:
         设置日志输出
         :returns msgOut: FileOut
         '''
-        if "environment" in self.context and self.context["environment"] == "qinglong":
-            # 若使用了青龙面板（即添加了 "-e qinglong" 参数，则强制不输出日志到文件，因为青龙面板会将输出截取为日志）
-            logDir = ""
-            print("当前使用青龙面板，请从日志管理页面获取日志")
-        else:
+        if self.geneLogFile:
             logDir = self.config.get('logDir')
-            if type(logDir) == str and self.entrance == "__main__":
+            if type(logDir) == str:
                 logDir = os.path.join(logDir, TT.formatStartTime(
                     "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
                 LL.msgOut.setFileOut(logDir)
                 return
-            else:
-                return
+        else:
+            return
 
     def loadConfig(self):
         '''
@@ -351,11 +359,8 @@ class MainHandler:
         :returns config: dict
         '''
         # 检查config.yml是否存在
-        if not os.path.isfile('config.yml'):
-            if "configfile" in self.context:
-                print(
-                    "读取配置文件出错, 但找到外部参数，将从参数指定的路径中读取配置文件")
-            elif os.path.isfile("config.yml.sample"):
+        if not os.path.isfile(self.configDir):
+            if os.path.isfile("config.yml.sample"):
                 raise Exception(
                     "读取配置文件出错, 请将「config.yml.sample」重命名为「config.yml」")
             elif os.path.isfile("sample_config.yml"):
@@ -365,10 +370,7 @@ class MainHandler:
                 raise Exception("读取配置文件出错, 未找到「config.yml」")
         # 读取config.yml
         try:
-            if "configfile" in self.context:
-                config = DT.loadYml(self.context["configfile"])
-            else:
-                config = DT.loadYml('config.yml')
+            config = DT.loadYml(self.configDir)
         except Exception as e:
             errmsg = f"""读取配置文件出错
 请尝试检查配置文件(建议下载VSCode并安装yaml插件进行检查)

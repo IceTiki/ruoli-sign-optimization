@@ -25,19 +25,6 @@ if os.name == "posix":
     # 如果是linux系统, 增加TZ环境变量
     os.environ['TZ'] = "Asia/Shanghai"
 sys.path.append(absScriptDir)  # 将脚本路径加入模块搜索路径
-
-
-# 初始化参数
-class cpdaily_args:
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-c", "--configfile", required=False, help="配置文件路径（可选）")
-    parser.add_argument("-e", "--environment", required=False, help=textwrap.dedent("""\
-针对特殊运行环境使用，目前可选值为：
-local：本地环境，如需使用外部配置文件需要加入该参数
-qinglong: 此参数代表环境为使用青龙面板，加入此参数将不会输出日志到文件，日志请从青龙面板的“日志管理”页面查看"""))
-    args = vars(parser.parse_args())
-
-
 # ==========检查第三方模块==========
 try:
     for i in ("requests", "requests_toolbelt", "urllib3", "bs4", "Crypto", "pyDes", "yaml", "lxml", "rsa"):
@@ -75,9 +62,26 @@ if diff:
     LL.log(1, "以下代码文件相比发布版本有变动: \n" + "\n".join(diff))
 else:
     LL.log(1, "一切代码文件保持初始状态")
-
-
 # ====================完成导入模块====================
+
+
+# ====================初始化本模块对象====================
+def getCommandArgs():
+    """
+    使用命令传入参数时, 解析传入参数
+    :returns args:(dict)字典
+    """
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-c", "--configfile",
+                        required=False, help="配置文件路径（可选）")
+    parser.add_argument("-e", "--environment", required=False, help=textwrap.dedent("""\
+针对特殊运行环境使用，目前可选值为：
+local：本地环境，如需使用外部配置文件需要加入该参数
+qinglong: 此参数代表环境为使用青龙面板，加入此参数将不会输出日志到文件，日志请从青龙面板的“日志管理”页面查看"""))
+    args = vars(parser.parse_args())
+    return args
+# ====================初始化本模块对象====================
 
 
 # ====================开始执行任务====================
@@ -94,7 +98,4 @@ def main_handler(event, context):
 
 if __name__ == '__main__':
     '''本地执行入口位置'''
-    if cpdaily_args.args["environment"]:
-        MainHandler("__main__", {}, cpdaily_args.args).execute()
-    else:
-        MainHandler("__main__").execute()
+    MainHandler("__main__", {"args": getCommandArgs()}, {}).execute()
