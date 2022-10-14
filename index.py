@@ -92,4 +92,7 @@ def main_handler(event, context):
 
 if __name__ == '__main__':
     '''本地执行入口位置'''
-    MainHandler("__main__", {}, cpdaily_args.args).execute()
+    if cpdaily_args.args["configfile"]:
+        MainHandler("__main__", {}, cpdaily_args.args).execute()
+    else:
+        MainHandler("__main__").execute()
