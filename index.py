@@ -5,6 +5,8 @@ import imp
 import os
 import sys
 import codecs
+import argparse
+import textwrap
 
 # ==========检查python版本==========
 if not (sys.version_info[0] == 3 and sys.version_info[1] >= 6):
@@ -24,6 +26,18 @@ if os.name == "posix":
     os.environ['TZ'] = "Asia/Shanghai"
 sys.path.append(absScriptDir)  # 将脚本路径加入模块搜索路径
 
+
+# 初始化参数
+class cpdaily_args:
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-c", "--configfile", required=False, help="配置文件路径（可选）")
+    parser.add_argument("-e", "--environment", required=False, help=textwrap.dedent("""\
+针对特殊运行环境使用，目前可选值为：
+local：本地环境，如需使用外部配置文件需要加入该参数
+qinglong: 此参数代表环境为使用青龙面板，加入此参数将不会输出日志到文件，日志请从青龙面板的“日志管理”页面查看"""))
+    args = vars(parser.parse_args())
+
+
 # ==========检查第三方模块==========
 try:
     for i in ("requests", "requests_toolbelt", "urllib3", "bs4", "Crypto", "pyDes", "yaml", "lxml", "rsa"):
@@ -41,7 +55,9 @@ except OSError as e:
 错误信息: [{e}]""")
 # ==========检查代码完整性==========
 try:
-    for i in ("todayLoginService", "actions/autoSign", "actions/collection", "actions/sleepCheck", "actions/workLog", "actions/sendMessage", "actions/teacherSign", "login/Utils", "login/casLogin", "login/iapLogin", "login/RSALogin", "liteTools", "handler", "checkRepositoryVersion"):
+    for i in ("todayLoginService", "actions/autoSign", "actions/collection", "actions/sleepCheck", "actions/workLog",
+              "actions/sendMessage", "actions/teacherSign", "login/Utils", "login/casLogin", "login/iapLogin",
+              "login/RSALogin", "liteTools", "handler", "checkRepositoryVersion"):
         i = os.path.normpath(i)  # 路径适配系统
         imp.find_module(i)
 except ImportError as e:
@@ -59,6 +75,8 @@ if diff:
     LL.log(1, "以下代码文件相比发布版本有变动: \n" + "\n".join(diff))
 else:
     LL.log(1, "一切代码文件保持初始状态")
+
+
 # ====================完成导入模块====================
 
 
@@ -76,4 +94,7 @@ def main_handler(event, context):
 
 if __name__ == '__main__':
     '''本地执行入口位置'''
-    MainHandler("__main__").execute()
+    if cpdaily_args.args["environment"]:
+        MainHandler("__main__", {}, cpdaily_args.args).execute()
+    else:
+        MainHandler("__main__").execute()
