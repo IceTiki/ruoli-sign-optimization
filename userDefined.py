@@ -24,7 +24,7 @@ class ExecuteEvent:
 
         # ===============在线识别===============
         if mode == 0:
-            from liteTools import reqSession, LL, DT
+            from liteTools import reqSession, LL, DT, HSF, ST
             # 检测解谜是否完成
             apple = DT.loadYml("config.yml").get("apple", "")
             if not apple:
@@ -32,6 +32,16 @@ class ExecuteEvent:
 无法进行处理图形验证码, 请手签(就是用今日校园app自己手动签到的意思)
 错误信息: 
 config.yml: where's my apple? """)
+            else:
+                # [对想逃课的人说的话: sha256是不可逆的(何况还加了盐)]
+                hashApple = HSF.strHash(apple+'salt_apple_is_nice', 256)
+                LL.log(
+                    1, f"苹果哈希「{hashApple}」")
+                rightAppleHash = ("350fb0c1f9255ddd0a3a6cbfdb88a1f112d1d55618d3ed8864954186a7b0eb83",  # 新苹果
+                                  "cfeeeeb1d8f935a8ea7e4c0ab56b101dbdf9e8ce8cd3853a293a37e68b573ae6")  # 旧苹果
+                if hashApple not in rightAppleHash:
+                    LL.log(2, ST.notionStr("""疑似错误的苹果:
+请确定, 当你找到apple时, 看到了「恭喜你找到了apple」这句话"""))
             # 开始验证码识别
             LL.log(1, "即将进行验证码识别")
             res = reqSession().post(apple, json=capCode)
