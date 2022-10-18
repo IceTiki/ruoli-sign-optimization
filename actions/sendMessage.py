@@ -364,17 +364,24 @@ class Gotify:
         if not self.configIsCorrect:
             return '无效配置'
 
+        msgs = []
+        for seg in str(msg).split("\n"):
+            if seg:
+                if seg.startswith(">>"):
+                    seg = f"> {seg[2:]}\n"
+                msgs.append(seg)
+
         params = {
             "extras": {
                 "client::display": {
-                    "contentType": "text/markdown"  # 尝试渲染 Markdown，不过不生效
+                    "contentType": "text/markdown"
                 }
             },
             "title": str(title),
-            "message": str(msg),
+            "message": '\n'.join(msgs),
             "priority": 2
         }
         # 准备发送
         res = requests.post(
-            f"{self.gotify_url}/message?token={self.gotify_apptoken}", params=params)
+            f"{self.gotify_url}/message?token={self.gotify_apptoken}", json=params)
         return "发送成功" if res.status_code == 200 else "发送失败"
