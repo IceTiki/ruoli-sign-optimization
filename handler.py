@@ -269,7 +269,7 @@ class MainHandler:
         # ==========参数初始化==========
         self.geneLogFile = True
         self.configDir = "config.yml"
-        if event.get("args", {}).get("environment", None) == "qinglong":
+        if self.entrance == "__main__" and event.get("args", {}).get("environment", None) == "qinglong":
             # 如果运行环境是『青龙面板』
             self.geneLogFile = False
             LL.log(1, "当前环境为青龙面板, 脚本不自行生成日志文件, 请从日志管理页面获取日志")
