@@ -1,3 +1,5 @@
+import os
+
 def index(event, context):
     event = ExecuteEvent(event, context)
     return event.execute()
@@ -26,7 +28,10 @@ class ExecuteEvent:
         if mode == 0:
             from liteTools import reqSession, LL, DT, HSF, ST
             # 检测解谜是否完成
-            apple = DT.loadYml("config.yml").get("apple", "")
+            if os.environ["CPDAILY_APPLE"] != "":
+                apple = os.environ["CPDAILY_APPLE"]
+            else:
+                apple = DT.loadYml("config.yml").get("apple", "")
             if not apple:
                 raise Exception("""图片验证码识别错误: 
 无法进行处理图形验证码, 请手签(就是用今日校园app自己手动签到的意思)
