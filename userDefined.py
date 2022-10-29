@@ -1,5 +1,6 @@
 import os
 
+
 def index(event, context):
     event = ExecuteEvent(event, context)
     return event.execute()
@@ -28,7 +29,7 @@ class ExecuteEvent:
         if mode == 0:
             from liteTools import reqSession, LL, DT, HSF, ST
             # 检测解谜是否完成
-            if os.environ["CPDAILY_APPLE"] != "":
+            if os.environ.get("CPDAILY_APPLE"):
                 apple = os.environ["CPDAILY_APPLE"]
             else:
                 apple = DT.loadYml("config.yml").get("apple", "")

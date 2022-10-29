@@ -130,6 +130,10 @@ class casLogin:
                             msg = msg[0].get_text()
             else:
                 msg = soup.select('#formErrorTip2')[0].get_text()
-            raise Exception(msg)
+            displayError = re.findall(
+                r'"([^"]*[Ee]rror[^"]*)"[^>]*style="(?!display:none;)[^>]*">', data)
+            print("=============================================================")
+            print(displayError)
+            raise Exception(msg+str(displayError))
         else:
             raise Exception('教务系统出现了问题啦！返回状态码：' + str(data.status_code))
