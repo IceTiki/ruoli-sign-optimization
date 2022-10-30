@@ -39,6 +39,7 @@ try:
 except OSError as e:
     raise OSError(f"""!!!!!!!!!!!!!!Crypto模块版本错误!!!!!!!!!!!!!!
 请不要将linux系统(比如云函数)和windows系统的依赖混用
+请删除pycryptodome模块并重新安装
 错误信息: [{e}]""")
 # ==========检查代码完整性==========
 try:
