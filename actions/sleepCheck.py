@@ -100,7 +100,7 @@ class sleepCheck:
         for month in monthList:
             # 获取对应历史月签到情况
             req = {"statisticYearMonth": month}
-            url = f'{self.host}wec-counselor-sign-apps/stu/sign/getStuSignInfosByWeekMonth'
+            url = f'{self.host}wec-counselor-attendance-apps/student/attendance/getStuSignInfosByWeekMonth'
             res = self.session.post(
                 url, headers=headers, data=json.dumps(req), verify=False)
             res = res.json()
@@ -158,7 +158,7 @@ class sleepCheck:
             self.getHistoryTaskInfo()
             hti = self.historyTaskInfo
 
-            self.form['signPhotoUrl'] = hti['photograph']
+            self.form['signPhotoUrl'] = hti['signPhotoUrl']
             self.form['signInstanceWid'] = self.taskInfo['signInstanceWid']
             self.form['longitude'], self.form['latitude'] = hti['longitude'], hti['latitude']
             # 检查是否在签到范围内
