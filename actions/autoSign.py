@@ -84,6 +84,7 @@ class AutoSign:
         res = self.session.post(url, headers=headers,
                                 data=json.dumps({}), verify=False)
         res = res.json()
+        LL.log(1, "历史签到月历", res)
         monthList = [i['id'] for i in res['datas']['rows']]
         monthList.sort(reverse=True)  # 降序排序月份
 
@@ -95,6 +96,7 @@ class AutoSign:
             res = self.session.post(
                 url, headers=headers, data=json.dumps(req), verify=False)
             res = res.json()
+            LL.log(1, "获取对应历史月签到情况", res)
             monthSignList = list(res['datas']['rows'])
             # 遍历查找历史月中每日的签到情况
             monthSignList.sort(
@@ -117,6 +119,7 @@ class AutoSign:
                         res = self.session.post(
                             url, headers=headers, data=json.dumps(historyTaskId), verify=False)
                         res = res.json()
+                        LL.log(1, "获取历史任务详情", res)
                         # 其他模拟请求
                         url = f'{self.host}wec-counselor-sign-apps/stu/sign/queryNotice'
                         self.session.post(url, headers=headers,
@@ -319,7 +322,7 @@ class AutoSign:
         res = self.session.post(f'{self.host}wec-counselor-sign-apps/stu/sign/submitSign', headers=headers,
                                 data=json.dumps(self.submitData), verify=False)
         res = res.json()
-        LL.log(1, '提交后返回的信息', res['message'])
+        LL.log(1, '提交后返回的信息', res)
         # 检查签到情况
         if self.getDetailTask()['signTime']:
             self.signTask_.code = 101
