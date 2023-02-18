@@ -97,7 +97,7 @@ class casLogin:
 
         # 发送数据尝试登录
         data = self.session.post(
-            self.login_url, params=params, allow_redirects=False)
+            self.login_url, data=params, allow_redirects=False)
         # 如果等于302强制跳转，代表登陆成功
         if data.status_code == 302:
             jump_url = data.headers['Location']
