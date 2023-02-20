@@ -11,7 +11,7 @@ class VersionInfo:
         "actions/collection.py": "9509cdeb59dba47013d850ca85f16cf2df50d34aa6728b61c4afffb9eae95415",
         "actions/sleepCheck.py": "aeb190b19e18098acaec7334dad52c9e554ecc98e257decbe8e3c260bfcf20b8",
         "actions/workLog.py": "829b721adc4005fc55fc56b37f4c93baf70f0518987d566b04fba3d351c0e01a",
-        "actions/sendMessage.py": "f1e02a0a7934fff0e6a1ebc11ccb1dc71bc3a58c47af7ec8a9aacb8ba132198d",
+        "actions/sendMessage.py": "8ed80d1c99f4350f4d7495955710c1d40891a5176c986e16b78f7bc78a56e4a5",
         "actions/teacherSign.py": "c3e760f06c30f09f94550a4c4906796e45dc485be7c55d5018d88532063a3aa1",
         "login/Utils.py": "ad03d5691e31b3948766e988ddbacbfd5e552b074e0e6cf1ba1c56b4904713d1",
         "login/casLogin.py": "4743cf5bb480a50c1e49711401ec5a44033071f734a51513898b18876b34f97f",

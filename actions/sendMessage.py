@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 import re
 from urllib import parse
 import json
+import apprise
 
 
 # 通知类
@@ -30,6 +31,7 @@ class SendMessage:
         self.pp = Pushplus(con.get("pushplus_parameters"))
         self.sc = Serverchan(con.get("severchan_sendkey"))
         self.gotify = Gotify(con.get("gotify_url"), con.get("gotify_apptoken"))
+        self.apprist = AppriseSend(con.get("apprise"))
         self.log_str = "推送情况\n"
 
     def send(self, msg="no msg", title="no title", attachments=()):
@@ -61,6 +63,10 @@ class SendMessage:
             self.log_str += "\nGotify|" + self.gotify.sendWithGotify(msg, title)
         except Exception as e:
             self.log_str += "\nGotify|出错|%s" % e
+        try:
+            self.log_str += "\nApprise|" + self.apprist.send(msg, title)
+        except Exception as e:
+            self.log_str += "\nApprise|出错|%s" % e
 
 
 class RlMessage:
@@ -387,3 +393,38 @@ class Gotify:
             f"{self.gotify_url}/message?token={self.gotify_apptoken}", json=params
         )
         return "发送成功" if res.status_code == 200 else "发送失败"
+
+
+class AppriseSend:
+    def __init__(self, service_api) -> None:
+        """
+        :param service_api: 见https://github.com/caronc/apprise#productivity-based-notifications
+        """
+        self.service_api = service_api
+        if self.is_config_correct:
+            self.pusher = apprise.Apprise()
+            self.pusher.add(service_api)
+
+    @property
+    def is_config_correct(self):
+        if re.match(r"\w*:\/\/.*", self.service_api):
+            return True
+        else:
+            False
+
+    def send(self, msg, title):
+        """发送消息
+        :params msg: 要发送的消息(自动转为字符串类型)"""
+        # msg处理
+        msg = str(msg)
+        title = str(title)
+        # 简单检查配置
+        if not self.is_config_correct:
+            return "无效配置"
+
+        res = self.pusher.notify(
+            body=msg,
+            title=title,
+        )
+
+        return str(res)
