@@ -8,7 +8,9 @@ import rsa
 import yaml
 from Crypto.Cipher import AES
 from tencentcloud.common import credential
-from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
+from tencentcloud.common.exception.tencent_cloud_sdk_exception import (
+    TencentCloudSDKException,
+)
 from tencentcloud.common.profile.client_profile import ClientProfile
 from tencentcloud.common.profile.http_profile import HttpProfile
 from tencentcloud.ocr.v20181119 import ocr_client, models
@@ -24,34 +26,36 @@ class Utils:
     @staticmethod
     def checkStatus(request, *args, **kwargs):
         if request.status_code == 418:
-            raise Exception('[HTTP 418]\n当前IP地址已被屏蔽\n请尝试使用其他地区的云函数节点/服务器\n或者在配置中填入可用代理(方式见文档)')
+            raise Exception(
+                "[HTTP 418]\n当前IP地址已被屏蔽\n请尝试使用其他地区的云函数节点/服务器\n或者在配置中填入可用代理(方式见文档)"
+            )
 
     # 获取当前北京时间
     @staticmethod
     def getAsiaTime():
         utc_dt = datetime.utcnow().replace(tzinfo=timezone.utc)
         asia_dt = utc_dt.astimezone(timezone(timedelta(hours=8)))
-        return asia_dt.strftime('%H:%M:%S')
+        return asia_dt.strftime("%H:%M:%S")
 
     # 获取当前北京日期
     @staticmethod
     def getAsiaDate():
         utc_dt = datetime.utcnow().replace(tzinfo=timezone.utc)
         asia_dt = utc_dt.astimezone(timezone(timedelta(hours=8)))
-        return asia_dt.strftime('%Y-%m-%d')
+        return asia_dt.strftime("%Y-%m-%d")
 
     # 获取指定长度的随机字符
     @staticmethod
     def randString(length):
         baseString = "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678"
-        data = ''
+        data = ""
         for i in range(length):
             data += baseString[random.randint(0, len(baseString) - 1)]
         return data
 
     @staticmethod
-    def getYmlConfig(yaml_file='./login/system.yml'):
-        file = open(yaml_file, 'r', encoding="utf-8")
+    def getYmlConfig(yaml_file="./login/system.yml"):
+        file = open(yaml_file, "r", encoding="utf-8")
         file_data = file.read()
         file.close()
         config = yaml.load(file_data, Loader=yaml.FullLoader)
@@ -80,11 +84,11 @@ class Utils:
         message = message[::-1]
         max_msglength = target_length - 11
         msglength = len(message)
-        padding = b''
+        padding = b""
         padding_length = target_length - msglength - 3
         for i in range(padding_length):
-            padding += b'\x00'
-        return b''.join([b'\x00\x00', padding, b'\x00', message])
+            padding += b"\x00"
+        return b"".join([b"\x00\x00", padding, b"\x00", message])
 
     # aes加密的实现
     @staticmethod
@@ -93,7 +97,9 @@ class Utils:
         randIvLen = 16
         ranStr = Utils.randString(randStrLen)
         ivStr = Utils.randString(randIvLen)
-        aes = AES.new(bytes(key, encoding='utf-8'), AES.MODE_CBC, bytes(ivStr, encoding="utf8"))
+        aes = AES.new(
+            bytes(key, encoding="utf-8"), AES.MODE_CBC, bytes(ivStr, encoding="utf8")
+        )
         data = ranStr + password
 
         text_length = len(data)
@@ -103,9 +109,9 @@ class Utils:
         pad = chr(amount_to_pad)
         data = data + pad * amount_to_pad
 
-        text = aes.encrypt(bytes(data, encoding='utf-8'))
+        text = aes.encrypt(bytes(data, encoding="utf-8"))
         text = base64.encodebytes(text)
-        text = text.decode('utf-8').strip()
+        text = text.decode("utf-8").strip()
         return text
 
     # 通过url解析图片验证码
@@ -113,12 +119,17 @@ class Utils:
     def getCodeFromImg(res, imgUrl):
         response = res.get(imgUrl, verify=False)  # 将这个图片保存在内存
         # 得到这个图片的base64编码
-        imgCode = str(base64.b64encode(BytesIO(response.content).read()), encoding='utf-8')
+        imgCode = str(
+            base64.b64encode(BytesIO(response.content).read()), encoding="utf-8"
+        )
         # print(imgCode)
         try:
-            config = DT.loadYml('config.yml')
-            captchaLen = config['captcha']['captchaLen']
-            cred = credential.Credential(config['captcha']['tencentSecretId'], config['captcha']['tencentSecretKey'])
+            config = DT.loadYml("config.yml")
+            captchaLen = config["captcha"]["captchaLen"]
+            cred = credential.Credential(
+                config["captcha"]["tencentSecretId"],
+                config["captcha"]["tencentSecretKey"],
+            )
             httpProfile = HttpProfile()
             httpProfile.endpoint = "ocr.tencentcloudapi.com"
 
@@ -127,21 +138,19 @@ class Utils:
             client = ocr_client.OcrClient(cred, "ap-beijing", clientProfile)
 
             req = models.GeneralBasicOCRRequest()
-            params = {
-                "ImageBase64": imgCode
-            }
+            params = {"ImageBase64": imgCode}
             req.from_json_string(json.dumps(params))
             resp = client.GeneralBasicOCR(req)
-            codeArray = json.loads(resp.to_json_string())['TextDetections']
-            code = ''
+            codeArray = json.loads(resp.to_json_string())["TextDetections"]
+            code = ""
             for item in codeArray:
-                code += item['DetectedText'].replace(' ', '')
+                code += item["DetectedText"].replace(" ", "")
             if len(code) == captchaLen:
                 return code
             else:
                 return Utils.getCodeFromImg(res, imgUrl)
         except TencentCloudSDKException as err:
-            raise Exception('验证码识别出现问题了' + str(err.message))
+            raise Exception("验证码识别出现问题了" + str(err.message))
 
     @staticmethod
     def getUserAgents():
@@ -195,5 +204,5 @@ class Utils:
             "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.60 Safari/537.17",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1309.0 Safari/537.17",
             "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.15 (KHTML, like Gecko) Chrome/24.0.1295.0 Safari/537.15",
-            "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.14 (KHTML, like Gecko) Chrome/24.0.1292.0 Safari/537.14"
+            "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.14 (KHTML, like Gecko) Chrome/24.0.1292.0 Safari/537.14",
         ]

@@ -23,53 +23,53 @@ import checkRepositoryVersion
 
 
 class reqResponse(requests.Response):
-    '''requests.reqResponse的子类'''
+    """requests.reqResponse的子类"""
 
     def __init__(self, res: requests.Response):
         self.__dict__.update(res.__dict__)
 
     def json(self, *args, **kwargs):
-        '''当解析失败的时候, 会print出响应内容'''
+        """当解析失败的时候, 会print出响应内容"""
         try:
             return super(reqResponse, self).json(*args, **kwargs)
         except Exception as e:
-            raise Exception(
-                f'响应内容以json格式解析失败({e})，响应内容:\n\n{self.text}')
+            raise Exception(f"响应内容以json格式解析失败({e})，响应内容:\n\n{self.text}")
 
 
 class reqSession(requests.Session):
-    '''requests.Session的子类'''
+    """requests.Session的子类"""
 
     def request(self, *args, **kwargs):
-        '''增添了请求的默认超时时间, 将返回值转换为reqResponse'''
-        kwargs.setdefault('timeout', (10, 30))
+        """增添了请求的默认超时时间, 将返回值转换为reqResponse"""
+        kwargs.setdefault("timeout", (10, 30))
         res = super(reqSession, self).request(*args, **kwargs)
         return reqResponse(res)
 
 
 class FileOut:
-    '''
+    """
     代替stdout和stderr, 使print同时输出到文件和终端中。
     start()方法可以直接用自身(self)替换stdout和stderr
     close()方法可以还原stdout和stderr
-    '''
+    """
+
     stdout = sys.stdout
     stderr = sys.stderr
 
     def __init__(self, logPath: str = None):
-        '''
+        """
         初始化
         :params logDir: 输出文件(如果路径不存在自动创建), 如果为空则不输出到文件
-        '''
+        """
         self.log: str = ""  # 同时将所有输出记录到log字符串中
         self.logFile: TextIOWrapper = None
         self.setFileOut(logPath)
 
     def setFileOut(self, path: str = None):
-        '''
+        """
         设置日志输出文件
         :params path: 日志输出文件路径, 如果为空则取消日志文件输出
-        '''
+        """
         # 关闭旧文件
         if self.logFile:
             self.logFile.close()
@@ -95,7 +95,7 @@ class FileOut:
             return
 
     def start(self):
-        '''开始替换stdout和stderr'''
+        """开始替换stdout和stderr"""
         if type(sys.stdout) != FileOut and type(sys.stderr) != FileOut:
             sys.stdout = self
             sys.stderr = self
@@ -103,10 +103,10 @@ class FileOut:
             raise Exception("sysout/syserr已被替换为FileOut")
 
     def write(self, str_):
-        r'''
+        r"""
         :params str: print传来的字符串
         :print(s)等价于sys.stdout.write(s+"\n")
-        '''
+        """
         str_ = str(str_)
         self.log += str_
         if self.logFile:
@@ -115,13 +115,13 @@ class FileOut:
         self.flush()
 
     def flush(self):
-        '''刷新缓冲区'''
+        """刷新缓冲区"""
         self.stdout.flush()
         if self.logFile:
             self.logFile.flush()
 
     def close(self):
-        '''关闭'''
+        """关闭"""
         if self.logFile:
             self.logFile.close()
         self.log = ""
@@ -130,10 +130,12 @@ class FileOut:
 
 
 class TaskError(Exception):
-    '''目前(配置/时间/签到情况)不宜完成签到任务，出现本异常不进行重试。'''
+    """目前(配置/时间/签到情况)不宜完成签到任务，出现本异常不进行重试。"""
 
-    def __init__(self, msg="目前(配置/时间/签到情况)不宜完成签到任务", code=301, taskName='', moreInfo=''):
-        '''
+    def __init__(
+        self, msg="目前(配置/时间/签到情况)不宜完成签到任务", code=301, taskName="", moreInfo=""
+    ):
+        """
         :code的含义
         0: 等待执行
         1: 出现错误(等待重试)
@@ -144,20 +146,21 @@ class TaskError(Exception):
         300: 出错
         301: 当前情况无法完成该任务
         400: 没有找到需要执行的任务
-        '''
+        """
         self.msg = str(msg)
         self.code = code
         self.taskName = taskName
         self.moreInfo = moreInfo
 
     def __str__(self):
-        msg = f'『{self.taskName}』' if self.taskName else ''
-        msg += f'{self.msg}'
+        msg = f"『{self.taskName}』" if self.taskName else ""
+        msg += f"{self.msg}"
         return msg
 
 
 class TT:
-    '''time Tools'''
+    """time Tools"""
+
     startTime = time.time()
 
     @staticmethod
@@ -166,14 +169,14 @@ class TT:
 
     @staticmethod
     def isInTimeList(timeRanges, nowTime: float = startTime):
-        '''判断(在列表中)是否有时间限定字符串是否匹配时间
+        """判断(在列表中)是否有时间限定字符串是否匹配时间
         :params timeRages: 时间限定字符串列表。
             :时间限定字符串是形如"1,2,3 1,2,3 1,2,3 1,2,3 1,2,3"形式的字符串。
             :其各位置代表"周(星期几) 月 日 时 分", 周/月/日皆以1开始。
             :可以以"2-5"形式代表时间范围。比如"3,4-6"就等于"3,4,5,6"
         :params nowTime: 时间戳
         :return bool: 在列表中是否有时间限定字符串匹配时间
-        '''
+        """
         timeRanges = DT.formatStrList(timeRanges)
         for i in timeRanges:
             if TT.isInTime(i, nowTime):
@@ -185,7 +188,7 @@ class TT:
 
     @staticmethod
     def isInTime(timeRange: str, nowTime: float = startTime):
-        '''
+        """
         判断时间限定字符串是否匹配时间
         :params timeRage: 时间限定字符串。
             :是形如"1,2,3 1,2,3 1,2,3 1,2,3 1,2,3"形式的字符串。
@@ -193,31 +196,32 @@ class TT:
             :可以以"2-5"形式代表时间范围。比如"3,4-6"就等于"3,4,5,6"
         :params nowTime: 时间戳
         :return bool: 时间限定字符串是否匹配时间
-        '''
+        """
         # 判断类型
         if type(timeRange) != str:
-            raise TypeError(
-                f"timeRange(时间限定字符串)应该是字符串, 而不是『{type(timeRange)}』")
+            raise TypeError(f"timeRange(时间限定字符串)应该是字符串, 而不是『{type(timeRange)}』")
         # 判断格式
-        if not re.match(r"^(?:\d+-?\d*(?:,\d+-?\d*)* ){4}(?:\d+-?\d*(?:,\d+-?\d*)*)$", timeRange):
-            raise Exception(f'『{timeRange}』不是正确格式的时间限定字符串')
+        if not re.match(
+            r"^(?:\d+-?\d*(?:,\d+-?\d*)* ){4}(?:\d+-?\d*(?:,\d+-?\d*)*)$", timeRange
+        ):
+            raise Exception(f"『{timeRange}』不是正确格式的时间限定字符串")
         # 将时间范围格式化
 
         def formating(m):
-            '''匹配a-e样式的字符串替换为a,b,c,d,e样式'''
+            """匹配a-e样式的字符串替换为a,b,c,d,e样式"""
             a = int(m.group(1))
             b = int(m.group(2))
             if a > b:
                 a, b = b, a
-            return ','.join([str(i) for i in range(a, b)]+[str(b)])
+            return ",".join([str(i) for i in range(a, b)] + [str(b)])
+
         timeRange = re.sub(r"(\d*)-(\d*)", formating, timeRange)
         # 将字符串转为二维整数数组
-        timeRange = timeRange.split(' ')
-        timeRange = [[int(j) for j in i.split(',')] for i in timeRange]
+        timeRange = timeRange.split(" ")
+        timeRange = [[int(j) for j in i.split(",")] for i in timeRange]
         # 将当前时间格式化为"周 月 日 时 分"
         nowTime = tuple(time.localtime(nowTime))
-        nowTime = (nowTime[6]+1, nowTime[1],
-                   nowTime[2], nowTime[3], nowTime[4])
+        nowTime = (nowTime[6] + 1, nowTime[1], nowTime[2], nowTime[3], nowTime[4])
         for a, b in zip(nowTime, timeRange):
             if a not in b:
                 return False
@@ -228,39 +232,45 @@ class TT:
 
     @staticmethod
     def executionSeconds(round_: int = 2):
-        return round(time.time()-TT.startTime, round_)
+        return round(time.time() - TT.startTime, round_)
 
 
 class LL:
-    '''lite log'''
+    """lite log"""
+
     prefix = checkRepositoryVersion.getCodeVersion()
     startTime = TT.startTime
     log_list = []
     printLevel = 0
-    logTypeDisplay = ['debug', 'info', 'warn', 'error', 'critical']
+    logTypeDisplay = ["debug", "info", "warn", "error", "critical"]
     msgOut: FileOut = FileOut()
     msgOut.start()
 
     @staticmethod
     def formatLog(logType: str, args):
-        '''返回logItem[时间,类型,内容]'''
-        string = ''
+        """返回logItem[时间,类型,内容]"""
+        string = ""
         for item in args:
             if type(item) == dict or type(item) == list:
-                string += yaml.dump(item, allow_unicode=True)+'\n'
+                string += yaml.dump(item, allow_unicode=True) + "\n"
             else:
-                string += str(item)+'\n'
-        return [time.time()-LL.startTime, logType, string]
+                string += str(item) + "\n"
+        return [time.time() - LL.startTime, logType, string]
 
     @staticmethod
     def log2FormatStr(logItem):
         logType = LL.logTypeDisplay[logItem[1]]
-        return '|||%s|||%s|||%0.3fs|||\n%s' % (LL.prefix, logType, logItem[0], logItem[2])
+        return "|||%s|||%s|||%0.3fs|||\n%s" % (
+            LL.prefix,
+            logType,
+            logItem[0],
+            logItem[2],
+        )
 
     @staticmethod
     def log(logType=1, *args):
-        '''日志函数
-        logType:int = debug:0|info:1|warn:2|error:3|critical:4'''
+        """日志函数
+        logType:int = debug:0|info:1|warn:2|error:3|critical:4"""
         if not args:
             return
         logItem = LL.formatLog(logType, args)
@@ -270,8 +280,8 @@ class LL:
 
     @staticmethod
     def getLog(level=0):
-        '''获取日志函数'''
-        string = ''
+        """获取日志函数"""
+        string = ""
         for item in LL.log_list:
             if level <= item[1]:
                 string += LL.log2FormatStr(item)
@@ -279,28 +289,28 @@ class LL:
 
     @staticmethod
     def saveLog(dir, level=0):
-        '''保存日志函数'''
+        """保存日志函数"""
         if type(dir) != str:
             return
 
         log = LL.getLog(level)
         if not os.path.isdir(dir):
             os.makedirs(dir)
-        dir = os.path.join(dir, TT.formatStartTime(
-            "LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
-        with open(dir, 'w', encoding='utf-8') as f:
+        dir = os.path.join(dir, TT.formatStartTime("LOG#t=%Y-%m-%d--%H-%M-%S##.txt"))
+        with open(dir, "w", encoding="utf-8") as f:
             f.write(log)
 
 
 class CpdailyTools:
-    '''今日校园相关函数'''
-    desKey = 'XCE927=='
+    """今日校园相关函数"""
+
+    desKey = "XCE927=="
     aesKey = b"SASEoK4Pa5d4SssO"
     aesKey_str = "SASEoK4Pa5d4SssO"
 
     @staticmethod
     def encrypt_CpdailyExtension(text, key=desKey):
-        '''CpdailyExtension加密'''
+        """CpdailyExtension加密"""
         iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
         d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
 
@@ -311,7 +321,7 @@ class CpdailyTools:
 
     @staticmethod
     def decrypt_CpdailyExtension(text, key=desKey):
-        '''CpdailyExtension加密'''
+        """CpdailyExtension加密"""
         iv = b"\x01\x02\x03\x04\x05\x06\x07\x08"
         d = des(key, CBC, iv, pad=None, padmode=PAD_PKCS5)
 
@@ -323,7 +333,7 @@ class CpdailyTools:
     @staticmethod
     def encrypt_BodyString(text, key=aesKey):
         """BodyString加密"""
-        iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
+        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07"
         cipher = AES.new(key, AES.MODE_CBC, iv)
 
         text = CT.pkcs7padding(text)  # 填充
@@ -335,7 +345,7 @@ class CpdailyTools:
     @staticmethod
     def decrypt_BodyString(text, key=aesKey):
         """BodyString解密"""
-        iv = b'\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07'
+        iv = b"\x01\x02\x03\x04\x05\x06\x07\x08\t\x01\x02\x03\x04\x05\x06\x07"
         cipher = AES.new(key, AES.MODE_CBC, iv)
 
         text = base64.b64decode(text)  # Base64解码
@@ -346,94 +356,118 @@ class CpdailyTools:
 
     @staticmethod
     def signAbstract(submitData: dict, key=aesKey_str):
-        '''表单中sign项目生成'''
-        abstractKey = ["appVersion", "bodyString", "deviceId", "lat",
-                       "lon", "model", "systemName", "systemVersion", "userId"]
+        """表单中sign项目生成"""
+        abstractKey = [
+            "appVersion",
+            "bodyString",
+            "deviceId",
+            "lat",
+            "lon",
+            "model",
+            "systemName",
+            "systemVersion",
+            "userId",
+        ]
         abstractSubmitData = {k: submitData[k] for k in abstractKey}
-        abstract = parse.urlencode(abstractSubmitData) + '&' + key
+        abstract = parse.urlencode(abstractSubmitData) + "&" + key
         abstract_md5 = HSF.strHash(abstract, 5)
         return abstract_md5
 
     @staticmethod
     def baiduGeocoding(address: str):
-        '''地址转坐标'''
+        """地址转坐标"""
         # 获取百度地图API的密钥
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'}
-        url = 'https://feres.cpdaily.com/bower_components/baidumap/baidujsSdk@2.js'
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0"
+        }
+        url = "https://feres.cpdaily.com/bower_components/baidumap/baidujsSdk@2.js"
         res = requests.get(url, headers=headers, verify=False)
         baiduMap_ak = re.findall(r"ak=(\w*)", res.text)[0]
         # 用地址获取相应坐标
-        url = f'http://api.map.baidu.com/geocoding/v3'
-        params = {
-            "output": "json", "address": address, "ak": baiduMap_ak}
-        res = requests.get(
-            url, headers=headers, params=params, verify=False)
+        url = f"http://api.map.baidu.com/geocoding/v3"
+        params = {"output": "json", "address": address, "ak": baiduMap_ak}
+        res = requests.get(url, headers=headers, params=params, verify=False)
         res = res.json()
-        lon = res['result']['location']['lng']
-        lat = res['result']['location']['lat']
+        lon = res["result"]["location"]["lng"]
+        lat = res["result"]["location"]["lat"]
         return (lon, lat)
 
     @staticmethod
     def baiduReverseGeocoding(lon: float, lat: float):
-        '''坐标转地址'''
+        """坐标转地址"""
         # 获取百度地图API的密钥
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'}
-        url = 'https://feres.cpdaily.com/bower_components/baidumap/baidujsSdk@2.js'
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0"
+        }
+        url = "https://feres.cpdaily.com/bower_components/baidumap/baidujsSdk@2.js"
         res = requests.get(url, headers=headers, verify=False)
         baiduMap_ak = re.findall(r"ak=(\w*)", res.text)[0]
         # 用地址获取相应坐标
-        url = f'http://api.map.baidu.com/reverse_geocoding/v3'
-        params = {
-            "output": "json", "location": "%f,%f" % (lon, lat), "ak": baiduMap_ak}
+        url = f"http://api.map.baidu.com/reverse_geocoding/v3"
+        params = {"output": "json", "location": "%f,%f" % (lon, lat), "ak": baiduMap_ak}
         res = requests.get(url, headers=headers, params=params, verify=False)
         res = res.json()
-        address = res['result']['formatted_address']
+        address = res["result"]["formatted_address"]
         return address
 
     @staticmethod
     def uploadPicture(url, session, picBlob, picType):
-        '''上传图片到阿里云oss'''
-        res = session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps({'fileType': 1}),
-                           verify=False)
-        datas = res.json().get('datas')
-        fileName = datas.get('fileName')
-        policy = datas.get('policy')
-        accessKeyId = datas.get('accessid')
-        signature = datas.get('signature')
-        policyHost = datas.get('host')
-        ossKey = f'{fileName}.{picType}'
+        """上传图片到阿里云oss"""
+        res = session.post(
+            url=url,
+            headers={"content-type": "application/json"},
+            data=json.dumps({"fileType": 1}),
+            verify=False,
+        )
+        datas = res.json().get("datas")
+        fileName = datas.get("fileName")
+        policy = datas.get("policy")
+        accessKeyId = datas.get("accessid")
+        signature = datas.get("signature")
+        policyHost = datas.get("host")
+        ossKey = f"{fileName}.{picType}"
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0'
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0"
         }
         multipart_encoder = MultipartEncoder(
             fields={  # 这里根据需要进行参数格式设置
-                'key': ossKey, 'policy': policy, 'AccessKeyId': accessKeyId,
-                'signature': signature, 'x-obs-acl': 'public-read',
-                'file': ('blob', picBlob, f'image/{picType}')
-            })
-        headers['Content-Type'] = multipart_encoder.content_type
-        res = session.post(url=policyHost,
-                           headers=headers,
-                           data=multipart_encoder)
+                "key": ossKey,
+                "policy": policy,
+                "AccessKeyId": accessKeyId,
+                "signature": signature,
+                "x-obs-acl": "public-read",
+                "file": ("blob", picBlob, f"image/{picType}"),
+            }
+        )
+        headers["Content-Type"] = multipart_encoder.content_type
+        res = session.post(url=policyHost, headers=headers, data=multipart_encoder)
         return ossKey
 
     @staticmethod
     def getPictureUrl(url, session, ossKey):
-        '''获取图片上传位置'''
-        params = {'ossKey': ossKey}
-        res = session.post(url=url, headers={'content-type': 'application/json'}, data=json.dumps(params),
-                           verify=False)
-        photoUrl = res.json().get('datas')
+        """获取图片上传位置"""
+        params = {"ossKey": ossKey}
+        res = session.post(
+            url=url,
+            headers={"content-type": "application/json"},
+            data=json.dumps(params),
+            verify=False,
+        )
+        photoUrl = res.json().get("datas")
         return photoUrl
 
     @staticmethod
-    def handleCaptcha(host: str, session: reqSession, deviceId: str, maxTry=3, signType: str = "attendance"):
-        '''
+    def handleCaptcha(
+        host: str,
+        session: reqSession,
+        deviceId: str,
+        maxTry=3,
+        signType: str = "attendance",
+    ):
+        """
         图形验证码处理
         :returns dict:用于更新表单(self.form)的字典(如果不需要验证码返回{}, 如果需要返回)
-        '''
+        """
         error = None  # 如果发生异常进行重试, 则保留错误信息
         headers = session.headers.copy()
         # ====================检查是否需要验证码====================
@@ -442,41 +476,51 @@ class CpdailyTools:
         elif signType == "sign":
             have_cap = f"{host}wec-counselor-sign-apps/stu/sign/checkValidation"
         elif signType == "collector":
-            have_cap = f"{host}wec-counselor-collector-apps/stu/collector/checkValidation"
+            have_cap = (
+                f"{host}wec-counselor-collector-apps/stu/collector/checkValidation"
+            )
         else:
             raise Exception("未知signType")
-        data = {'deviceId': deviceId}
-        headers.update({
-            'CpdailyStandAlone': '0',
-            'extension': '1',
-            'Content-Type': 'application/json; charset=utf-8',
-        })
-        res = session.post(
-            url=have_cap, data=json.dumps(data), headers=headers)
+        data = {"deviceId": deviceId}
+        headers.update(
+            {
+                "CpdailyStandAlone": "0",
+                "extension": "1",
+                "Content-Type": "application/json; charset=utf-8",
+            }
+        )
+        res = session.post(url=have_cap, data=json.dumps(data), headers=headers)
         res = res.json()
-        haveCap_data = res['datas']
+        haveCap_data = res["datas"]
         LL.log(1, "检查是否需要填写验证码", haveCap_data)
-        if not haveCap_data['validation']:
-            '''如果不需要填写验证码, 则直接返回'''
+        if not haveCap_data["validation"]:
+            """如果不需要填写验证码, 则直接返回"""
             return {}
 
         for try_ in range(maxTry):
             LL.log(1, f"正在进行第{try_+1}次验证码识别尝试")
             # ====================获取验证码====================
-            headers.update({
-                'Content-Type': 'multipart/form-data; boundary=----WebKitFormBoundaryBlRdUZvbYBzP5FaF',
-                'deviceId': deviceId,
-            })
+            headers.update(
+                {
+                    "Content-Type": "multipart/form-data; boundary=----WebKitFormBoundaryBlRdUZvbYBzP5FaF",
+                    "deviceId": deviceId,
+                }
+            )
             url = f"{host}captcha-open-api/v1/captcha/create/scenesImage"
             data = [
-                ("accountKey", haveCap_data['accountKey']),
-                ("sceneCode", haveCap_data['sceneCode']),
-                ("tenantId", haveCap_data['tenantId']),
-                ("userId", haveCap_data['userId'])
+                ("accountKey", haveCap_data["accountKey"]),
+                ("sceneCode", haveCap_data["sceneCode"]),
+                ("tenantId", haveCap_data["tenantId"]),
+                ("userId", haveCap_data["userId"]),
             ]
 
-            res = session.post(url=url, data=MultipartEncoder(
-                data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"), headers=headers)
+            res = session.post(
+                url=url,
+                data=MultipartEncoder(
+                    data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"
+                ),
+                headers=headers,
+            )
             capCode = res.json()
             LL.log(1, "获取验证码", capCode)
 
@@ -488,77 +532,87 @@ class CpdailyTools:
                 "code": 300,
             }
             handleCaptchaResult = UserDefined.trigger(
-                event, context={"capcode": capCode})
+                event, context={"capcode": capCode}
+            )
 
             hc_err = handleCaptchaResult["exceptError"]
             if hc_err:
-                '''如果报错'''
+                """如果报错"""
                 error = hc_err
                 LL.log(3, f"验证码识别出错: {hc_err}")
                 RT.randomSleep(timeRange=(5, 6))  # 刷新验证码
                 continue
             else:
-                '''如果执行正常'''
+                """如果执行正常"""
                 answerkey = handleCaptchaResult["result"]
 
             # ====================提交验证码====================
             url = f"{host}captcha-open-api/v1/captcha/validate/scenesImage"
             data = [
-                ("accountKey", haveCap_data['accountKey']),
-                ("sceneCode", haveCap_data['sceneCode']),
-                ("tenantId", haveCap_data['tenantId']),
-                ("userId", haveCap_data['userId']),
-                ("scenesImageCode", capCode["result"]['code'])
+                ("accountKey", haveCap_data["accountKey"]),
+                ("sceneCode", haveCap_data["sceneCode"]),
+                ("tenantId", haveCap_data["tenantId"]),
+                ("userId", haveCap_data["userId"]),
+                ("scenesImageCode", capCode["result"]["code"]),
             ]
-            data.extend([('scenesImageCodes', i) for i in answerkey])
-            res = session.post(url=url, data=MultipartEncoder(
-                data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"), headers=headers)
+            data.extend([("scenesImageCodes", i) for i in answerkey])
+            res = session.post(
+                url=url,
+                data=MultipartEncoder(
+                    data, boundary="----WebKitFormBoundaryBlRdUZvbYBzP5FaF"
+                ),
+                headers=headers,
+            )
             res = res.json()
             LL.log(1, "提交验证码", res)
-            if not res['result']:
+            if not res["result"]:
                 LL.log(3, "验证码提交出错")
                 RT.randomSleep(timeRange=(16, 20))  # 验证码获取间隔时间为15秒
                 continue
-            return {"ticket": res['result']}
+            return {"ticket": res["result"]}
         else:
-            '''重试次数达到上限'''
+            """重试次数达到上限"""
             raise Exception(f"验证码处理失败, 错误信息: \n『{error}』")
 
 
 class NT:
-    '''NetTools'''
+    """NetTools"""
+
     @staticmethod
     def isDisableProxies(proxies: dict):
-        '''
+        """
         检查代理是否可用
         :return 如果代理正常返回0, 代理异常返回1
-        '''
+        """
         try:
-            requests.get(url='https://www.baidu.com/',
-                         proxies=proxies, timeout=10)
+            requests.get(url="https://www.baidu.com/", proxies=proxies, timeout=10)
         except requests.RequestException as e:
             return 1
         return 0
 
 
 class MT:
-    '''MiscTools'''
+    """MiscTools"""
+
     @staticmethod
     def geoDistance(lon1, lat1, lon2, lat2):
-        '''两经纬度算距离'''
+        """两经纬度算距离"""
         # 经纬度转换成弧度
-        lon1, lat1, lon2, lat2 = map(math.radians, [float(
-            lon1), float(lat1), float(lon2), float(lat2)])
-        dlon = lon2-lon1
-        dlat = lat2-lat1
-        a = math.sin(dlat/2)**2 + math.cos(lat1) * \
-            math.cos(lat2) * math.sin(dlon/2)**2
-        distance = 2*math.asin(math.sqrt(a))*6371393  # 地球平均半径，6371393m
+        lon1, lat1, lon2, lat2 = map(
+            math.radians, [float(lon1), float(lat1), float(lon2), float(lat2)]
+        )
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        )
+        distance = 2 * math.asin(math.sqrt(a)) * 6371393  # 地球平均半径，6371393m
         return distance
 
 
 class PseudoRandom:
-    '''随机数种子临时固定类(用于with语句)'''
+    """随机数种子临时固定类(用于with语句)"""
 
     def __init__(self, seed=time.time()):
         self.seed = str(seed)
@@ -572,18 +626,19 @@ class PseudoRandom:
 
 
 class RT:
-    '''randomTools'''
+    """randomTools"""
+
     default_offset = 50
     default_location_round = 6
 
     @staticmethod
     def locationOffset(lon, lat, offset=default_offset, round_=default_location_round):
-        '''经纬度随机偏移(偏移不会累积)
+        """经纬度随机偏移(偏移不会累积)
         lon——经度
         lat——纬度
         offset——偏移范围(单位m)
         round_——保留位数
-        '''
+        """
         lon = float(lon)
         lat = float(lat)
         if offset == 0:
@@ -596,14 +651,15 @@ class RT:
             if n > b:
                 n = b
             return n
+
         # 弧度=弧长/半径，角度=弧长*180°/π，某地经度所对应的圆半径=cos(|维度|)*地球半径
         # ==纬度==
         # 偏移大小
-        latOffset = offset/6371393*(180/math.pi)
+        latOffset = offset / 6371393 * (180 / math.pi)
         # 偏移范围
-        lat_a = lat-lat % latOffset
+        lat_a = lat - lat % latOffset
         lat_a = limit(lat_a, -90, 90)
-        lat_b = lat+0.99*latOffset-lat % latOffset
+        lat_b = lat + 0.99 * latOffset - lat % latOffset
         lat_b = limit(lat_b, -90, 90)
         # 随机偏移
         lat = random.uniform(lat_a, lat_b)
@@ -612,11 +668,12 @@ class RT:
 
         # ==经度==
         # 偏移大小(依赖纬度计算)
-        lonOffset = offset / \
-            (6371393*math.cos(abs(lat_a/180*math.pi)))*(180/math.pi)
+        lonOffset = (
+            offset / (6371393 * math.cos(abs(lat_a / 180 * math.pi))) * (180 / math.pi)
+        )
         # 偏移范围
-        lon_a = lon-lon % lonOffset
-        lon_b = lon+0.99*lonOffset-lon % lonOffset
+        lon_a = lon - lon % lonOffset
+        lon_b = lon + 0.99 * lonOffset - lon % lonOffset
         lon_a = limit(lon_a, -180, 180)
         lon_b = limit(lon_b, -180, 180)
         # 随机偏移
@@ -628,23 +685,23 @@ class RT:
 
     @staticmethod
     def choiceFile(dir):
-        '''从指定路径(路径列表)中随机选取一个文件路径'''
+        """从指定路径(路径列表)中随机选取一个文件路径"""
         if type(dir) == list or type(dir) == tuple:
-            '''如果路径是一个列表/元组，则从中随机选择一项'''
+            """如果路径是一个列表/元组，则从中随机选择一项"""
             dir = random.choice(dir)
         if os.path.isfile(dir):
-            '''如果路径指向一个文件，则返回这个路径'''
+            """如果路径指向一个文件，则返回这个路径"""
             return dir
         else:
             files = os.listdir(dir)
-            '''如果路径指向一个文件夹，则随机返回一个文件夹里的文件'''
+            """如果路径指向一个文件夹，则随机返回一个文件夹里的文件"""
             if len(files) == 0:
                 raise Exception("路径(%s)指向一个空文件夹" % dir)
             return os.path.join(dir, random.choice(files))
 
     @staticmethod
     def choiceInList(item):
-        '''从列表/元组中随机选取一项'''
+        """从列表/元组中随机选取一项"""
         if type(item) in (list, tuple):
             return random.choice(item)
         else:
@@ -665,32 +722,35 @@ class RT:
         random.shuffle(picList)
 
         # 根据图片地址前缀筛选出在线图片列表
-        urlList = filter(lambda x: re.match(r'https?:\/\/', x), picList)
+        urlList = filter(lambda x: re.match(r"https?:\/\/", x), picList)
         for url in urlList:
-            '''遍历url列表, 寻找可用图片'''
+            """遍历url列表, 寻找可用图片"""
             # 下载图片
-            LL.log(1, f'正在尝试下载[{url}]')
+            LL.log(1, f"正在尝试下载[{url}]")
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.46", }
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.46",
+            }
             try:
-                response = requests.get(
-                    url=url, headers=headers, timeout=(10, 20))
+                response = requests.get(url=url, headers=headers, timeout=(10, 20))
             except requests.exceptions.ConnectionError as e:
-                LL.log(1, f'在线图片[{url}]下载失败，错误原因:\n{e}\
+                LL.log(
+                    1,
+                    f"在线图片[{url}]下载失败，错误原因:\n{e}\
                     \n可能造成此问题的原因有:\
                     \n1. 图片链接失效(请自行验证链接是否可用)\
                     \n2. 图片请求超时(过几分钟再试一下)\
-                    \n如持续遇到此问题，请检查该链接的有效性或移除此链接')
+                    \n如持续遇到此问题，请检查该链接的有效性或移除此链接",
+                )
                 continue
             picBlob = response.content
-            LL.log(1, f'在线图片[{url}]下载成功')
+            LL.log(1, f"在线图片[{url}]下载成功")
             # 判断图片类型
             picType = imghdr.what(None, picBlob)
             if picType:
-                LL.log(1, f'在线图片[{url}]属于{picType}')
+                LL.log(1, f"在线图片[{url}]属于{picType}")
                 return picBlob, picType
             else:
-                LL.log(1, f'在线图片[{url}]不是正常图片')
+                LL.log(1, f"在线图片[{url}]不是正常图片")
                 continue
 
         # 根据图片地址前缀筛选出本地路径列表
@@ -709,64 +769,70 @@ class RT:
         random.shuffle(fileList)
 
         for file in fileList:
-            '''遍历路径列表, 寻找可用图片'''
-            with open(file, 'rb') as f:
+            """遍历路径列表, 寻找可用图片"""
+            with open(file, "rb") as f:
                 picBlob = f.read()
             picType = imghdr.what(None, picBlob)
             if picType:
-                LL.log(1, f'本地图片[{file}]属于{picType}')
+                LL.log(1, f"本地图片[{file}]属于{picType}")
                 return picBlob, picType
             else:
-                LL.log(1, f'本地图片[{file}]不是正常图片')
+                LL.log(1, f"本地图片[{file}]不是正常图片")
                 continue
 
         # 如果没有找到可用图片，开始报错
-        LL.log(2, '图片列表中没有可用图片')
+        LL.log(2, "图片列表中没有可用图片")
         # 报出无效本地路径列表
         invalidPath = list(set(dirList) - set(fileList) - set(folderList))
         if invalidPath:
-            LL.log(1, '无效本地路径列表', invalidPath)
-        raise Exception('图片列表中没有可用图片')
+            LL.log(1, "无效本地路径列表", invalidPath)
+        raise Exception("图片列表中没有可用图片")
 
     @staticmethod
     def randomSleep(timeRange: tuple = (5, 7)):
-        '''随机暂停一段时间'''
+        """随机暂停一段时间"""
         if len(timeRange) != 2:
             raise Exception("时间范围应包含开始与结束，列表长度应为2")
         a = timeRange[0]
         b = timeRange[1]
         sleepTime = random.uniform(a, b)
-        LL.log(0, '程序正在暂停%.3f秒' % sleepTime)
+        LL.log(0, "程序正在暂停%.3f秒" % sleepTime)
         time.sleep(sleepTime)
 
     @staticmethod
     def genDeviceID(seed=time.time()):
-        '''根据种子生成uuid'''
+        """根据种子生成uuid"""
         with PseudoRandom(seed):
-            def ranHex(x): return ''.join(
-                random.choices('0123456789ABCDEF', k=x))  # 指定长度随机Hex字符串生成
-            deviceId = "-".join([ranHex(8), ranHex(4), ranHex(4),
-                                ranHex(4), ranHex(12)])  # 拼合字符串
+
+            def ranHex(x):
+                return "".join(
+                    random.choices("0123456789ABCDEF", k=x)
+                )  # 指定长度随机Hex字符串生成
+
+            deviceId = "-".join(
+                [ranHex(8), ranHex(4), ranHex(4), ranHex(4), ranHex(12)]
+            )  # 拼合字符串
         return deviceId
 
 
 class DT:
-    '''dict/list tools'''
+    """dict/list tools"""
+
     @staticmethod
-    def loadYml(ymlDir='config.yml'):
-        with open(ymlDir, 'r', encoding="utf-8") as f:
+    def loadYml(ymlDir="config.yml"):
+        with open(ymlDir, "r", encoding="utf-8") as f:
             return yaml.load(f, Loader=yaml.FullLoader)
 
     @staticmethod
-    def writeYml(item, ymlDir='config.yml'):
-        with open(ymlDir, 'w', encoding='utf-8') as f:
+    def writeYml(item, ymlDir="config.yml"):
+        with open(ymlDir, "w", encoding="utf-8") as f:
             yaml.dump(item, f, allow_unicode=True)
 
     @staticmethod
     def formatStrList(item, returnSuperStr=False):
-        '''字符串序列或字符串 格式化为 字符串列表。
+        """字符串序列或字符串 格式化为 字符串列表。
         :feature: 超级字符串会被格式化为字符串
-        :feature: 空值会被格式化为 空列表'''
+        :feature: 空值会被格式化为 空列表"""
         if isinstance(item, str):
             strList = [item]
         elif isinstance(item, dict):
@@ -778,7 +844,7 @@ class DT:
         elif not item:
             strList = []
         else:
-            raise TypeError('请传入序列/字符串')
+            raise TypeError("请传入序列/字符串")
         # 格式化超级字符串
         for i, v in enumerate(strList):
             if isinstance(v, str) or isinstance(v, dict) or v == SuperString:
@@ -790,7 +856,7 @@ class DT:
 
     @staticmethod
     def urlParamsToDict(url: str):
-        '''提取url请求参数, 转为字典'''
+        """提取url请求参数, 转为字典"""
         query = parse.urlparse(url).query
         params = parse.parse_qs(query)
         params = {k: v[0] for k, v in params.items()}
@@ -798,8 +864,9 @@ class DT:
 
 
 class CT:
-    '''CryptoTools'''
-    charset = 'utf-8'
+    """CryptoTools"""
+
+    charset = "utf-8"
 
     @staticmethod
     def pkcs7padding(text: str):
@@ -810,11 +877,12 @@ class CT:
     @staticmethod
     def pkcs7unpadding(text: str):
         """去掉填充字符"""
-        return text[:-ord(text[-1])]
+        return text[: -ord(text[-1])]
 
 
 class HSF:
     """Hashing String And File"""
+
     @staticmethod
     def geneHashObj(hash_type):
         if hash_type == 1:
@@ -838,7 +906,7 @@ class HSF:
         elif hash_type == 3.512:
             return hashlib.sha3_512()
         else:
-            raise Exception('类型错误, 初始化失败')
+            raise Exception("类型错误, 初始化失败")
 
     @staticmethod
     def fileHash(path, hash_type):
@@ -863,12 +931,12 @@ class HSF:
                         hashObj.update(byte_block)
                     return hashObj.hexdigest()
             except Exception as e:
-                raise Exception('%s计算哈希出错: %s' % (path, e))
+                raise Exception("%s计算哈希出错: %s" % (path, e))
         else:
             raise Exception('路径错误, 没有指向文件: "%s"')
 
     @staticmethod
-    def strHash(str_: str, hash_type, charset='utf-8'):
+    def strHash(str_: str, hash_type, charset="utf-8"):
         """计算字符串哈希
         :param str_: 字符串
         :param hash_type: 哈希算法类型
@@ -909,88 +977,107 @@ class HSF:
 
 
 class ST:
-    '''StringTools'''
+    """StringTools"""
+
     @staticmethod
     def timeFormating(string: str):
-        '''字符串根据time.strftime()的规则，按照当前时间进行格式化'''
+        """字符串根据time.strftime()的规则，按照当前时间进行格式化"""
         return time.strftime(string, time.localtime())
 
     @staticmethod
     def randomFormating(string: str):
-        r'''对字符串中的<rd>和</rd>之间(由\a分隔的字符串)随机选取一项加入到字符串中'''
-        return re.sub(r"<rd>.*?</rd>", lambda x: random.choice(x.group()[4:-5].split('\a')), string)
+        r"""对字符串中的<rd>和</rd>之间(由\a分隔的字符串)随机选取一项加入到字符串中"""
+        return re.sub(
+            r"<rd>.*?</rd>",
+            lambda x: random.choice(x.group()[4:-5].split("\a")),
+            string,
+        )
 
     @staticmethod
     def avoidRegular(string: str):
         '''对字符串中的正则特殊符号前加上"\\", 并且在头尾加上"^"和"$"'''
-        return '^' + re.sub(r"\.|\^|\$|\*|\+|\?|\{|\}|\[|\]|\(|\)|\||\\", lambda x: '\\'+x.group(), string) + "$"
+        return (
+            "^"
+            + re.sub(
+                r"\.|\^|\$|\*|\+|\?|\{|\}|\[|\]|\(|\)|\||\\",
+                lambda x: "\\" + x.group(),
+                string,
+            )
+            + "$"
+        )
 
     @staticmethod
     def notionStr(s: str):
-        '''让输入的句子非常非常显眼'''
-        return ('↓'*50 + '看这里' + '↓'*50 + '\n')*5 + s + ('\n' + '↑'*50 + '看这里' + '↑'*50)*5
+        """让输入的句子非常非常显眼"""
+        return (
+            ("↓" * 50 + "看这里" + "↓" * 50 + "\n") * 5
+            + s
+            + ("\n" + "↑" * 50 + "看这里" + "↑" * 50) * 5
+        )
 
     @staticmethod
     def stringFormating(str_: str, params: dict):
-        '''
+        """
         接受字符串和一个参数字典, 将字符串中{key}形式的部分, 利用params格式化。返回一个字符串。
         本函数类似于str.format()与「lambda str_, params:str_.format(**params)」功能相同, 但当找不到对应的key时不会报错而是会跳过。
-        '''
+        """
+
         def formating(m):
-            '''匹配a-e样式的字符串替换为a,b,c,d,e样式'''
+            """匹配a-e样式的字符串替换为a,b,c,d,e样式"""
             key = m.group()[1:-1]
             return str(params.get(key, f"{'{'}{key}{'}'}"))
+
         str_ = re.sub(r"\{[^{}]*?\}", formating, str_)
         return str_
 
 
 class SuperString:
-    '''超级字符串是带有flag的字符串。
-    通过flag, 可以增加字符串功能(比如自动时间格式化/随机化), 定义匹配规则(正则/全等)'''
+    """超级字符串是带有flag的字符串。
+    通过flag, 可以增加字符串功能(比如自动时间格式化/随机化), 定义匹配规则(正则/全等)"""
 
     def __init__(self, strLike):
-        '''初始化超级字符串
+        """初始化超级字符串
         :param strLike: str|dict|SuperString
-            : 字典要求{"str+": "字符串", "flag":"flag1|flag2"}形式'''
+            : 字典要求{"str+": "字符串", "flag":"flag1|flag2"}形式"""
         # 参数初始化
-        self.str = ''
+        self.str = ""
         self.flags = []
-        self.fStr = ''
+        self.fStr = ""
         self.reFlag = False
         # 根据类型处理传入的项目
         if isinstance(strLike, str):
             self.str = str(strLike)
         elif isinstance(strLike, dict):
-            if not ('str+' in strLike and 'flag' in strLike):
+            if not ("str+" in strLike and "flag" in strLike):
                 raise TypeError('不支持缺少键"str+"或"flag"的字典转超级字符串')
-            self.str = strLike['str+']
-            self.flags = strLike['flag'].split('|')
+            self.str = strLike["str+"]
+            self.flags = strLike["flag"].split("|")
         elif isinstance(strLike, SuperString):
             self.str = SuperString.str
             self.flags = SuperString.flags
         elif isinstance(strLike, (int, float, datetime.date, datetime.datetime)):
             self.str = str(strLike)
         else:
-            raise TypeError(f'不支持[{type(strLike)}]转超级字符串')
+            raise TypeError(f"不支持[{type(strLike)}]转超级字符串")
         # 生成格式化字符串
         self.formating()
         # 判断self.match函数是否启用正则
-        if 're' in self.flags:
+        if "re" in self.flags:
             self.reFlag = True
 
     def formating(self):
-        '''根据flags, 格式化字符串'''
+        """根据flags, 格式化字符串"""
         string = self.str
         for flag in self.flags:
-            if flag == 'tf':
+            if flag == "tf":
                 string = ST.timeFormating(string)
-            elif flag == 'rd':
+            elif flag == "rd":
                 string = ST.randomFormating(string)
         self.fStr = string
         return self
 
     def match(self, str_):
-        '''判断输入的字符串是否与超级字符串匹配'''
+        """判断输入的字符串是否与超级字符串匹配"""
         if self.reFlag:
             return re.search(self.fStr, str_)
         else:
@@ -1016,10 +1103,7 @@ class ProxyGet:
         elif type(config) == str:
             if re.match(r"https?:\/\/", config):
                 address = config
-                self.proxy = {
-                    'http': address,
-                    'https': address
-                }
+                self.proxy = {"http": address, "https": address}
                 self.type = "normal"
             else:
                 raise Exception("代理应以http://或https://为开头")
@@ -1034,14 +1118,10 @@ class ProxyGet:
                 url = config["api"]
                 # 解析url地址
                 pa = parse.urlparse(url)
-                self.api = pa.scheme + "://" + pa.netloc+pa.path
+                self.api = pa.scheme + "://" + pa.netloc + pa.path
                 # 解析url参数
                 self.params = DT.urlParamsToDict(url)
-                self.params.update({
-                    "validTime": 1,
-                    "isTxt": 0,
-                    "count": 1
-                })
+                self.params.update({"validTime": 1, "isTxt": 0, "count": 1})
                 self.maxRetry = config.get("maxRetry", 1)
             else:
                 Exception(f"不支持的配置[{config}]")
@@ -1052,23 +1132,20 @@ class ProxyGet:
         if self.type == "normal" and NT.isDisableProxies(self.proxy):
             self.proxy = {}
             self.type = "normal"
-            LL.log(2, f'[{self.proxy}]不可用, 已取消使用')
+            LL.log(2, f"[{self.proxy}]不可用, 已取消使用")
 
     def getProxy(self):
         if self.type == "normal" or self.type == "none":
             return self.proxy
         elif self.type == "panda":
             LL.log(0, "正在通过熊猫代理API获取代理")
-            for times in range(1, self.maxRetry+1):
+            for times in range(1, self.maxRetry + 1):
                 try:
                     res = None
                     res = requests.get(self.api, params=self.params).json()
                     proxyLoc = res["obj"][0]
                     proxyUrl = f"http://{proxyLoc['ip']}:{proxyLoc['port']}"
-                    proxy = {
-                        'http': proxyUrl,
-                        'https': proxyUrl
-                    }
+                    proxy = {"http": proxyUrl, "https": proxyUrl}
                     LL.log(1, f"通过熊猫代理API获取到代理[{proxy}]")
                     time.sleep(1)
                     if NT.isDisableProxies(proxy):
@@ -1087,7 +1164,8 @@ class ProxyGet:
 
 
 class UserDefined:
-    '''UserDefined接口, 用于触发用户自定义函数(userDefined.py)'''
+    """UserDefined接口, 用于触发用户自定义函数(userDefined.py)"""
+
     _userIndex = None
 
     # trigger()的event参数模板
@@ -1108,7 +1186,7 @@ class UserDefined:
 
     @classmethod
     def trigger(cla, event: dict, context: dict):
-        '''
+        """
         触发用户自定义函数
         :param event: 事件
         :param context: 参数
@@ -1117,9 +1195,15 @@ class UserDefined:
                 "result": ...,  # 返回结果
                 "exceptError": ...,  # 捕获的异常
             }
-        '''
+        """
         LL.log(
-            1, f"收到事件「{event.get('msg')}({event.get('code')})」, 尝试触发用户自定义函数", "event", event, "context", context)
+            1,
+            f"收到事件「{event.get('msg')}({event.get('code')})」, 尝试触发用户自定义函数",
+            "event",
+            event,
+            "context",
+            context,
+        )
         # ==========返回值模板==========
         result = {
             "result": None,  # 返回结果
@@ -1129,6 +1213,7 @@ class UserDefined:
         if not cla._userIndex:
             try:
                 from userDefined import index
+
                 cla._userIndex = index
             except Exception as e:
                 LL.log(2, "用户自定义函数导入失败")
