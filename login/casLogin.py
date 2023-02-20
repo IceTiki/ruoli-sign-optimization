@@ -1,9 +1,9 @@
-import json
 import re
 import requests
 from bs4 import BeautifulSoup
 from urllib3.exceptions import InsecureRequestWarning
 from login.Utils import Utils
+from liteTools import Image
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -15,7 +15,7 @@ class casLogin:
         self.password = password
         self.login_url = login_url
         self.host = host
-        self.session = session
+        self.session: requests.Session = session
         self.formType = ""
 
     # 判断是否需要验证码
@@ -35,6 +35,34 @@ class casLogin:
                 url, params={"username": self.username}, verify=False
             ).json()
             return flag["isNeed"]
+
+    def solve_captcha(self, params: dict):
+        """
+        解决验证码问题
+        :param params: 正在填写的登录参数
+        """
+        # 滑块验证
+        if self.captcha_type == "slider":
+            get_captcha_url = self.host + "authserver/common/openSliderCaptcha.htl"
+            verify_captcha_url = self.host + "authserver/common/verifySliderCaptcha.htl"
+            captcha_data = self.session.get(get_captcha_url).json()
+            solution = Image.solve_slide(
+                captcha_data["smallImage"], captcha_data["bigImage"]
+            )
+            verify_data = {
+                "canvasLength": 280,
+                "moveLength": int(280 * solution["slide"] / solution["canvas"]),
+            }
+            self.session.post(verify_captcha_url, data=verify_data)
+            return
+
+        # 验证码验证
+        if self.formType == "casLoginForm":
+            imgUrl = self.host + "authserver/captcha.html"
+            params["captchaResponse"] = Utils.getCodeFromImg(self.session, imgUrl)
+        else:
+            imgUrl = self.host + "authserver/getCaptcha.htl"
+            params["captcha"] = Utils.getCodeFromImg(self.session, imgUrl)
 
     def login(self):
         html = self.session.get(self.login_url, verify=False).text
@@ -84,19 +112,16 @@ class casLogin:
                 salt = maySalt[0]
         # 将用户名填入即将提交的参数中
         params["username"] = self.username
+        # 检查验证码类型
+        self.captcha_type = "code"
+        if re.findall("sliderCaptchaDiv", html):
+            self.captcha_type = "slider"
         # 将密码填入即将提交的参数中
         if salt:
             params["password"] = Utils.encryptAES(self.password, salt)
             # 识别填写验证码
             if self.getNeedCaptchaUrl():
-                if self.formType == "casLoginForm":
-                    imgUrl = self.host + "authserver/captcha.html"
-                    params["captchaResponse"] = Utils.getCodeFromImg(
-                        self.session, imgUrl
-                    )
-                else:
-                    imgUrl = self.host + "authserver/getCaptcha.htl"
-                    params["captcha"] = Utils.getCodeFromImg(self.session, imgUrl)
+                self.solve_captcha(params)
         else:
             params["password"] = self.password
 
@@ -135,11 +160,32 @@ class casLogin:
                             msg = msg[0].get_text()
             else:
                 msg = soup.select("#formErrorTip2")[0].get_text()
+            print("=============================================================")
             displayError = re.findall(
                 r'"([^"]*[Ee]rror[^"]*)"[^>]*style="(?!display:none;)[^>]*">', data
             )
-            print("=============================================================")
             print(displayError)
-            raise Exception(msg + str(displayError))
+            error_tip = re.findall(
+                r'<span .*id="showErrorTip".*>(?:[\s\S]*?)<\/span>', data.text
+            )
+            if error_tip:
+                error_tip = error_tip.group()
+                print(error_tip)
+            else:
+                print(data.text)
+            raise Exception(msg + "\n" + str(displayError) + "\n" + str(error_tip))
         else:
-            raise Exception("教务系统出现了问题啦！返回状态码：" + str(data.status_code))
+            error_tip = re.search(
+                r'<span .*id="showErrorTip".*>(?:[\s\S]*?)<\/span>', data.text, re.M
+            )
+            if error_tip:
+                print(error_tip.group(0))
+            else:
+                print(data.text)
+                error_tip = ""
+            raise Exception(
+                "教务系统出现了问题啦！返回状态码："
+                + str(data.status_code)
+                + "\n错误提示: "
+                + str(error_tip)
+            )
