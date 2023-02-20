@@ -241,7 +241,7 @@
 
   * [文档链接](https://apple.ruoli.cc/captcha/docs)
 
-
+* 『2023-2-20更新』增加对`numpy`、`Pillow`、`scipy`、`loguru`、`apprise`的模块需求
 
 # 琵琶行
 

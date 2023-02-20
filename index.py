@@ -42,8 +42,8 @@ try:
         "numpy",
         "PIL",
         "scipy",
-        # "loguru",
-        # "apprise",
+        "loguru",
+        "apprise",
     ):
         imp.find_module(i)
 except ImportError as e:  # 腾讯云函数在初始化过程中print运作不正常，所以将信息丢入异常中
