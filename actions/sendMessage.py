@@ -407,10 +407,12 @@ class AppriseSend:
 
     @property
     def is_config_correct(self):
-        if re.match(r"\w*:\/\/.*", self.service_api):
-            return True
-        else:
-            False
+        if type(self.service_api) != str:
+            return False
+        if not re.match(r"\w*:\/\/.*", self.service_api):
+            return False
+
+        return True
 
     def send(self, msg, title):
         """发送消息
