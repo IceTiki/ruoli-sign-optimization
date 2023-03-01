@@ -21,7 +21,6 @@ import datetime
 import base64
 import PIL.Image as PIL_Image
 import numpy as np
-import scipy.signal as scipy_signal
 from io import BytesIO
 
 import checkRepositoryVersion
@@ -1065,6 +1064,23 @@ class Image:
             canvas_img[img_range[0] : img_range[1], :],
         )
 
+        # numpy实现的卷积
+        def convolution_2d(img: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+            """
+            二维卷积(边缘补0)
+            """
+            img_h = img.shape[0]
+            img_w = img.shape[1]
+            img_canvas = np.zeros((img_h + 2, img_w + 2))
+            img_canvas[1:-1, 1:-1] = img
+            result_canvas = np.zeros([img_h, img_w])
+            for i in range(img_h):
+                for j in range(img_w):
+                    temp = img_canvas[i : i + 3, j : j + 3]
+                    temp = np.multiply(temp, kernel)
+                    result_canvas[i][j] = temp.sum()
+            return result_canvas
+
         # 卷积找边缘
         def find_edge(img: np.ndarray) -> np.ndarray:
             """
@@ -1076,9 +1092,9 @@ class Image:
             sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
 
             # 计算x方向卷积
-            img_x = scipy_signal.convolve2d(img, sobel_x, boundary="symm", mode="same")
+            img_x = convolution_2d(img, sobel_x)
             # 计算y方向卷积
-            img_y = scipy_signal.convolve2d(img, sobel_y, boundary="symm", mode="same")
+            img_y = convolution_2d(img, sobel_y)
             # 得到梯度矩阵
             img_xy = np.sqrt(img_x**2 + img_y**2)
             # 梯度矩阵归一到0-255

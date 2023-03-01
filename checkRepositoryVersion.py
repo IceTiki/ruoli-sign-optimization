@@ -17,8 +17,8 @@ class VersionInfo:
         "login/casLogin.py": "4743cf5bb480a50c1e49711401ec5a44033071f734a51513898b18876b34f97f",
         "login/iapLogin.py": "ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40",
         "login/RSALogin.py": "9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12",
-        "index.py": "634fb689f9aadb7cce3601d79cab63df659728a6e47fb7f68a549fb68bfb72dd",
-        "liteTools.py": "80a9dfe842aee6d9e153a2cdb37ba1b7740c1d56d423259502a605aa9bca048f",
+        "index.py": "f86b8097905bd08af54c1ae954bfc0e09acca3197612f5335fa6edafae1fa942",
+        "liteTools.py": "6a9c2961a9ac37b0a0d7fde5ca5863a217624370eafb21079e9f7e7c332e2da0",
         "handler.py": "cd01d8123d717d9c9aaca70f6f700f2a9d4cc50fe3a54f213e14934540eb2136",
         "userDefined.py": "42cbd0c82e59be9a6e21d8f7ae1f54f9d504d10a7cf2fd8fdda4789a353d2770",
     }

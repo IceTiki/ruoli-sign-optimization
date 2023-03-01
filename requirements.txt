@@ -11,5 +11,4 @@ rsa==4.7.2
 loguru>=0.6.0
 Pillow>=9.2.0
 numpy>=1.21.0
-scipy>=1.7.0
 apprise==0.9.7
