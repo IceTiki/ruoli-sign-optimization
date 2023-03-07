@@ -9,6 +9,6 @@ PyYAML==5.4.1
 lxml==4.6.5
 rsa==4.7.2
 loguru>=0.6.0
-Pillow>=9.2.0
-numpy>=1.21.0
+Pillow>=6.0.0
+numpy>=1.15.0
 apprise==0.9.7
