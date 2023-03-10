@@ -14,7 +14,7 @@ class VersionInfo:
         "actions/sendMessage.py": "37ff6a09f646ccd3171ed0d129eada734759a9f333244ea12e8f86c3d54867c0",
         "actions/teacherSign.py": "c3e760f06c30f09f94550a4c4906796e45dc485be7c55d5018d88532063a3aa1",
         "login/Utils.py": "ad03d5691e31b3948766e988ddbacbfd5e552b074e0e6cf1ba1c56b4904713d1",
-        "login/casLogin.py": "4743cf5bb480a50c1e49711401ec5a44033071f734a51513898b18876b34f97f",
+        "login/casLogin.py": "0a675a7d2bb6a49bebb709c6046a39bf0c15c90de51ca14fc508184359579cb0",
         "login/iapLogin.py": "ed2775a15dc628b8c0c01429d7a2f84ee3fef56f0623b4118b51d733081b6b40",
         "login/RSALogin.py": "9ec9bb985b95564ab00216df14ab892ce2f262e08a216538f60ca293f1a12c12",
         "index.py": "f86b8097905bd08af54c1ae954bfc0e09acca3197612f5335fa6edafae1fa942",

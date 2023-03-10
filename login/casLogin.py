@@ -143,9 +143,8 @@ class casLogin:
                 else:
                     raise Exception("登录失败，请反馈BUG")
         elif data.status_code == 200:
-            data = data.text
-            print(data)
-            soup = BeautifulSoup(data, "lxml")
+            print(data.content)
+            soup = BeautifulSoup(data.text, "lxml")
             if self.formType == "casLoginForm":
                 msg = soup.select("#errorMsg")
                 if len(msg) != 0:
@@ -162,7 +161,7 @@ class casLogin:
                 msg = soup.select("#formErrorTip2")[0].get_text()
             print("=============================================================")
             displayError = re.findall(
-                r'"([^"]*[Ee]rror[^"]*)"[^>]*style="(?!display:none;)[^>]*">', data
+                r'"([^"]*[Ee]rror[^"]*)"[^>]*style="(?!display:none;)[^>]*">', data.text
             )
             print(displayError)
             error_tip = re.findall(
